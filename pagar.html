@@ -395,6 +395,30 @@
         </div>
     </div>
 
+    <div id="financeDeleteModal" class="confirm-overlay hidden">
+    <div class="confirm-modal">
+        <div class="confirm-icon">
+            <i data-lucide="triangle-alert"></i>
+        </div>
+
+        <h3>Excluir lançamento</h3>
+
+        <p id="financeDeleteText">
+            Deseja excluir este lançamento? Esta ação não poderá ser desfeita.
+        </p>
+
+        <div class="confirm-actions">
+            <button class="btn btn-soft" id="cancelDeleteFinance" type="button">
+                Cancelar
+            </button>
+
+            <button class="btn btn-danger" id="confirmDeleteFinance" type="button">
+                Excluir
+            </button>
+        </div>
+    </div>
+</div>
+
     <div id="toast" class="toast hidden"></div>
 
     <script src="js/config.js"></script>

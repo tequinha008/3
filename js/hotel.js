@@ -35,6 +35,12 @@ const hotelDetailContent = document.getElementById("hotelDetailContent");
 const hotelDetailClose = document.getElementById("hotelDetailClose");
 const hotelDetailDone = document.getElementById("hotelDetailDone");
 
+const hotelDeleteModal = document.getElementById("hotelDeleteModal");
+const hotelDeleteText = document.getElementById("hotelDeleteText");
+const cancelDeleteHotel = document.getElementById("cancelDeleteHotel");
+const confirmDeleteHotel = document.getElementById("confirmDeleteHotel");
+
+let hotelToDelete = null;
 let currentUser = null;
 let currentProfile = null;
 let hotels = [];
@@ -582,6 +588,20 @@ function renderHotels() {
 
                     </button>
 
+                    ${
+                    isAdminOrMaster()
+                        ? `
+                            <button
+                                class="icon-button danger"
+                                data-action="delete"
+                                data-id="${hotel.id}"
+                                title="Excluir">
+                                <i data-lucide="trash-2"></i>
+                            </button>
+                        `
+                        : ""
+                }
+
                 </div>
 
             </td>
@@ -690,6 +710,52 @@ logoutButton.addEventListener("click", async function () {
 
 });
 
+cancelDeleteHotel.addEventListener("click", closeDeleteHotelModal);
+confirmDeleteHotel.addEventListener("click", deleteHotelConfirmed);
+
+hotelDeleteModal.addEventListener("click", function (event) {
+    if (event.target === hotelDeleteModal) {
+        closeDeleteHotelModal();
+    }
+});
+
+function openDeleteHotelModal(id) {
+    const hotel = hotels.find(item => item.id === id);
+
+    hotelToDelete = id;
+
+    hotelDeleteText.textContent = `Deseja excluir ${hotel?.codigo_tres || "esta solicitação"}? Esta ação não poderá ser desfeita.`;
+
+    hotelDeleteModal.classList.remove("hidden");
+    lucide.createIcons();
+}
+
+function closeDeleteHotelModal() {
+    hotelToDelete = null;
+    hotelDeleteModal.classList.add("hidden");
+}
+
+async function deleteHotelConfirmed() {
+    if (!hotelToDelete) return;
+
+    const { error } = await supabaseClient
+        .from("solicitacoes_hotel")
+        .delete()
+        .eq("id", hotelToDelete);
+
+    if (error) {
+        console.error(error);
+        showToast("Erro ao excluir solicitação.");
+        return;
+    }
+
+    selectedHotels.delete(hotelToDelete);
+    closeDeleteHotelModal();
+
+    showToast("Solicitação excluída.");
+    await loadHotels();
+}
+
 hotelTableBody.addEventListener("click", async function (event) {
 
     const button =
@@ -700,6 +766,12 @@ hotelTableBody.addEventListener("click", async function (event) {
     const id = button.dataset.id;
 
     switch (button.dataset.action) {
+
+        case "delete":
+        
+        openDeleteHotelModal(id);
+    
+        break;
 
         case "details":
 

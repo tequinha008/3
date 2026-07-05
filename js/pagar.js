@@ -90,6 +90,12 @@ const financeDetailDone = document.getElementById("financeDetailDone");
 
 const toast = document.getElementById("toast");
 
+const financeDeleteModal = document.getElementById("financeDeleteModal");
+const financeDeleteText = document.getElementById("financeDeleteText");
+const cancelDeleteFinance = document.getElementById("cancelDeleteFinance");
+const confirmDeleteFinance = document.getElementById("confirmDeleteFinance");
+
+let financeToDelete = null;
 let currentUser = null;
 let currentProfile = null;
 let selectedSubtype = "AEREO";
@@ -758,6 +764,19 @@ function renderLancamentos() {
                             title="Concluir">
                             <i data-lucide="check"></i>
                         </button>
+                        ${
+                        isAdminOrMaster()
+                            ? `
+                                <button
+                                    class="icon-button danger"
+                                    data-action="delete"
+                                    data-id="${item.id}"
+                                    title="Excluir">
+                                    <i data-lucide="trash-2"></i>
+                                </button>
+                            `
+                            : ""
+                    }
                     </div>
                 </td>
             </tr>
@@ -928,6 +947,43 @@ financeTableBody.addEventListener("change", function (event) {
     }
 });
 
+function openDeleteFinanceModal(id) {
+    const item = lancamentos.find(lancamento => lancamento.id === id);
+
+    financeToDelete = id;
+
+    financeDeleteText.textContent = `Deseja excluir ${item?.codigo_tres || "este lançamento"}? Esta ação não poderá ser desfeita.`;
+
+    financeDeleteModal.classList.remove("hidden");
+    lucide.createIcons();
+}
+
+function closeDeleteFinanceModal() {
+    financeToDelete = null;
+    financeDeleteModal.classList.add("hidden");
+}
+
+async function deleteFinanceConfirmed() {
+    if (!financeToDelete) return;
+
+    const { error } = await supabaseClient
+        .from("lancamentos")
+        .delete()
+        .eq("id", financeToDelete);
+
+    if (error) {
+        console.error(error);
+        showToast("Erro ao excluir lançamento.");
+        return;
+    }
+
+    selectedLancamentos.delete(financeToDelete);
+    closeDeleteFinanceModal();
+
+    showToast("Lançamento excluído.");
+    await loadLancamentos();
+}
+
 financeTableBody.addEventListener("click", async function (event) {
     const button = event.target.closest("button");
 
@@ -941,6 +997,18 @@ financeTableBody.addEventListener("click", async function (event) {
 
     if (button.dataset.action === "complete") {
         await completeLancamento(button.dataset.id);
+    }
+    if (button.dataset.action === "delete") {
+    openDeleteFinanceModal(button.dataset.id);
+    }
+});
+
+cancelDeleteFinance.addEventListener("click", closeDeleteFinanceModal);
+confirmDeleteFinance.addEventListener("click", deleteFinanceConfirmed);
+
+financeDeleteModal.addEventListener("click", function (event) {
+    if (event.target === financeDeleteModal) {
+        closeDeleteFinanceModal();
     }
 });
 

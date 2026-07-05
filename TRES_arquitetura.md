@@ -1,7 +1,7 @@
-# TRES Blueprint v1.0
+# TRES Arquitetura v1.0
 
 ## 1. Nome do sistema
-TRES - Sistema Operacional AD Turismo.
+TRES
 
 O nome TRES representa os três módulos iniciais do sistema:
 - Solicitação de Cadastro de Hotéis

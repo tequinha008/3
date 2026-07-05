@@ -1,9 +1,9 @@
-# TRES — Design System v1.0
+# TRES — Design v1.0
 
 ## Nome visual
 
 TRES  
-Sistema interno para solicitações financeiras e cadastrais
+Sistema interno para lançamentos financeiros e cadastrais
 
 ## Estilo
 
