@@ -1,0 +1,147 @@
+/* TRES — Hotéis */
+
+.hotel-module {
+    border-left: 5px solid var(--hotel);
+}
+
+.hotel-module .eyebrow {
+    color: var(--hotel);
+}
+
+.tab-button[data-tab="newHotel"].active,
+.tab-button[data-tab="allHotels"].active {
+    color: var(--hotel);
+}
+
+#newHotel .btn-hotel {
+    min-width: 180px;
+}
+
+#completeSelectedButton {
+    background: var(--action-soft);
+    color: var(--action);
+    box-shadow: none;
+}
+
+#completeSelectedButton:hover {
+    background: #dbe7ef;
+}
+
+#cnpjMessage {
+    min-height: 18px;
+}
+
+.hotel-checkbox,
+#selectAllHotels {
+    accent-color: var(--hotel);
+}
+.details-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 999;
+    background: rgba(15, 23, 42, 0.62);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+}
+
+.details-modal {
+    width: min(680px, 94vw);
+    max-height: 90vh;
+    overflow-y: auto;
+    border-radius: 24px;
+    background: #ffffff;
+    padding: 26px;
+    box-shadow: 0 34px 90px rgba(15, 23, 42, 0.38);
+}
+
+.details-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 18px;
+    padding-bottom: 18px;
+    margin-bottom: 18px;
+    border-bottom: 1px solid var(--line);
+}
+
+.details-header p {
+    margin: 0 0 8px;
+    color: var(--hotel);
+    font-size: 12px;
+    font-weight: 900;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+}
+
+.details-header h2 {
+    margin: 0;
+    color: var(--text-strong);
+    font-size: 22px;
+}
+
+.details-close {
+    width: 36px;
+    height: 36px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: #ffffff;
+    color: var(--muted);
+    font-size: 20px;
+}
+
+.details-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.details-item {
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 13px;
+    background: #f8fafc;
+}
+
+.details-item.wide {
+    grid-column: span 2;
+}
+
+.details-item.full {
+    grid-column: 1 / -1;
+}
+
+.details-item span {
+    display: block;
+    margin-bottom: 7px;
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 900;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+}
+
+.details-item strong {
+    color: var(--text-strong);
+    font-size: 14px;
+}
+
+.details-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 18px;
+    padding-top: 16px;
+    border-top: 1px solid var(--line);
+}
+
+@media (max-width: 760px) {
+    .details-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .details-item.wide,
+    .details-item.full {
+        grid-column: auto;
+    }
+}

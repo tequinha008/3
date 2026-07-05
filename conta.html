@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TRES | Minha Conta</title>
+
+    <link rel="icon" type="image/png" href="TRES_logo_transparente.png">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/conta.css">
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+
+<body class="app-body">
+    <aside class="sidebar">
+        <button class="sidebar-toggle" id="sidebarToggle" title="Recolher menu">
+            <i data-lucide="panel-left-close"></i>
+        </button>
+
+        <div class="sidebar-logo">
+            <div class="mini-mark"><span></span><span></span><span></span></div>
+            <div><strong>TRES</strong><small>Sistema interno</small></div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a href="dashboard.html" class="nav-link"><i data-lucide="layout-dashboard"></i><span>Início</span></a>
+            <a href="hotel.html" class="nav-link"><i data-lucide="building-2"></i><span>Hotéis</span></a>
+            <a href="pagar.html" class="nav-link"><i data-lucide="wallet-cards"></i><span>Contas a Pagar</span></a>
+            <a href="reembolso.html" class="nav-link"><i data-lucide="receipt-text"></i><span>Reembolsos</span></a>
+            <a href="usuarios.html" class="nav-link admin-link hidden"><i data-lucide="users-round"></i><span>Usuários</span></a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <a href="conta.html" class="nav-link active"><i data-lucide="circle-user-round"></i><span>Minha conta</span></a>
+            <button id="logoutButton" class="nav-link"><i data-lucide="log-out"></i><span>Sair</span></button>
+        </div>
+    </aside>
+
+    <main class="app-main">
+        <header class="topbar">
+            <div><p class="eyebrow">Perfil e segurança</p><h1>Minha Conta</h1></div>
+            <div class="user-pill">
+                <div class="avatar" id="avatar">T</div>
+                <div><strong id="userName">Usuário</strong><small id="userRole">perfil</small></div>
+            </div>
+        </header>
+
+        <section class="first-access-banner hidden" id="firstAccessBanner">
+            <div class="first-access-icon"><i data-lucide="shield-alert"></i></div>
+            <div>
+                <p class="eyebrow">Primeiro acesso</p>
+                <h2>Crie sua senha definitiva</h2>
+                <p>Por segurança, você precisa trocar a senha temporária antes de acessar os outros módulos.</p>
+            </div>
+        </section>
+
+        <section class="module-header account-module" id="regularAccountHeader">
+            <div>
+                <p class="eyebrow">Sua conta</p>
+                <h2>Perfil e senha</h2>
+                <p>Consulte os dados do seu acesso e altere sua senha sempre que necessário.</p>
+            </div>
+        </section>
+
+        <div class="account-layout">
+            <section class="panel account-profile-card">
+                <div class="account-profile-avatar" id="profileAvatar">T</div>
+                <div class="account-profile-heading">
+                    <p class="eyebrow">Identificação</p>
+                    <h3 id="profileName">Usuário</h3>
+                    <span class="account-role-badge" id="profileRole">USUÁRIO</span>
+                </div>
+
+                <dl class="account-data-list">
+                    <div><dt>E-mail</dt><dd id="profileEmail">-</dd></div>
+                    <div><dt>Status</dt><dd><span class="account-status-active" id="profileStatus">ATIVO</span></dd></div>
+                    <div><dt>Segurança</dt><dd id="profileAccessStatus">Senha definida</dd></div>
+                </dl>
+            </section>
+
+            <section class="panel account-password-card">
+                <div class="panel-header">
+                    <div><p class="eyebrow">Segurança</p><h3>Alterar senha</h3></div>
+                </div>
+
+                <form id="passwordChangeForm" class="account-password-form">
+                    <div class="form-field">
+                        <label for="currentPassword">Senha atual</label>
+                        <div class="password-input-wrap">
+                            <input type="password" id="currentPassword" required autocomplete="current-password">
+                            <button type="button" class="password-toggle" data-target="currentPassword" aria-label="Mostrar senha"><i data-lucide="eye"></i></button>
+                        </div>
+                    </div>
+
+                    <div class="form-field">
+                        <label for="newPassword">Nova senha</label>
+                        <div class="password-input-wrap">
+                            <input type="password" id="newPassword" minlength="8" required autocomplete="new-password">
+                            <button type="button" class="password-toggle" data-target="newPassword" aria-label="Mostrar senha"><i data-lucide="eye"></i></button>
+                        </div>
+                    </div>
+
+                    <div class="form-field">
+                        <label for="confirmPassword">Confirmar nova senha</label>
+                        <div class="password-input-wrap">
+                            <input type="password" id="confirmPassword" minlength="8" required autocomplete="new-password">
+                            <button type="button" class="password-toggle" data-target="confirmPassword" aria-label="Mostrar senha"><i data-lucide="eye"></i></button>
+                        </div>
+                    </div>
+
+                    <div class="password-rules" aria-live="polite">
+                        <strong>A nova senha deve conter:</strong>
+                        <ul>
+                            <li id="ruleLength"><i data-lucide="circle"></i> Pelo menos 8 caracteres</li>
+                            <li id="ruleUpper"><i data-lucide="circle"></i> Uma letra maiúscula</li>
+                            <li id="ruleLower"><i data-lucide="circle"></i> Uma letra minúscula</li>
+                            <li id="ruleNumber"><i data-lucide="circle"></i> Um número</li>
+                            <li id="ruleSymbol"><i data-lucide="circle"></i> Um símbolo</li>
+                        </ul>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-soft" id="clearPasswordForm">Limpar</button>
+                        <button type="submit" class="btn btn-primary" id="changePasswordButton">Salvar nova senha</button>
+                    </div>
+                </form>
+            </section>
+        </div>
+    </main>
+
+    <div id="toast" class="toast hidden"></div>
+    <script src="js/config.js"></script>
+    <script src="js/conta.js"></script>
+</body>
+</html>

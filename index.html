@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>TRES</title>
+
+    <link rel="icon" type="image/png" href="TRES_logo_transparente.png">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/login.css">
+
+    <!-- Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <!-- Lucide -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+</head>
+
+<body class="tres-preview-body">
+
+    <main class="login-shell">
+
+        <section class="brand-panel">
+
+            <div class="mark">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+
+            <h1>TRES</h1>
+
+            <p>
+                Sistema interno para solicitações
+                financeiras e cadastrais
+            </p>
+
+            <small>
+                Solicite cadastro de hotéis,
+                reembolsos e documente valores a pagar.
+            </small>
+
+        </section>
+
+        <section class="login-card">
+
+            <p class="eyebrow">
+                Acesso interno
+            </p>
+
+            <h2>
+                Bem-vindo(a)!
+            </h2>
+
+            <p class="muted">
+                Faça login para continuar.
+            </p>
+
+            <!-- FORMULÁRIO -->
+            <form id="loginForm">
+
+                <label for="email">
+                    E-mail
+                </label>
+
+                <input
+                    type="email"
+                    id="email"
+                    placeholder="seuemail@empresa.com"
+                    required>
+
+                <label for="password">
+                    Senha
+                </label>
+
+                <input
+                    type="password"
+                    id="password"
+                    placeholder="Digite sua senha"
+                    required>
+
+                <button
+                    type="submit"
+                    id="loginButton">
+
+                    Entrar
+
+                </button>
+
+                <p
+                    id="loginMessage"
+                    class="form-message">
+                </p>
+
+            </form>
+
+            <footer>
+
+                TRES v0.1 • Sthefanie Araujo
+
+            </footer>
+
+        </section>
+
+    </main>
+
+    <script src="js/config.js"></script>
+    <script src="js/login.js"></script>
+
+</body>
+
+</html>

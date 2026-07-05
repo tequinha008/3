@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TRES | Usuários</title>
+
+    <link rel="icon" type="image/png" href="TRES_logo_transparente.png">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/usuarios.css">
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+
+<body class="app-body">
+    <aside class="sidebar">
+        <button class="sidebar-toggle" id="sidebarToggle" title="Recolher menu">
+            <i data-lucide="panel-left-close"></i>
+        </button>
+
+        <div class="sidebar-logo">
+            <div class="mini-mark"><span></span><span></span><span></span></div>
+            <div><strong>TRES</strong><small>Sistema interno</small></div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a href="dashboard.html" class="nav-link">
+                <i data-lucide="layout-dashboard"></i><span>Início</span>
+            </a>
+            <a href="hotel.html" class="nav-link">
+                <i data-lucide="building-2"></i><span>Hotéis</span>
+            </a>
+            <a href="pagar.html" class="nav-link">
+                <i data-lucide="wallet-cards"></i><span>Contas a Pagar</span>
+            </a>
+            <a href="reembolso.html" class="nav-link">
+                <i data-lucide="receipt-text"></i><span>Reembolsos</span>
+            </a>
+            <a href="usuarios.html" class="nav-link active">
+                <i data-lucide="users-round"></i><span>Usuários</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <a href="conta.html" class="nav-link">
+                <i data-lucide="circle-user-round"></i><span>Minha conta</span>
+            </a>
+            <button id="logoutButton" class="nav-link">
+                <i data-lucide="log-out"></i><span>Sair</span>
+            </button>
+        </div>
+    </aside>
+
+    <main class="app-main">
+        <header class="topbar">
+            <div>
+                <p class="eyebrow">Administração</p>
+                <h1>Usuários</h1>
+            </div>
+
+            <div class="user-pill">
+                <div class="avatar" id="avatar">T</div>
+                <div><strong id="userName">Usuário</strong><small id="userRole">perfil</small></div>
+            </div>
+        </header>
+
+        <section class="module-header users-module">
+            <div>
+                <p class="eyebrow">Acesso e permissões</p>
+                <h2>Gerenciamento de usuários</h2>
+                <p>Crie acessos, defina perfis e controle quem pode entrar no TRES.</p>
+            </div>
+        </section>
+
+        <section class="users-summary-grid">
+            <article class="users-summary-card">
+                <span>Total de usuários</span><strong id="summaryUsers">0</strong>
+            </article>
+            <article class="users-summary-card">
+                <span>Usuários ativos</span><strong id="summaryActive">0</strong>
+            </article>
+            <article class="users-summary-card">
+                <span>Administradores e masters</span><strong id="summaryManagers">0</strong>
+            </article>
+        </section>
+
+        <div class="users-layout">
+            <section class="panel users-create-card">
+                <div class="panel-header">
+                    <div><p class="eyebrow">Novo acesso</p><h3>Cadastrar usuário</h3></div>
+                </div>
+
+                <form id="createUserForm" class="form-grid users-form">
+                    <div class="form-field span-2">
+                        <label for="newUserName">Nome completo</label>
+                        <input type="text" id="newUserName" required autocomplete="off">
+                    </div>
+                    <div class="form-field span-2">
+                        <label for="newUserEmail">E-mail</label>
+                        <input type="email" id="newUserEmail" required autocomplete="off">
+                    </div>
+                    <div class="form-field">
+                        <label for="newUserRole">Perfil</label>
+                        <select id="newUserRole" required>
+                            <option value="usuario">Usuário</option>
+                            <option value="admin">Administrador</option>
+                            <option value="master">Master</option>
+                        </select>
+                    </div>
+                    <div class="form-field">
+                        <label for="newUserPassword">Senha temporária</label>
+                        <input type="password" id="newUserPassword" minlength="8" required autocomplete="new-password">
+                    </div>
+                    <p class="users-form-help span-2">
+                        No primeiro acesso, o usuário será direcionado para trocar a senha.
+                    </p>
+                    <div class="form-actions span-2">
+                        <button type="button" class="btn btn-soft" id="clearUserForm">Limpar</button>
+                        <button type="submit" class="btn btn-primary" id="createUserButton">Criar acesso</button>
+                    </div>
+                </form>
+            </section>
+
+            <section class="panel users-table-card">
+                <div class="panel-header users-table-header">
+                    <div><p class="eyebrow">Equipe</p><h3>Usuários cadastrados</h3></div>
+                    <button type="button" class="btn btn-soft" id="refreshUsersButton">
+                        <i data-lucide="refresh-cw"></i> Atualizar
+                    </button>
+                </div>
+
+                <div class="filters-grid users-filters">
+                    <input type="search" id="userSearch" placeholder="Pesquisar nome ou e-mail">
+                    <select id="userRoleFilter">
+                        <option value="">Todos os perfis</option>
+                        <option value="usuario">Usuário</option>
+                        <option value="admin">Administrador</option>
+                        <option value="master">Master</option>
+                    </select>
+                    <select id="userStatusFilter">
+                        <option value="">Todos os status</option>
+                        <option value="ativo">Ativos</option>
+                        <option value="inativo">Inativos</option>
+                    </select>
+                </div>
+
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Nome</th><th>E-mail</th><th>Perfil</th><th>Status</th>
+                                <th>Primeiro acesso</th><th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersTableBody"></tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <div class="users-modal-backdrop hidden" id="editUserModal" role="dialog" aria-modal="true" aria-hidden="true">
+        <div class="users-modal-card">
+            <header class="users-modal-header">
+                <div><p class="eyebrow">Usuário</p><h2>Editar acesso</h2></div>
+                <button type="button" class="icon-button" id="closeEditUser" aria-label="Fechar"><i data-lucide="x"></i></button>
+            </header>
+            <form id="editUserForm" class="users-modal-form">
+                <input type="hidden" id="editUserId">
+                <div class="form-field"><label>Nome completo</label><input type="text" id="editUserName" required></div>
+                <div class="form-field"><label>E-mail</label><input type="email" id="editUserEmail" disabled></div>
+                <div class="form-field"><label>Perfil</label>
+                    <select id="editUserRole" required>
+                        <option value="usuario">Usuário</option><option value="admin">Administrador</option><option value="master">Master</option>
+                    </select>
+                </div>
+                <label class="users-switch-row">
+                    <span><strong>Acesso ativo</strong><small>Permitir que este usuário entre no sistema.</small></span>
+                    <input type="checkbox" id="editUserActive">
+                </label>
+                <div class="users-modal-actions">
+                    <button type="button" class="btn btn-soft" id="cancelEditUser">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" id="saveEditUser">Salvar alterações</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="users-modal-backdrop hidden" id="passwordModal" role="dialog" aria-modal="true" aria-hidden="true">
+        <div class="users-modal-card users-modal-small">
+            <header class="users-modal-header">
+                <div><p class="eyebrow">Segurança</p><h2>Redefinir senha</h2></div>
+                <button type="button" class="icon-button" id="closePasswordModal" aria-label="Fechar"><i data-lucide="x"></i></button>
+            </header>
+            <form id="passwordForm" class="users-modal-form">
+                <input type="hidden" id="passwordUserId">
+                <p class="users-modal-description" id="passwordUserDescription"></p>
+                <div class="form-field">
+                    <label>Nova senha temporária</label>
+                    <input type="password" id="temporaryPassword" minlength="8" required autocomplete="new-password">
+                </div>
+                <div class="users-modal-actions">
+                    <button type="button" class="btn btn-soft" id="cancelPasswordModal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" id="saveTemporaryPassword">Redefinir senha</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="toast" class="toast hidden"></div>
+    <script src="js/config.js"></script>
+    <script src="js/usuarios.js"></script>
+</body>
+</html>

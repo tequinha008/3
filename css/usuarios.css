@@ -1,0 +1,107 @@
+/* TRES — Usuários */
+
+.users-module {
+    border-left: 5px solid var(--action);
+}
+
+.profile-badge {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    padding: 5px 10px;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.profile-usuario {
+    color: #334155;
+    background: #f1f5f9;
+}
+
+.profile-admin {
+    color: #1e3a8a;
+    background: #dbeafe;
+}
+
+.profile-master {
+    color: #581c87;
+    background: #f3e8ff;
+}
+/* TRES — Usuários */
+
+.users-module { border-left: 5px solid var(--action); }
+.users-module .eyebrow { color: var(--action); }
+
+.users-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+    margin-bottom: 22px;
+}
+
+.users-summary-card {
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    padding: 20px;
+    background: #ffffff;
+    box-shadow: var(--shadow-soft);
+}
+
+.users-summary-card span { color: var(--muted); font-size: 13px; font-weight: 700; }
+.users-summary-card strong { display: block; margin-top: 7px; color: var(--text-strong); font-size: 28px; }
+
+.users-layout { display: grid; grid-template-columns: minmax(320px, .72fr) minmax(0, 1.5fr); gap: 22px; }
+.users-create-card, .users-table-card { min-width: 0; }
+.users-form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.users-form-help { margin: -2px 0 0; color: var(--muted); font-size: 13px; line-height: 1.45; }
+.users-table-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.users-table-header .btn { display: inline-flex; align-items: center; gap: 8px; }
+.users-table-header .btn svg { width: 16px; height: 16px; }
+.users-filters { grid-template-columns: minmax(220px, 1fr) 170px 150px; }
+
+.profile-badge, .user-status-badge {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    padding: 5px 10px;
+    font-size: 11px;
+    font-weight: 800;
+}
+.profile-usuario { color: #334155; background: #f1f5f9; }
+.profile-admin { color: #1e3a8a; background: #dbeafe; }
+.profile-master { color: #581c87; background: #f3e8ff; }
+.user-status-active { color: #166534; background: #dcfce7; }
+.user-status-inactive { color: #991b1b; background: #fee2e2; }
+.users-first-access { color: #92400e; font-weight: 700; }
+
+.users-modal-backdrop {
+    position: fixed; inset: 0; z-index: 140; display: grid; place-items: center;
+    padding: 20px; background: rgba(15, 23, 42, .64); backdrop-filter: blur(4px);
+}
+.users-modal-backdrop.hidden { display: none; }
+.users-modal-card {
+    width: min(100%, 560px); max-height: calc(100vh - 40px); overflow-y: auto;
+    border: 1px solid var(--line); border-radius: 24px; padding: 26px;
+    background: #fff; box-shadow: 0 28px 80px rgba(15, 23, 42, .32);
+}
+.users-modal-small { width: min(100%, 470px); }
+.users-modal-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; padding-bottom: 18px; border-bottom: 1px solid var(--line); }
+.users-modal-header h2 { margin: 3px 0 0; font-size: 22px; }
+.users-modal-form { display: grid; gap: 17px; padding-top: 20px; }
+.users-modal-description { margin: 0; color: var(--muted); line-height: 1.5; }
+.users-switch-row { display: flex; align-items: center; justify-content: space-between; gap: 20px; border: 1px solid var(--line); border-radius: 16px; padding: 14px; }
+.users-switch-row span { display: flex; flex-direction: column; gap: 4px; }
+.users-switch-row small { color: var(--muted); font-weight: 400; }
+.users-switch-row input { width: 19px; height: 19px; accent-color: var(--action); }
+.users-modal-actions { display: flex; justify-content: flex-end; gap: 10px; padding-top: 4px; }
+body.users-modal-open { overflow: hidden; }
+
+@media (max-width: 1180px) {
+    .users-layout { grid-template-columns: 1fr; }
+}
+@media (max-width: 760px) {
+    .users-summary-grid, .users-form, .users-filters { grid-template-columns: 1fr; }
+    .users-table-header { align-items: stretch; flex-direction: column; }
+    .users-modal-actions { flex-direction: column-reverse; }
+    .users-modal-actions .btn { width: 100%; }
+}

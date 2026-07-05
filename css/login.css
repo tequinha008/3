@@ -1,0 +1,151 @@
+/* TRES — Login */
+
+.tres-preview-body {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 28px;
+    background:
+        radial-gradient(circle at 14% 18%, rgba(15, 118, 110, 0.22), transparent 28%),
+        radial-gradient(circle at 92% 80%, rgba(20, 61, 89, 0.28), transparent 34%),
+        linear-gradient(135deg, var(--bg-deeper), var(--bg-deep));
+}
+
+.login-shell {
+    width: min(1060px, 94vw);
+    min-height: 630px;
+    display: grid;
+    grid-template-columns: 1.08fr 0.92fr;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 34px;
+    background: rgba(255, 255, 255, 0.065);
+    box-shadow: var(--shadow-strong);
+    backdrop-filter: blur(16px);
+}
+
+.brand-panel {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 72px;
+    color: #ffffff;
+}
+
+.mark {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 34px;
+}
+
+.mark span {
+    width: 10px;
+    height: 44px;
+    border-radius: 999px;
+    display: block;
+}
+
+.mark span:nth-child(1) { background: var(--hotel); }
+.mark span:nth-child(2) { background: var(--finance); }
+.mark span:nth-child(3) { background: var(--refund); }
+
+.brand-panel h1 {
+    margin: 0;
+    font-size: clamp(56px, 7vw, 86px);
+    line-height: 1;
+    letter-spacing: 10px;
+}
+
+.brand-panel p {
+    max-width: 440px;
+    margin: 24px 0 16px;
+    color: #e2e8f0;
+    font-size: 22px;
+    line-height: 1.35;
+}
+
+.brand-panel small {
+    max-width: 460px;
+    color: var(--muted-light);
+    line-height: 1.55;
+    font-size: 15px;
+}
+
+.login-card {
+    margin: 26px;
+    padding: 46px;
+    border-radius: 28px;
+    background: var(--card);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.login-card h2 {
+    margin: 0;
+    color: var(--text);
+    font-size: 34px;
+}
+
+.login-card form {
+    display: grid;
+    gap: 10px;
+}
+
+.login-card label {
+    margin-top: 10px;
+}
+
+.login-card button {
+    width: 100%;
+    margin-top: 24px;
+    min-height: 48px;
+    border: 0;
+    border-radius: 14px;
+    padding: 14px 18px;
+    color: #ffffff;
+    background: linear-gradient(135deg, var(--action), var(--action-dark));
+    box-shadow: 0 12px 24px rgba(20, 61, 89, 0.22);
+    font-size: 15px;
+    font-weight: 800;
+    transition: 0.18s ease;
+}
+
+.login-card button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 16px 30px rgba(20, 61, 89, 0.28);
+}
+
+.login-card button:active {
+    transform: translateY(0);
+}
+
+.form-message {
+    min-height: 20px;
+    margin: 10px 0 0;
+    color: var(--danger);
+    font-size: 14px;
+}
+
+.login-card footer {
+    margin-top: 34px;
+    color: var(--muted-light);
+    font-size: 13px;
+    text-align: center;
+}
+
+@media (max-width: 860px) {
+    .login-shell {
+        grid-template-columns: 1fr;
+    }
+
+    .brand-panel {
+        padding: 42px;
+    }
+
+    .login-card {
+        margin: 16px;
+        padding: 30px;
+    }
+}

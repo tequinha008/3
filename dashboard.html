@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TRES | Início</title>
+
+    <link rel="icon" type="image/png" href="TRES_logo_transparente.png">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+
+<body class="app-body">
+
+    <aside class="sidebar">
+            <button class="sidebar-toggle" id="sidebarToggle" title="Recolher menu">
+                <i data-lucide="panel-left-close"></i>
+            </button>
+
+        <div class="sidebar-logo">
+
+            <div class="mini-mark">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+
+            <div>
+                <strong>TRES</strong>
+                <small>Sistema interno</small>
+            </div>
+
+        </div>
+
+        <nav class="sidebar-nav">
+
+            <a href="dashboard.html" class="nav-link active">
+                <i data-lucide="layout-dashboard"></i>
+                <span>Início</span>
+            </a>
+
+            <a href="hotel.html" class="nav-link">
+                <i data-lucide="building-2"></i>
+                <span>Hotéis</span>
+            </a>
+
+            <a href="pagar.html" class="nav-link">
+                <i data-lucide="wallet-cards"></i>
+                <span>Contas a Pagar</span>
+            </a>
+
+            <a href="reembolso.html" class="nav-link">
+                <i data-lucide="receipt-text"></i>
+                <span>Reembolsos</span>
+            </a>
+
+            <a href="usuarios.html" class="nav-link admin-link hidden">
+                <i data-lucide="users-round"></i>
+                <span>Usuários</span>
+            </a>
+
+        </nav>
+
+        <div class="sidebar-footer">
+
+            <a href="conta.html" class="nav-link">
+                <i data-lucide="circle-user-round"></i>
+                <span>Minha conta</span>
+            </a>
+
+            <button id="logoutButton" class="nav-link">
+                <i data-lucide="log-out"></i>
+                <span>Sair</span>
+            </button>
+
+        </div>
+
+    </aside>
+
+    <main class="app-main">
+
+        <header class="topbar">
+
+            <div>
+                <p class="eyebrow">Painel principal</p>
+                <h1 id="welcomeTitle">Bem-vindo(a) ao TRES</h1>
+            </div>
+
+            <div class="topbar-actions">
+
+                <div class="search-box">
+                    <i data-lucide="search"></i>
+                    <input type="search" placeholder="Pesquisar por OS, hotel, cliente...">
+                </div>
+
+                <div class="user-pill">
+                    <div class="avatar" id="avatar">T</div>
+
+                    <div>
+                        <strong id="userName">Usuário</strong>
+                        <small id="userRole">perfil</small>
+                    </div>
+                </div>
+
+            </div>
+
+        </header>
+
+        <section class="hero-card">
+
+            <div>
+                <p class="eyebrow">
+                    Sistema interno para solicitações financeiras e cadastrais
+                </p>
+
+                <h2>
+                    Centralize, organize e acompanhe suas solicitações.
+                </h2>
+
+                <p>
+                    Use os atalhos abaixo para criar solicitações, acompanhar pendências
+                    e consultar registros.
+                </p>
+            </div>
+
+            <div class="hero-actions">
+
+                <a href="hotel.html" class="btn btn-hotel">
+                    Novo cadastro de hotel
+                </a>
+
+                <a href="pagar.html" class="btn btn-finance">
+                    Novo valor a pagar
+                </a>
+
+                <a href="reembolso.html" class="btn btn-refund">
+                    Novo reembolso
+                </a>
+
+        </div>
+
+        </section>
+
+        <section class="metrics-grid">
+
+            <article class="metric-card hotel-accent">
+                <div class="metric-icon">
+                    <i data-lucide="building-2"></i>
+                </div>
+
+                <div>
+                    <span>Hotéis pendentes</span>
+                    <strong id="metricHotels">0</strong>
+                    <small>Solicitações aguardando tratativa</small>
+                </div>
+            </article>
+
+            <article class="metric-card finance-accent">
+                <div class="metric-icon">
+                    <i data-lucide="wallet-cards"></i>
+                </div>
+
+                <div>
+                    <span>Valores pendentes</span>
+                    <strong id="metricFinance">0</strong>
+                    <small>Lançamentos ainda não concluídos</small>
+                </div>
+            </article>
+
+            <article class="metric-card refund-accent">
+                <div class="metric-icon">
+                    <i data-lucide="receipt-text"></i>
+                </div>
+
+                <div>
+                    <span>Reembolsos pendentes</span>
+                    <strong id="metricRefunds">0</strong>
+                    <small>Solicitações em aberto</small>
+                </div>
+            </article>
+
+        </section>
+
+        <section class="content-grid">
+
+            <article class="panel">
+
+                <div class="panel-header">
+                    <p class="eyebrow">Ações rápidas</p>
+                    <h3>Criar nova solicitação</h3>
+                </div>
+
+                <div class="quick-actions">
+
+                    <a href="hotel.html" class="quick-card">
+                        <i data-lucide="building-2"></i>
+                        <strong>Cadastro de hotel</strong>
+                        <span>Solicitar novo cadastro cadastral.</span>
+                    </a>
+
+                    <a href="pagar.html" class="quick-card">
+                        <i data-lucide="wallet-cards"></i>
+                        <strong>Valor a pagar</strong>
+                        <span>Documentar valores e serviços.</span>
+                    </a>
+
+                    <a href="reembolso.html" class="quick-card">
+                        <i data-lucide="receipt-text"></i>
+                        <strong>Reembolso</strong>
+                        <span>Solicitar e acompanhar reembolsos.</span>
+                    </a>
+
+                </div>
+
+            </article>
+
+            <article class="panel">
+
+                <div class="panel-header">
+                    <p class="eyebrow">Últimas atividades</p>
+                    <h3>Resumo recente</h3>
+                </div>
+
+                <div class="empty-state">
+                    <i data-lucide="sparkles"></i>
+                    <p>
+                        As últimas atividades aparecerão aqui quando os módulos forem utilizados.
+                    </p>
+                </div>
+
+            </article>
+
+        </section>
+
+    </main>
+
+    <script src="js/config.js"></script>
+    <script src="js/dashboard.js"></script>
+
+</body>
+
+</html>

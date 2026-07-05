@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TRES | Reembolsos</title>
+
+    <link rel="icon" type="image/png" href="TRES_logo_transparente.png">
+
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/reembolso.css">
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+
+<body class="app-body">
+
+    <aside class="sidebar">
+
+        <button class="sidebar-toggle" id="sidebarToggle" title="Recolher menu">
+            <i data-lucide="panel-left-close"></i>
+        </button>
+
+        <div class="sidebar-logo">
+            <div class="mini-mark">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+
+            <div>
+                <strong>TRES</strong>
+                <small>Sistema interno</small>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a href="dashboard.html" class="nav-link">
+                <i data-lucide="layout-dashboard"></i>
+                <span>Início</span>
+            </a>
+
+            <a href="hotel.html" class="nav-link">
+                <i data-lucide="building-2"></i>
+                <span>Hotéis</span>
+            </a>
+
+            <a href="pagar.html" class="nav-link">
+                <i data-lucide="wallet-cards"></i>
+                <span>Contas a Pagar</span>
+            </a>
+
+            <a href="reembolso.html" class="nav-link active">
+                <i data-lucide="receipt-text"></i>
+                <span>Reembolsos</span>
+            </a>
+
+            <a href="usuarios.html" class="nav-link admin-link hidden">
+                <i data-lucide="users-round"></i>
+                <span>Usuários</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <a href="conta.html" class="nav-link">
+                <i data-lucide="circle-user-round"></i>
+                <span>Minha conta</span>
+            </a>
+
+            <button id="logoutButton" class="nav-link">
+                <i data-lucide="log-out"></i>
+                <span>Sair</span>
+            </button>
+        </div>
+
+    </aside>
+
+    <main class="app-main">
+
+        <header class="topbar">
+            <div>
+                <p class="eyebrow">Módulo financeiro</p>
+                <h1>Reembolsos</h1>
+            </div>
+
+            <div class="user-pill">
+                <div class="avatar" id="avatar">T</div>
+
+                <div>
+                    <strong id="userName">Usuário</strong>
+                    <small id="userRole">perfil</small>
+                </div>
+            </div>
+        </header>
+
+        <section class="module-header refund-module">
+            <div>
+                <p class="eyebrow">Reembolso</p>
+                <h2>Solicitação de reembolso</h2>
+                <p>
+                    Registre solicitações, acompanhe pendências e exporte os dados por período.
+                </p>
+            </div>
+        </section>
+
+        <section class="tabs-card refund-page">
+
+            <div class="refund-summary-grid">
+                <div class="refund-summary-card">
+                    <span>Total solicitado</span>
+                    <strong id="summaryRequested">R$ 0,00</strong>
+                </div>
+
+                <div class="refund-summary-card">
+                    <span>Taxa ADM</span>
+                    <strong id="summaryTax">R$ 0,00</strong>
+                </div>
+
+                <div class="refund-summary-card">
+                    <span>Valor líquido</span>
+                    <strong id="summaryFinal">R$ 0,00</strong>
+                </div>
+            </div>
+
+            <div class="refund-layout">
+
+                <section class="refund-form-card" id="newRefundArea">
+
+                    <div class="panel-header">
+                        <p class="eyebrow">Novo reembolso</p>
+                        <h3>Dados do reembolso</h3>
+                    </div>
+
+                    <form id="refundForm" class="form-grid">
+
+                        <div class="form-field">
+                            <label>Data de hoje</label>
+                            <input type="date" id="dataSolicitacao" disabled>
+                        </div>
+
+                        <div class="form-field">
+                            <label>Emissor</label>
+                            <input type="text" id="emissorNome" disabled>
+                        </div>
+
+                        <div class="form-field">
+                            <label>Cliente</label>
+                            <select id="cliente" required>
+                                <option value="">Selecione</option>
+                            </select>
+                        </div>
+
+                        <div class="form-field">
+                            <label>OS</label>
+                            <input type="text" id="os" required>
+                        </div>
+
+                        <div class="form-field span-2">
+                            <label>Fornecedor</label>
+                            <input type="text" id="fornecedor" required>
+                        </div>
+
+                        <div class="form-field">
+                            <label>Valor total cobrado</label>
+                            <input type="number" step="0.01" id="valorCobrado" required>
+                        </div>
+
+                        <div class="form-field">
+                            <label>Valor total a ser reembolsado</label>
+                            <input type="number" step="0.01" id="valorReembolsado" required>
+                        </div>
+
+                        <div class="form-field">
+                            <label>Taxa ADM 3,5%</label>
+                            <input type="text" id="taxaAdmPreview" disabled value="R$ 0,00">
+                        </div>
+
+                        <div class="form-field">
+                            <label>Valor final reembolso</label>
+                            <input type="text" id="valorFinalPreview" disabled value="R$ 0,00">
+                        </div>
+
+                        <div class="form-actions span-2">
+                            <button type="button" class="btn btn-soft" id="clearRefundForm">
+                                Limpar dados
+                            </button>
+
+                            <button type="submit" class="btn btn-refund" id="saveRefundButton">
+                                Salvar reembolso
+                            </button>
+                        </div>
+
+                    </form>
+
+                </section>
+
+                <section class="refund-table-card" id="allRefundsArea">
+
+                    <div class="panel-header table-header refund-table-header">
+                        <div>
+                            <p class="eyebrow">Consulta</p>
+                            <h3>Solicitações de reembolso</h3>
+                        </div>
+
+                        <button class="btn btn-refund" id="exportRefundsButton">
+                            Exportar Excel
+                        </button>
+                    </div>
+
+                    <div class="filters-grid refund-filters">
+                        <input type="date" id="startDate">
+                        <input type="date" id="endDate">
+
+                        <select id="refundStatusFilter">
+                            <option value="">Todos os status</option>
+                            <option value="PENDENTE">Pendente</option>
+                            <option value="CONCLUIDO">Concluído</option>
+                        </select>
+
+                        <input type="search" id="refundSearch" placeholder="Pesquisar OS ou fornecedor">
+                    </div>
+
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>
+                                        <input type="checkbox" id="selectAllRefunds">
+                                    </th>
+                                    <th>Código</th>
+                                    <th>Data</th>
+                                    <th>Cliente</th>
+                                    <th>OS</th>
+                                    <th>Fornecedor</th>
+                                    <th>Cobrado</th>
+                                    <th>Reembolsado</th>
+                                    <th>Taxa ADM</th>
+                                    <th>Valor final</th>
+                                    <th>Status</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+
+                            <tbody id="refundTableBody"></tbody>
+                        </table>
+                    </div>
+
+                    <div class="refund-table-footer">
+                        <button class="btn btn-soft hidden" id="completeSelectedButton">
+                            Concluir selecionados
+                        </button>
+                    </div>
+
+                </section>
+
+            </div>
+
+        </section>
+
+    </main>
+
+    <div id="toast" class="toast hidden"></div>
+
+    <script src="js/config.js"></script>
+    <script src="js/reembolso.js"></script>
+
+</body>
+
+</html>

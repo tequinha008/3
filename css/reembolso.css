@@ -1,0 +1,212 @@
+/* TRES — Reembolso */
+
+.refund-module {
+    border-left: 5px solid var(--refund);
+}
+
+.refund-module .eyebrow {
+    color: var(--refund);
+}
+
+.refund-tab.active {
+    color: var(--refund);
+}
+
+.refund-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.refund-summary-card {
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    padding: 18px;
+    background: #fffbeb;
+}
+
+.refund-summary-card span {
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.refund-summary-card strong {
+    display: block;
+    margin-top: 6px;
+    color: var(--refund-dark);
+    font-size: 24px;
+}
+
+#selectAllRefunds {
+    accent-color: var(--refund);
+}
+/* REEMBOLSO - LAYOUT REORGANIZADO */
+
+.refund-page {
+    padding-bottom: 26px;
+}
+
+.refund-page .tabs-header {
+    margin-bottom: 22px;
+}
+
+.refund-summary-grid {
+    padding: 0 26px;
+    margin-bottom: 22px;
+}
+
+.refund-layout {
+    display: grid;
+    grid-template-columns: 0.85fr 1.35fr;
+    gap: 22px;
+    padding: 0 26px 26px;
+}
+
+.refund-form-card,
+.refund-table-card {
+    border: 1px solid var(--line);
+    border-radius: 24px;
+    background: #ffffff;
+    padding: 24px;
+    box-shadow: 0 12px 26px rgba(15, 23, 42, 0.04);
+}
+
+.refund-form-card .form-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.refund-table-card {
+    min-width: 0;
+}
+
+.refund-table-header {
+    align-items: center;
+}
+
+.refund-filters {
+    grid-template-columns: 160px 160px 190px 1fr;
+}
+
+.refund-table-footer {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 16px;
+}
+
+.refund-summary-card {
+    min-height: 96px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.refund-summary-card strong {
+    margin-top: 8px;
+}
+
+.refund-tab.active {
+    color: var(--refund);
+}
+
+@media (max-width: 1200px) {
+    .refund-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .refund-filters {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (max-width: 760px) {
+    .refund-summary-grid,
+    .refund-layout {
+        padding-left: 18px;
+        padding-right: 18px;
+    }
+
+    .refund-summary-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .refund-filters,
+    .refund-form-card .form-grid {
+        grid-template-columns: 1fr;
+    }
+}
+/* REEMBOLSO - SEM ABAS */
+
+.refund-page {
+    padding: 26px;
+}
+
+.refund-summary-grid {
+    padding: 0;
+    margin-bottom: 22px;
+}
+
+.refund-layout {
+    display: grid;
+    grid-template-columns: 0.85fr 1.35fr;
+    gap: 22px;
+    padding: 0;
+}
+
+.refund-form-card,
+.refund-table-card {
+    border: 1px solid var(--line);
+    border-radius: 24px;
+    background: #ffffff;
+    padding: 24px;
+    box-shadow: 0 12px 26px rgba(15, 23, 42, 0.04);
+}
+
+.refund-table-header {
+    align-items: center;
+}
+
+.refund-filters {
+    grid-template-columns: 160px 160px 190px 1fr;
+}
+
+.refund-table-footer {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 16px;
+}
+
+@media (max-width: 1200px) {
+    .refund-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .refund-filters {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (max-width: 760px) {
+    .refund-page {
+        padding: 18px;
+    }
+
+    .refund-summary-grid,
+    .refund-filters,
+    .refund-form-card .form-grid {
+        grid-template-columns: 1fr;
+    }
+}
+.icon-button.danger{
+
+    color:#dc2626;
+
+}
+
+.icon-button.danger:hover{
+
+    background:#fee2e2;
+
+    color:#b91c1c;
+
+}
