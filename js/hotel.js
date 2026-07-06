@@ -497,6 +497,7 @@ function renderHotels() {
                 </td>
 
                 <td>${hotel.codigo_tres || "-"}</td>
+                <td>${hotel.emissor_nome || hotel.usuarios?.nome || "-"}</td>
                 <td>${hotel.nome_hotel || "-"}</td>
                 <td>${hotel.cidade_estado || "-"}</td>
                 <td>${hotel.tipo || "-"}</td>
