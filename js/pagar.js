@@ -94,6 +94,7 @@ const financeDeleteModal = document.getElementById("financeDeleteModal");
 const financeDeleteText = document.getElementById("financeDeleteText");
 const cancelDeleteFinance = document.getElementById("cancelDeleteFinance");
 const confirmDeleteFinance = document.getElementById("confirmDeleteFinance");
+const rowsPerPage = 10;
 
 let financeToDelete = null;
 let currentUser = null;
@@ -101,6 +102,8 @@ let currentProfile = null;
 let selectedSubtype = "AEREO";
 let lancamentos = [];
 let selectedLancamentos = new Set();
+let currentPage = 1;
+
 
 function todayISO() {
     return new Date().toISOString().split("T")[0];
