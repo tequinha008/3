@@ -29,6 +29,7 @@ const hotelTableBody = document.getElementById("hotelTableBody");
 const selectAllHotels = document.getElementById("selectAllHotels");
 const completeSelectedButton = document.getElementById("completeSelectedButton");
 const toast = document.getElementById("toast");
+
 const hotelDetailModal = document.getElementById("hotelDetailModal");
 const hotelDetailTitle = document.getElementById("hotelDetailTitle");
 const hotelDetailContent = document.getElementById("hotelDetailContent");
@@ -39,6 +40,9 @@ const hotelDeleteModal = document.getElementById("hotelDeleteModal");
 const hotelDeleteText = document.getElementById("hotelDeleteText");
 const cancelDeleteHotel = document.getElementById("cancelDeleteHotel");
 const confirmDeleteHotel = document.getElementById("confirmDeleteHotel");
+
+const sidebar = document.querySelector(".sidebar");
+const sidebarToggle = document.getElementById("sidebarToggle");
 
 let hotelToDelete = null;
 let currentUser = null;
@@ -340,14 +344,13 @@ async function loadHotels() {
     hotels = data || [];
     renderHotels();
 }
-function getFilteredHotels() {
 
+function getFilteredHotels() {
     const search = normalizeText(hotelSearch.value);
     const status = statusFilter.value;
     const tipo = tipoFilter.value;
 
     return hotels.filter(function (hotel) {
-
         const matchSearch =
             !search ||
             normalizeText(hotel.nome_hotel).includes(search) ||
@@ -361,15 +364,11 @@ function getFilteredHotels() {
             !tipo || hotel.tipo === tipo;
 
         return matchSearch && matchStatus && matchTipo;
-
     });
-
 }
 
 function statusBadge(status) {
-
     switch (status) {
-
         case "CONCLUIDO":
             return `<span class="badge badge-concluido">CONCLUÍDO</span>`;
 
@@ -378,9 +377,7 @@ function statusBadge(status) {
 
         default:
             return `<span class="badge badge-pendente">PENDENTE</span>`;
-
     }
-
 }
 
 function escapeHtml(value) {
@@ -419,6 +416,8 @@ function hotelDetailItem(label, value, className = "") {
 }
 
 function closeHotelDetails() {
+    if (!hotelDetailModal) return;
+
     hotelDetailModal.classList.add("hidden");
     hotelDetailModal.setAttribute("aria-hidden", "true");
     document.body.classList.remove("hotel-detail-open");
@@ -460,6 +459,7 @@ function openHotelDetails(id) {
     hotelDetailTitle.textContent = hotel.codigo_tres
         ? `${hotel.codigo_tres} · ${hotel.nome_hotel}`
         : hotel.nome_hotel;
+
     hotelDetailContent.innerHTML = details.join("");
     hotelDetailModal.classList.remove("hidden");
     hotelDetailModal.setAttribute("aria-hidden", "false");
@@ -468,11 +468,9 @@ function openHotelDetails(id) {
 }
 
 function renderHotels() {
-
     const filteredHotels = getFilteredHotels();
 
     if (filteredHotels.length === 0) {
-
         hotelTableBody.innerHTML = `
             <tr>
                 <td colspan="9" class="empty-table-message">
@@ -482,134 +480,98 @@ function renderHotels() {
         `;
 
         return;
-
     }
 
     hotelTableBody.innerHTML = filteredHotels.map(function (hotel) {
-
         const checked =
             selectedHotels.has(hotel.id) ? "checked" : "";
 
         return `
-
-        <tr>
-
-            <td>
-
-                <input
-                    type="checkbox"
-                    class="hotel-checkbox"
-                    data-id="${hotel.id}"
-                    ${checked}>
-
-            </td>
-
-            <td>${hotel.codigo_tres}</td>
-
-            <td>${hotel.nome_hotel}</td>
-
-            <td>${hotel.cidade_estado}</td>
-
-            <td>${hotel.tipo}</td>
-
-            <td>${hotel.cnpj ? formatCNPJ(hotel.cnpj) : "-"}</td>
-
-            <td>${statusBadge(hotel.status)}</td>
-
-            <td>
-
-                ${
-                    isAdminOrMaster()
-
-                        ? `<input
-                                class="table-input"
-                                data-id="${hotel.id}"
-                                value="${hotel.codigo_integracao || ""}"
-                                placeholder="Código">`
-
-                        : (hotel.codigo_integracao || "-")
-
-                }
-
-            </td>
-
-            <td>
-
-                <div class="action-buttons">
-
-                    <button
-                        class="icon-button"
-                        data-action="details"
+            <tr>
+                <td>
+                    <input
+                        type="checkbox"
+                        class="hotel-checkbox"
                         data-id="${hotel.id}"
-                        title="Abrir detalhes">
+                        ${checked}>
+                </td>
 
-                        <i data-lucide="eye"></i>
+                <td>${hotel.codigo_tres || "-"}</td>
+                <td>${hotel.nome_hotel || "-"}</td>
+                <td>${hotel.cidade_estado || "-"}</td>
+                <td>${hotel.tipo || "-"}</td>
+                <td>${hotel.cnpj ? formatCNPJ(hotel.cnpj) : "-"}</td>
+                <td>${statusBadge(hotel.status)}</td>
 
-                    </button>
-
+                <td>
                     ${
                         isAdminOrMaster()
-
-                            ? `
-
-                            <button
-                                class="icon-button"
-                                data-action="complete"
-                                data-id="${hotel.id}"
-                                title="Concluir">
-
-                                <i data-lucide="check"></i>
-
-                            </button>
-
-                            <button
-                                class="icon-button"
-                                data-action="already"
-                                data-id="${hotel.id}"
-                                title="Já cadastrado">
-
-                                <i data-lucide="badge-check"></i>
-
-                            </button>
-
-                            `
-
-                            : ""
-
+                            ? `<input
+                                    class="table-input integration-input"
+                                    data-id="${hotel.id}"
+                                    value="${escapeHtml(hotel.codigo_integracao || "")}"
+                                    placeholder="Código">`
+                            : (hotel.codigo_integracao || "-")
                     }
+                </td>
 
-                    <button
-                        class="icon-button"
-                        data-action="duplicate"
-                        data-id="${hotel.id}"
-                        title="Duplicar">
+                <td>
+                    <div class="action-buttons">
+                        <button
+                            class="icon-button"
+                            data-action="details"
+                            data-id="${hotel.id}"
+                            title="Abrir detalhes">
+                            <i data-lucide="eye"></i>
+                        </button>
 
-                        <i data-lucide="copy"></i>
+                        ${
+                            isAdminOrMaster()
+                                ? `
+                                    <button
+                                        class="icon-button"
+                                        data-action="complete"
+                                        data-id="${hotel.id}"
+                                        title="Concluir">
+                                        <i data-lucide="check"></i>
+                                    </button>
 
-                    </button>
+                                    <button
+                                        class="icon-button"
+                                        data-action="already"
+                                        data-id="${hotel.id}"
+                                        title="Já cadastrado">
+                                        <i data-lucide="badge-check"></i>
+                                    </button>
+                                `
+                                : ""
+                        }
 
-                    ${
-                    isAdminOrMaster()
-                        ? `
-                            <button
-                                class="icon-button danger"
-                                data-action="delete"
-                                data-id="${hotel.id}"
-                                title="Excluir">
-                                <i data-lucide="trash-2"></i>
-                            </button>
-                        `
-                        : ""
-                }
+                        <button
+                            class="icon-button"
+                            data-action="duplicate"
+                            data-id="${hotel.id}"
+                            title="Duplicar">
+                            <i data-lucide="copy"></i>
+                        </button>
 
-                </div>
-
-            </td>
-
-        </tr>
-
+                        ${
+                            isAdminOrMaster()
+                                ? `
+                                    <button
+                                        class="icon-button danger"
+                                        data-action="delete"
+                                        data-id="${hotel.id}"
+                                        title="Excluir">
+                                        <i data-lucide="trash-2"></i>
+                                    </button>
+                                `
+                                : ""
+                        }
+                    </div>
+                </td>
+            </tr>
         `;
-
     }).join("");
 
     completeSelectedButton.classList.toggle(
@@ -618,41 +580,50 @@ function renderHotels() {
     );
 
     lucide.createIcons();
-
 }
 
 async function updateHotelStatus(id, status) {
-
     const { error } = await supabaseClient
         .from("solicitacoes_hotel")
         .update({
-
             status,
             concluido_por: currentUser.id,
             concluido_por_nome: currentProfile.nome,
             concluido_em: new Date().toISOString(),
             updated_by: currentUser.id
-
         })
         .eq("id", id);
 
     if (error) {
-
         console.error(error);
         showToast("Erro ao atualizar.");
-
         return;
-
     }
 
     showToast("Status atualizado.");
-
     await loadHotels();
+}
 
+async function updateIntegrationCode(id, value) {
+    const { error } = await supabaseClient
+        .from("solicitacoes_hotel")
+        .update({
+            codigo_integracao: normalizeText(value),
+            updated_by: currentUser.id
+        })
+        .eq("id", id);
+
+    if (error) {
+        console.error(error);
+        showToast("Erro ao salvar código.");
+        return;
+    }
+
+    showToast("Código salvo.");
+    await loadHotels();
 }
 
 async function duplicateHotel(id) {
-
     const hotel =
         hotels.find(h => h.id === id);
 
@@ -672,52 +643,7 @@ async function duplicateHotel(id) {
     tabButtons[0].click();
 
     showToast("Dados copiados. Informe um novo CNPJ.");
-
 }
-
-hotelForm.addEventListener("submit", saveHotel);
-
-tipoHotel.addEventListener("change", handleTipoChange);
-
-clearHotelForm.addEventListener("click", function () {
-
-    hotelForm.reset();
-
-    dataSolicitacao.value = todayISO();
-    emissorNome.value = currentProfile.nome;
-    pais.value = "Brasil";
-    tipoHotel.value = "NACIONAL";
-
-    handleTipoChange();
-
-});
-
-cnpj.addEventListener("input", function () {
-
-    cnpj.value = formatCNPJ(cnpj.value);
-
-});
-
-hotelSearch.addEventListener("input", renderHotels);
-statusFilter.addEventListener("change", renderHotels);
-tipoFilter.addEventListener("change", renderHotels);
-
-logoutButton.addEventListener("click", async function () {
-
-    await supabaseClient.auth.signOut();
-
-    window.location.href = "index.html";
-
-});
-
-cancelDeleteHotel.addEventListener("click", closeDeleteHotelModal);
-confirmDeleteHotel.addEventListener("click", deleteHotelConfirmed);
-
-hotelDeleteModal.addEventListener("click", function (event) {
-    if (event.target === hotelDeleteModal) {
-        closeDeleteHotelModal();
-    }
-});
 
 function openDeleteHotelModal(id) {
     const hotel = hotels.find(item => item.id === id);
@@ -756,111 +682,236 @@ async function deleteHotelConfirmed() {
     await loadHotels();
 }
 
-hotelTableBody.addEventListener("click", async function (event) {
+async function completeSelectedHotels() {
+    if (selectedHotels.size === 0) {
+        return;
+    }
 
-    const button = event.target.closest("button");
+    const ids = Array.from(selectedHotels);
 
-    ...
+    const { error } = await supabaseClient
+        .from("solicitacoes_hotel")
+        .update({
+            status: "CONCLUIDO",
+            concluido_por: currentUser.id,
+            concluido_por_nome: currentProfile.nome,
+            concluido_em: new Date().toISOString(),
+            updated_by: currentUser.id
+        })
+        .in("id", ids);
+
+    if (error) {
+        console.error(error);
+        showToast("Erro ao concluir selecionados.");
+        return;
+    }
+
+    selectedHotels.clear();
+
+    if (selectAllHotels) {
+        selectAllHotels.checked = false;
+    }
+
+    showToast("Solicitações concluídas.");
+    await loadHotels();
+}
+
+function applySidebarState() {
+    if (!sidebar || !sidebarToggle) return;
+
+    const sidebarState = localStorage.getItem("tres_sidebar_collapsed");
+
+    if (sidebarState === "true") {
+        sidebar.classList.add("collapsed");
+        sidebarToggle.innerHTML = `<i data-lucide="panel-left-open"></i>`;
+    } else {
+        sidebar.classList.remove("collapsed");
+        sidebarToggle.innerHTML = `<i data-lucide="panel-left-close"></i>`;
+    }
+
+    lucide.createIcons();
+}
+
+hotelForm.addEventListener("submit", saveHotel);
+
+tipoHotel.addEventListener("change", handleTipoChange);
+
+clearHotelForm.addEventListener("click", function () {
+    hotelForm.reset();
+
+    dataSolicitacao.value = todayISO();
+    emissorNome.value = currentProfile.nome;
+    pais.value = "Brasil";
+    tipoHotel.value = "NACIONAL";
+
+    handleTipoChange();
+});
+
+cnpj.addEventListener("input", function () {
+    cnpj.value = formatCNPJ(cnpj.value);
+});
+
+hotelSearch.addEventListener("input", renderHotels);
+statusFilter.addEventListener("change", renderHotels);
+tipoFilter.addEventListener("change", renderHotels);
+
+if (selectAllHotels) {
+    selectAllHotels.addEventListener("change", function () {
+        selectedHotels.clear();
+
+        if (selectAllHotels.checked) {
+            getFilteredHotels().forEach(function (hotel) {
+                selectedHotels.add(hotel.id);
+            });
+        }
+
+        renderHotels();
+    });
+}
+
+if (completeSelectedButton) {
+    completeSelectedButton.addEventListener("click", completeSelectedHotels);
+}
+
+hotelTableBody.addEventListener("change", async function (event) {
+    const target = event.target;
+
+    if (target.classList.contains("hotel-checkbox")) {
+        const id = target.dataset.id;
+
+        if (target.checked) {
+            selectedHotels.add(id);
+        } else {
+            selectedHotels.delete(id);
+        }
+
+        renderHotels();
+    }
+
+    if (target.classList.contains("integration-input")) {
+        await updateIntegrationCode(
+            target.dataset.id,
+            target.value
+        );
+    }
 });
 
 hotelTableBody.addEventListener("click", async function (event) {
-
-    const button =
-        event.target.closest("button");
+    const button = event.target.closest("button");
 
     if (!button) return;
 
     const id = button.dataset.id;
 
     switch (button.dataset.action) {
-
         case "delete":
-        
-        openDeleteHotelModal(id);
-    
-        break;
+            openDeleteHotelModal(id);
+            break;
 
         case "details":
-
             openHotelDetails(id);
-
             break;
 
         case "complete":
-
-            await updateHotelStatus(
-                id,
-                "CONCLUIDO"
-            );
-
+            await updateHotelStatus(id, "CONCLUIDO");
             break;
 
         case "already":
-
-            await updateHotelStatus(
-                id,
-                "JA_CADASTRADO"
-            );
-
+            await updateHotelStatus(id, "JA_CADASTRADO");
             break;
 
         case "duplicate":
-
             await duplicateHotel(id);
-
             break;
-
-    }
-
-});
-
-hotelDetailClose.addEventListener("click", closeHotelDetails);
-hotelDetailDone.addEventListener("click", closeHotelDetails);
-
-hotelDetailModal.addEventListener("click", function (event) {
-    if (event.target === hotelDetailModal) {
-        closeHotelDetails();
     }
 });
+
+logoutButton.addEventListener("click", async function () {
+    await supabaseClient.auth.signOut();
+    window.location.href = "index.html";
+});
+
+if (cancelDeleteHotel) {
+    cancelDeleteHotel.addEventListener("click", closeDeleteHotelModal);
+}
+
+if (confirmDeleteHotel) {
+    confirmDeleteHotel.addEventListener("click", deleteHotelConfirmed);
+}
+
+if (hotelDeleteModal) {
+    hotelDeleteModal.addEventListener("click", function (event) {
+        if (event.target === hotelDeleteModal) {
+            closeDeleteHotelModal();
+        }
+    });
+}
+
+if (hotelDetailClose) {
+    hotelDetailClose.addEventListener("click", closeHotelDetails);
+}
+
+if (hotelDetailDone) {
+    hotelDetailDone.addEventListener("click", closeHotelDetails);
+}
+
+if (hotelDetailModal) {
+    hotelDetailModal.addEventListener("click", function (event) {
+        if (event.target === hotelDetailModal) {
+            closeHotelDetails();
+        }
+    });
+}
 
 document.addEventListener("keydown", function (event) {
-    if (event.key === "Escape" && !hotelDetailModal.classList.contains("hidden")) {
+    if (
+        event.key === "Escape" &&
+        hotelDetailModal &&
+        !hotelDetailModal.classList.contains("hidden")
+    ) {
         closeHotelDetails();
+    }
+
+    if (
+        event.key === "Escape" &&
+        hotelDeleteModal &&
+        !hotelDeleteModal.classList.contains("hidden")
+    ) {
+        closeDeleteHotelModal();
     }
 });
 
-const sidebar = document.querySelector(".sidebar");
-const sidebarToggle = document.getElementById("sidebarToggle");
+if (sidebarToggle) {
+    applySidebarState();
 
-sidebarToggle.addEventListener("click", function () {
-    sidebar.classList.toggle("collapsed");
+    sidebarToggle.addEventListener("click", function () {
+        sidebar.classList.toggle("collapsed");
 
-    const icon = sidebar.classList.contains("collapsed")
-        ? "panel-left-open"
-        : "panel-left-close";
+        const isCollapsed = sidebar.classList.contains("collapsed");
 
-    sidebarToggle.innerHTML = `<i data-lucide="${icon}"></i>`;
-    lucide.createIcons();
-});
+        localStorage.setItem("tres_sidebar_collapsed", isCollapsed);
+
+        sidebarToggle.innerHTML = isCollapsed
+            ? `<i data-lucide="panel-left-open"></i>`
+            : `<i data-lucide="panel-left-close"></i>`;
+
+        lucide.createIcons();
+    });
+}
 
 async function start() {
-
     currentUser = await checkAuth();
 
     if (!currentUser) return;
 
-    currentProfile =
-        await getUserProfile(currentUser.id);
+    currentProfile = await getUserProfile(currentUser.id);
 
     if (currentProfile?.primeiro_acesso) {
         window.location.href = "conta.html";
         return;
     }
 
-    applyUserProfile(
-        currentProfile,
-        currentUser
-    );
+    applyUserProfile(currentProfile, currentUser);
 
     dataSolicitacao.value = todayISO();
 
@@ -871,7 +922,6 @@ async function start() {
     await loadHotels();
 
     lucide.createIcons();
-
 }
 
 start();
