@@ -740,10 +740,10 @@ function renderLancamentos() {
                 </td>
 
                 <td>${item.codigo_tres || "-"}</td>
+                <td>${item.usuarios?.nome || "-"}</td>
                 <td>${item.data_lancamento || "-"}</td>
                 <td>${item.os || "-"}</td>
                 <td>${item.clientes?.nome || "-"}</td>
-                <td>${item.usuarios?.nome || "-"}</td>
                 <td>${item.servico || "-"}</td>
                 <td>${item.fornecedor || "-"}</td>
                 <td>${money(item.total, item.moeda)}</td>
