@@ -364,6 +364,7 @@ async function loadRefunds() {
         .select(`
             id,
             codigo_tres,
+            usuarios:emissor_id (nome),
             data_solicitacao,
             os,
             fornecedor,
@@ -483,6 +484,7 @@ function renderRefunds() {
                 </td>
 
                 <td>${item.codigo_tres || "-"}</td>
+                <td>${item.usuarios?.nome || "-"}</td>
                 <td>${item.data_solicitacao || "-"}</td>
                 <td>${item.clientes?.nome || "-"}</td>
                 <td>${item.os || "-"}</td>
