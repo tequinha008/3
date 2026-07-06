@@ -492,6 +492,7 @@ async function loadLancamentos() {
         .select(`
             id,
             codigo_tres,
+            usuarios:emissor_id (nome),
             data_lancamento,
             tipo,
             os,
@@ -742,6 +743,7 @@ function renderLancamentos() {
                 <td>${item.data_lancamento || "-"}</td>
                 <td>${item.os || "-"}</td>
                 <td>${item.clientes?.nome || "-"}</td>
+                <td>${item.usuarios?.nome || "-"}</td>
                 <td>${item.servico || "-"}</td>
                 <td>${item.fornecedor || "-"}</td>
                 <td>${money(item.total, item.moeda)}</td>
