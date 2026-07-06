@@ -36,6 +36,8 @@ const refundTableBody = document.getElementById("refundTableBody");
 const selectAllRefunds = document.getElementById("selectAllRefunds");
 
 const toast = document.getElementById("toast");
+let currentPage = 1;
+const rowsPerPage = 10;
 
 function ensureConfirmationModal() {
     if (!document.getElementById("confirmModalStyles")) {
