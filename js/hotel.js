@@ -522,7 +522,7 @@ function renderHotels() {
                     isAdminOrMaster()
 
                         ? `<input
-                                class="table-input integration-input"
+                                class="table-input"
                                 data-id="${hotel.id}"
                                 value="${hotel.codigo_integracao || ""}"
                                 placeholder="Código">`
@@ -756,43 +756,6 @@ async function deleteHotelConfirmed() {
     await loadHotels();
 }
 
-// Função para salvar o código de integração
-async function updateIntegrationCode(id, value) {
-
-    const { error } = await supabaseClient
-        .from("solicitacoes_hotel")
-        .update({
-            codigo_integracao: normalizeText(value),
-            updated_by: currentUser.id
-        })
-        .eq("id", id);
-
-    if (error) {
-        console.error(error);
-        showToast("Erro ao salvar código.");
-        return;
-    }
-
-    showToast("Código salvo.");
-}
-
-// Evento para salvar quando sair do campo
-hotelTableBody.addEventListener("change", async function (event) {
-
-    const target = event.target;
-
-    if (target.classList.contains("integration-input")) {
-
-        await updateIntegrationCode(
-            target.dataset.id,
-            target.value
-        );
-
-    }
-
-});
-
-// DEPOIS vem o seu bloco de clique
 hotelTableBody.addEventListener("click", async function (event) {
 
     const button = event.target.closest("button");
