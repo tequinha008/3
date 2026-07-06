@@ -43,12 +43,14 @@ const confirmDeleteHotel = document.getElementById("confirmDeleteHotel");
 
 const sidebar = document.querySelector(".sidebar");
 const sidebarToggle = document.getElementById("sidebarToggle");
+const rowsPerPage = 10;
 
 let hotelToDelete = null;
 let currentUser = null;
 let currentProfile = null;
 let hotels = [];
 let selectedHotels = new Set();
+let currentPage = 1;
 
 function todayISO() {
     return new Date().toISOString().split("T")[0];
