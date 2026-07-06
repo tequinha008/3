@@ -45,7 +45,7 @@ function applyUserProfile(profile, user) {
     userRole.textContent = role.toUpperCase();
     avatar.textContent = name.charAt(0).toUpperCase();
 
-    if (role === "admin" || role === "master") {
+    if (role === "master") {
         document.querySelectorAll(".admin-link").forEach(function (item) {
             item.classList.remove("hidden");
         });
