@@ -15,7 +15,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 
-<body class="app-body">
+<body class="app-body module-refund">
 
     <aside class="sidebar">
 
@@ -39,7 +39,7 @@
         <nav class="sidebar-nav">
             <a href="dashboard.html" class="nav-link">
                 <i data-lucide="layout-dashboard"></i>
-                <span>Dashboard</span>
+                <span>Início</span>
             </a>
 
             <a href="hotel.html" class="nav-link">
@@ -49,7 +49,7 @@
 
             <a href="pagar.html" class="nav-link">
                 <i data-lucide="wallet-cards"></i>
-                <span>Contas a pagar</span>
+                <span>Valores a pagar</span>
             </a>
 
             <a href="reembolso.html" class="nav-link active">
@@ -204,9 +204,15 @@
                             <h3>Solicitações de reembolso</h3>
                         </div>
 
-                        <button class="btn btn-refund" id="exportRefundsButton">
-                            Exportar Excel
-                        </button>
+                        <div class="table-header-actions">
+                            <button type="button" class="btn btn-soft" id="refreshRefundsButton">
+                                <i data-lucide="refresh-cw"></i> Atualizar
+                            </button>
+
+                            <button class="btn btn-refund" id="exportRefundsButton">
+                                Exportar Excel
+                            </button>
+                        </div>
                     </div>
 
                     <div class="filters-grid refund-filters">

@@ -83,6 +83,7 @@ const financeServiceFilter = document.getElementById("financeServiceFilter");
 const financeTableBody = document.getElementById("financeTableBody");
 const selectAllFinance = document.getElementById("selectAllFinance");
 const completeSelectedButton = document.getElementById("completeSelectedButton");
+const refreshFinanceButton = document.getElementById("refreshFinanceButton");
 const financePaginationInfo = document.getElementById("financePaginationInfo");
 const financePageSize = document.getElementById("financePageSize");
 const financePrevPage = document.getElementById("financePrevPage");
@@ -1650,6 +1651,20 @@ if (financeNextPage) {
     financeNextPage.addEventListener("click", function () {
         financeCurrentPage += 1;
         renderLancamentos();
+    });
+}
+
+if (refreshFinanceButton) {
+    refreshFinanceButton.addEventListener("click", async function () {
+        refreshFinanceButton.disabled = true;
+
+        try {
+            await loadLancamentos();
+            showToast("Lançamentos atualizados.");
+        } finally {
+            refreshFinanceButton.disabled = false;
+            lucide.createIcons();
+        }
     });
 }
 

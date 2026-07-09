@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TRES | Início</title>
+    <title>TRES | Dashboard</title>
 
     <link rel="icon" type="image/png" href="TRES_logo_transparente.png">
     <link rel="stylesheet" href="css/style.css">
@@ -14,7 +14,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 
-<body class="app-body">
+<body class="app-body module-dashboard">
 
     <aside class="sidebar">
             <button class="sidebar-toggle" id="sidebarToggle" title="Recolher menu">
@@ -50,7 +50,7 @@
 
             <a href="pagar.html" class="nav-link">
                 <i data-lucide="wallet-cards"></i>
-                <span>Contas a Pagar</span>
+                <span>Contas a pagar</span>
             </a>
 
             <a href="reembolso.html" class="nav-link">
@@ -97,6 +97,10 @@
                     <input type="search" placeholder="Pesquisar por OS, hotel, cliente...">
                 </div>
 
+                <button type="button" class="btn btn-soft" id="refreshDashboardButton">
+                    <i data-lucide="refresh-cw"></i> Atualizar
+                </button>
+
                 <div class="user-pill">
                     <div class="avatar" id="avatar">T</div>
 
@@ -134,7 +138,7 @@
                 </a>
 
                 <a href="pagar.html" class="btn btn-finance">
-                    Novo valor a pagar
+                    Novo contas a pagar
                 </a>
 
                 <a href="reembolso.html" class="btn btn-refund">
@@ -194,7 +198,16 @@
                     <h3>Criar nova solicitação</h3>
                 </div>
 
-                <div class="quick-actions">
+                <div class="activity-list" id="recentActivities">
+                    <div class="empty-state">
+                        <i data-lucide="sparkles"></i>
+                        <p>
+                            As últimas atualizações aparecerão aqui quando os módulos forem utilizados.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="quick-actions hidden">
 
                     <a href="hotel.html" class="quick-card">
                         <i data-lucide="building-2"></i>
@@ -204,7 +217,7 @@
 
                     <a href="pagar.html" class="quick-card">
                         <i data-lucide="wallet-cards"></i>
-                        <strong>Valor a pagar</strong>
+                        <strong>Contas a pagar</strong>
                         <span>Documentar valores e serviços.</span>
                     </a>
 
@@ -222,14 +235,16 @@
 
                 <div class="panel-header">
                     <p class="eyebrow">Últimas atividades</p>
-                    <h3>Resumo recente</h3>
+                    <h3>Volume de solicitações</h3>
                 </div>
 
-                <div class="empty-state">
-                    <i data-lucide="sparkles"></i>
+                <div class="volume-chart" id="volumeChart">
+                    <div class="empty-state">
+                    <i data-lucide="bar-chart-3"></i>
                     <p>
                         As últimas atividades aparecerão aqui quando os módulos forem utilizados.
                     </p>
+                    </div>
                 </div>
 
             </article>
@@ -237,6 +252,8 @@
         </section>
 
     </main>
+
+    <div id="toast" class="toast hidden"></div>
 
     <script src="js/config.js"></script>
     <script src="js/dashboard.js"></script>

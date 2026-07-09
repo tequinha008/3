@@ -14,7 +14,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 
-<body class="app-body">
+<body class="app-body module-hotel">
 
     <aside class="sidebar">
         <button class="sidebar-toggle" id="sidebarToggle" title="Recolher menu">
@@ -37,7 +37,7 @@
         <nav class="sidebar-nav">
             <a href="dashboard.html" class="nav-link">
                 <i data-lucide="layout-dashboard"></i>
-                <span>Dashboard</span>
+                <span>Início</span>
             </a>
 
             <a href="hotel.html" class="nav-link active">
@@ -190,9 +190,15 @@
                         <h3>Solicitações de hotéis</h3>
                     </div>
 
-                    <button class="btn btn-soft hidden" id="completeSelectedButton">
-                        Concluir selecionados
-                    </button>
+                    <div class="table-header-actions">
+                        <button type="button" class="btn btn-soft" id="refreshHotelsButton">
+                            <i data-lucide="refresh-cw"></i> Atualizar
+                        </button>
+
+                        <button class="btn btn-soft hidden" id="completeSelectedButton">
+                            Concluir selecionados
+                        </button>
+                    </div>
                 </div>
 
                 <div class="filters-grid">

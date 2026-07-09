@@ -66,6 +66,53 @@ button { cursor: pointer; }
     --shadow-strong: 0 42px 90px rgba(0, 0, 0, 0.36);
     --sidebar-width: 278px;
     --sidebar-collapsed-width: 82px;
+    --popup-accent: var(--action);
+    --popup-accent-dark: var(--action-dark);
+    --popup-soft: #f0f6fb;
+    --popup-border: #cdddea;
+    --popup-text: #12344d;
+    --popup-shadow: 0 24px 70px rgba(15, 23, 42, 0.18);
+}
+
+body.module-dashboard,
+body.module-account {
+    --popup-accent: #25627f;
+    --popup-accent-dark: #143d59;
+    --popup-soft: #eef6fb;
+    --popup-border: #cfe0ec;
+    --popup-text: #143d59;
+}
+
+body.module-hotel {
+    --popup-accent: #14b8a6;
+    --popup-accent-dark: #0f766e;
+    --popup-soft: #ecfdf8;
+    --popup-border: #a7f3dc;
+    --popup-text: #0f766e;
+}
+
+body.module-finance {
+    --popup-accent: #dc7373;
+    --popup-accent-dark: #b91c1c;
+    --popup-soft: #fff3f3;
+    --popup-border: #fecaca;
+    --popup-text: #991b1b;
+}
+
+body.module-refund {
+    --popup-accent: #e2ad2f;
+    --popup-accent-dark: #ca8a04;
+    --popup-soft: #fff8e1;
+    --popup-border: #fde68a;
+    --popup-text: #92400e;
+}
+
+body.module-users {
+    --popup-accent: #6b8faf;
+    --popup-accent-dark: #143d59;
+    --popup-soft: #f0f6fb;
+    --popup-border: #cfe0ec;
+    --popup-text: #143d59;
 }
 
 /* App layout */
@@ -368,6 +415,11 @@ button { cursor: pointer; }
     transform: translateY(-1px);
 }
 
+.btn svg {
+    width: 16px;
+    height: 16px;
+}
+
 .btn-primary {
     color: #ffffff;
     background: linear-gradient(135deg, var(--action), var(--action-dark));
@@ -510,6 +562,14 @@ button { cursor: pointer; }
     justify-content: space-between;
     gap: 16px;
     margin-bottom: 20px;
+}
+
+.table-header-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
 }
 
 .filters-grid {
@@ -862,6 +922,122 @@ tbody tr:hover { background: #f8fafc; }
     animation: toast-enter 0.22s ease-out;
 }
 
+/* Module-aware popups */
+
+body.app-body .toast {
+    border: 1px solid var(--popup-border);
+    color: var(--popup-text);
+    background: var(--popup-soft);
+    box-shadow: var(--popup-shadow);
+}
+
+body.app-body .toast::before {
+    content: "";
+    display: inline-block;
+    width: 9px;
+    height: 9px;
+    margin-right: 9px;
+    border-radius: 999px;
+    background: var(--popup-accent);
+    box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.72);
+    vertical-align: 1px;
+}
+
+body.app-body .history-backdrop,
+body.app-body .finance-detail-backdrop,
+body.app-body .hotel-detail-backdrop,
+body.app-body .users-modal-backdrop,
+body.app-body .modal-backdrop,
+body.app-body .tres-modal-backdrop {
+    background: rgba(15, 23, 42, 0.56);
+}
+
+body.app-body .history-modal,
+body.app-body .finance-detail-modal,
+body.app-body .hotel-detail-modal,
+body.app-body .users-modal-card,
+body.app-body .modal-card,
+body.app-body .tres-modal-card {
+    border-color: var(--popup-border);
+    background: linear-gradient(180deg, #ffffff 0%, #ffffff 62%, var(--popup-soft) 170%);
+    box-shadow: var(--popup-shadow);
+}
+
+body.app-body .history-header,
+body.app-body .finance-detail-header,
+body.app-body .hotel-detail-header,
+body.app-body .users-modal-header,
+body.app-body .finance-detail-footer,
+body.app-body .hotel-detail-footer {
+    border-color: var(--popup-border);
+}
+
+body.app-body .history-header .eyebrow,
+body.app-body .finance-detail-header .eyebrow,
+body.app-body .hotel-detail-header .eyebrow,
+body.app-body .users-modal-header .eyebrow {
+    color: var(--popup-text);
+}
+
+body.app-body .history-item {
+    border-left-color: var(--popup-border);
+}
+
+body.app-body .history-dot {
+    background: var(--popup-accent);
+    box-shadow: 0 0 0 2px var(--popup-border);
+}
+
+body.app-body .history-card,
+body.app-body .history-value,
+body.app-body .finance-detail-item,
+body.app-body .hotel-detail-item,
+body.app-body .users-switch-row {
+    border-color: var(--popup-border);
+}
+
+body.app-body .history-field,
+body.app-body .finance-detail-item,
+body.app-body .hotel-detail-item,
+body.app-body .password-rules {
+    background: rgba(248, 250, 252, 0.78);
+}
+
+body.app-body .history-value.after {
+    border-color: var(--popup-border);
+    color: var(--popup-text);
+    background: var(--popup-soft);
+}
+
+body.app-body .finance-detail-item.total,
+body.app-body .hotel-detail-item.highlight {
+    border-color: var(--popup-border);
+    background: var(--popup-soft);
+}
+
+body.app-body .finance-detail-item.total strong,
+body.app-body .hotel-detail-item.highlight strong {
+    color: var(--popup-accent-dark);
+}
+
+body.app-body .finance-detail-close:hover,
+body.app-body .icon-button:hover {
+    color: var(--popup-text);
+    background: var(--popup-soft);
+}
+
+body.app-body .modal-icon,
+body.app-body .tres-modal-icon {
+    color: var(--popup-text);
+    background: var(--popup-soft);
+}
+
+body.app-body .tres-modal-danger,
+body.app-body .btn-danger {
+    background: linear-gradient(135deg, var(--popup-accent), var(--popup-accent-dark));
+    box-shadow: 0 14px 28px rgba(15, 23, 42, 0.12);
+}
+
 @keyframes toast-enter {
     from {
         opacity: 0;
@@ -909,6 +1085,10 @@ tbody tr:hover { background: #f8fafc; }
     .table-header {
         align-items: stretch;
         flex-direction: column;
+    }
+
+    .table-header-actions {
+        justify-content: flex-start;
     }
 }
 

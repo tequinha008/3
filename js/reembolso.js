@@ -27,6 +27,7 @@ const summaryFinal = document.getElementById("summaryFinal");
 
 const completeSelectedButton = document.getElementById("completeSelectedButton");
 const exportRefundsButton = document.getElementById("exportRefundsButton");
+const refreshRefundsButton = document.getElementById("refreshRefundsButton");
 
 const startDate = document.getElementById("startDate");
 const endDate = document.getElementById("endDate");
@@ -1400,6 +1401,20 @@ function setupEvents() {
         refundNextPage.addEventListener("click", function () {
             refundCurrentPage += 1;
             renderRefunds();
+        });
+    }
+
+    if (refreshRefundsButton) {
+        refreshRefundsButton.addEventListener("click", async function () {
+            refreshRefundsButton.disabled = true;
+
+            try {
+                await loadRefunds();
+                showToast("Reembolsos atualizados.");
+            } finally {
+                refreshRefundsButton.disabled = false;
+                lucide.createIcons();
+            }
         });
     }
 

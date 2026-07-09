@@ -129,6 +129,142 @@
     line-height: 1.45;
 }
 
+.volume-chart {
+    display: grid;
+    gap: 16px;
+}
+
+.volume-row {
+    display: grid;
+    gap: 9px;
+}
+
+.volume-row-header,
+.volume-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.volume-row-header strong {
+    color: var(--text);
+    font-size: 22px;
+}
+
+.volume-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 850;
+}
+
+.volume-label svg {
+    width: 16px;
+    height: 16px;
+}
+
+.volume-label.hotel { color: var(--hotel); }
+.volume-label.finance { color: var(--finance); }
+.volume-label.refund { color: var(--refund); }
+
+.volume-track {
+    width: 100%;
+    height: 11px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: #eef2f7;
+}
+
+.volume-fill {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+}
+
+.volume-fill.hotel { background: linear-gradient(90deg, #5eead4, var(--hotel)); }
+.volume-fill.finance { background: linear-gradient(90deg, #fca5a5, var(--finance)); }
+.volume-fill.refund { background: linear-gradient(90deg, #fde68a, var(--refund)); }
+
+.volume-meta {
+    color: var(--muted);
+    font-size: 11px;
+}
+
+.activity-list {
+    display: grid;
+    gap: 8px;
+}
+
+.activity-item {
+    display: grid;
+    grid-template-columns: 34px 1fr;
+    gap: 10px;
+    align-items: center;
+    border: 1px solid transparent;
+    border-bottom-color: var(--line);
+    border-radius: 14px;
+    padding: 10px 8px;
+    background: transparent;
+    transition: 0.18s ease;
+}
+
+.activity-item:last-child {
+    border-bottom-color: transparent;
+}
+
+.activity-item:hover {
+    border-color: var(--line);
+    background: #ffffff;
+}
+
+.activity-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 12px;
+    display: grid;
+    place-items: center;
+    background: var(--action-soft);
+    color: var(--action);
+}
+
+.activity-icon svg {
+    width: 16px;
+    height: 16px;
+}
+
+.activity-icon.hotel {
+    color: var(--hotel);
+    background: #ecfdf8;
+}
+
+.activity-icon.finance {
+    color: var(--finance);
+    background: #fff3f3;
+}
+
+.activity-icon.refund {
+    color: var(--refund);
+    background: #fff8e1;
+}
+
+.activity-title {
+    margin: 0;
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 850;
+    line-height: 1.35;
+}
+
+.activity-meta {
+    margin: 3px 0 0;
+    color: var(--muted);
+    font-size: 11px;
+    line-height: 1.4;
+}
+
 .empty-state {
     min-height: 200px;
     border: 1px dashed var(--line);

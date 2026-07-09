@@ -28,6 +28,7 @@ const tipoFilter = document.getElementById("tipoFilter");
 const hotelTableBody = document.getElementById("hotelTableBody");
 const selectAllHotels = document.getElementById("selectAllHotels");
 const completeSelectedButton = document.getElementById("completeSelectedButton");
+const refreshHotelsButton = document.getElementById("refreshHotelsButton");
 const hotelPaginationInfo = document.getElementById("hotelPaginationInfo");
 const hotelPageSize = document.getElementById("hotelPageSize");
 const hotelPrevPage = document.getElementById("hotelPrevPage");
@@ -60,6 +61,13 @@ function onlyNumbers(value) {
 
 function normalizeText(value) {
     return String(value || "").trim().toUpperCase();
+}
+
+function normalizeSearchText(value) {
+    return normalizeText(value)
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/\s+/g, " ");
 }
 
 function formatCNPJ(value) {
@@ -569,17 +577,41 @@ async function attachHotelEmitterNames(items) {
 }
 function getFilteredHotels() {
 
-    const search = normalizeText(hotelSearch.value);
+    const search = normalizeSearchText(hotelSearch.value);
+    const searchNumbers = onlyNumbers(hotelSearch.value);
     const status = statusFilter.value;
     const tipo = tipoFilter.value;
 
     return hotels.filter(function (hotel) {
 
+        const searchableText = [
+            hotel.codigo_tres,
+            hotel.emissor_nome,
+            hotel.nome_hotel,
+            hotel.rua_numero,
+            hotel.bairro,
+            hotel.cidade_estado,
+            hotel.pais,
+            hotel.tipo,
+            hotel.codigo_integracao
+        ].map(normalizeSearchText).join(" ");
+
+        const searchTerms = search.split(" ").filter(Boolean);
+        const matchText =
+            !search ||
+            searchableText.includes(search) ||
+            searchTerms.every(function (term) {
+                return searchableText.includes(term);
+            });
+
+        const matchCnpj =
+            searchNumbers &&
+            onlyNumbers(hotel.cnpj).includes(searchNumbers);
+
         const matchSearch =
             !search ||
-            normalizeText(hotel.nome_hotel).includes(search) ||
-            normalizeText(hotel.cidade_estado).includes(search) ||
-            onlyNumbers(hotel.cnpj).includes(onlyNumbers(search));
+            matchText ||
+            matchCnpj;
 
         const matchStatus =
             !status || hotel.status === status;
@@ -1276,6 +1308,20 @@ if (hotelNextPage) {
     hotelNextPage.addEventListener("click", function () {
         hotelCurrentPage += 1;
         renderHotels();
+    });
+}
+
+if (refreshHotelsButton) {
+    refreshHotelsButton.addEventListener("click", async function () {
+        refreshHotelsButton.disabled = true;
+
+        try {
+            await loadHotels();
+            showToast("Hotéis atualizados.");
+        } finally {
+            refreshHotelsButton.disabled = false;
+            lucide.createIcons();
+        }
     });
 }
 
