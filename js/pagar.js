@@ -82,6 +82,11 @@ const financeServiceFilter = document.getElementById("financeServiceFilter");
 const financeTableBody = document.getElementById("financeTableBody");
 const selectAllFinance = document.getElementById("selectAllFinance");
 const completeSelectedButton = document.getElementById("completeSelectedButton");
+const financePaginationInfo = document.getElementById("financePaginationInfo");
+const financePageSize = document.getElementById("financePageSize");
+const financePrevPage = document.getElementById("financePrevPage");
+const financeNextPage = document.getElementById("financeNextPage");
+const financePageIndicator = document.getElementById("financePageIndicator");
 const financeDetailModal = document.getElementById("financeDetailModal");
 const financeDetailTitle = document.getElementById("financeDetailTitle");
 const financeDetailContent = document.getElementById("financeDetailContent");
@@ -90,17 +95,12 @@ const financeDetailDone = document.getElementById("financeDetailDone");
 
 const toast = document.getElementById("toast");
 
-const financeDeleteModal = document.getElementById("financeDeleteModal");
-const financeDeleteText = document.getElementById("financeDeleteText");
-const cancelDeleteFinance = document.getElementById("cancelDeleteFinance");
-const confirmDeleteFinance = document.getElementById("confirmDeleteFinance");
-
-let financeToDelete = null;
 let currentUser = null;
 let currentProfile = null;
 let selectedSubtype = "AEREO";
 let lancamentos = [];
 let selectedLancamentos = new Set();
+let financeCurrentPage = 1;
 
 function todayISO() {
     return new Date().toISOString().split("T")[0];
@@ -567,6 +567,43 @@ function statusBadge(status) {
     return `<span class="badge badge-pendente">PENDENTE</span>`;
 }
 
+function resetFinancePagination() {
+    financeCurrentPage = 1;
+    renderLancamentos();
+}
+
+function getFinancePageSize() {
+    return Number(financePageSize?.value || 10);
+}
+
+function updateFinancePagination(totalItems) {
+    const pageSize = getFinancePageSize();
+    const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+
+    if (financeCurrentPage > totalPages) {
+        financeCurrentPage = totalPages;
+    }
+
+    const start = totalItems === 0 ? 0 : ((financeCurrentPage - 1) * pageSize) + 1;
+    const end = Math.min(totalItems, financeCurrentPage * pageSize);
+
+    if (financePaginationInfo) {
+        financePaginationInfo.textContent = `Mostrando ${start}-${end} de ${totalItems}`;
+    }
+
+    if (financePageIndicator) {
+        financePageIndicator.textContent = `Página ${financeCurrentPage} de ${totalPages}`;
+    }
+
+    if (financePrevPage) {
+        financePrevPage.disabled = financeCurrentPage <= 1;
+    }
+
+    if (financeNextPage) {
+        financeNextPage.disabled = financeCurrentPage >= totalPages;
+    }
+}
+
 function escapeHtml(value) {
     return String(value ?? "")
         .replace(/&/g, "&amp;")
@@ -713,6 +750,9 @@ function openFinanceDetails(id) {
 
 function renderLancamentos() {
     const filtered = getFilteredLancamentos();
+    const pageSize = getFinancePageSize();
+
+    updateFinancePagination(filtered.length);
 
     if (filtered.length === 0) {
         financeTableBody.innerHTML = `
@@ -722,10 +762,16 @@ function renderLancamentos() {
                 </td>
             </tr>
         `;
+        completeSelectedButton.classList.add("hidden");
         return;
     }
 
-    financeTableBody.innerHTML = filtered.map(function (item) {
+    const visible = filtered.slice(
+        (financeCurrentPage - 1) * pageSize,
+        financeCurrentPage * pageSize
+    );
+
+    financeTableBody.innerHTML = visible.map(function (item) {
         const checked = selectedLancamentos.has(item.id) ? "checked" : "";
 
         return `
@@ -764,19 +810,6 @@ function renderLancamentos() {
                             title="Concluir">
                             <i data-lucide="check"></i>
                         </button>
-                        ${
-                        isAdminOrMaster()
-                            ? `
-                                <button
-                                    class="icon-button danger"
-                                    data-action="delete"
-                                    data-id="${item.id}"
-                                    title="Excluir">
-                                    <i data-lucide="trash-2"></i>
-                                </button>
-                            `
-                            : ""
-                    }
                     </div>
                 </td>
             </tr>
@@ -915,9 +948,21 @@ clearFinanceForm.addEventListener("click", function () {
     resetFinanceForm();
 });
 
-financeSearch.addEventListener("input", renderLancamentos);
-financeStatusFilter.addEventListener("change", renderLancamentos);
-financeServiceFilter.addEventListener("change", renderLancamentos);
+financeSearch.addEventListener("input", resetFinancePagination);
+financeStatusFilter.addEventListener("change", resetFinancePagination);
+financeServiceFilter.addEventListener("change", resetFinancePagination);
+
+financePageSize.addEventListener("change", resetFinancePagination);
+financePrevPage.addEventListener("click", function () {
+    if (financeCurrentPage > 1) {
+        financeCurrentPage -= 1;
+        renderLancamentos();
+    }
+});
+financeNextPage.addEventListener("click", function () {
+    financeCurrentPage += 1;
+    renderLancamentos();
+});
 
 selectAllFinance.addEventListener("change", function () {
     selectedLancamentos.clear();
@@ -947,43 +992,6 @@ financeTableBody.addEventListener("change", function (event) {
     }
 });
 
-function openDeleteFinanceModal(id) {
-    const item = lancamentos.find(lancamento => lancamento.id === id);
-
-    financeToDelete = id;
-
-    financeDeleteText.textContent = `Deseja excluir ${item?.codigo_tres || "este lançamento"}? Esta ação não poderá ser desfeita.`;
-
-    financeDeleteModal.classList.remove("hidden");
-    lucide.createIcons();
-}
-
-function closeDeleteFinanceModal() {
-    financeToDelete = null;
-    financeDeleteModal.classList.add("hidden");
-}
-
-async function deleteFinanceConfirmed() {
-    if (!financeToDelete) return;
-
-    const { error } = await supabaseClient
-        .from("lancamentos")
-        .delete()
-        .eq("id", financeToDelete);
-
-    if (error) {
-        console.error(error);
-        showToast("Erro ao excluir lançamento.");
-        return;
-    }
-
-    selectedLancamentos.delete(financeToDelete);
-    closeDeleteFinanceModal();
-
-    showToast("Lançamento excluído.");
-    await loadLancamentos();
-}
-
 financeTableBody.addEventListener("click", async function (event) {
     const button = event.target.closest("button");
 
@@ -997,18 +1005,6 @@ financeTableBody.addEventListener("click", async function (event) {
 
     if (button.dataset.action === "complete") {
         await completeLancamento(button.dataset.id);
-    }
-    if (button.dataset.action === "delete") {
-    openDeleteFinanceModal(button.dataset.id);
-    }
-});
-
-cancelDeleteFinance.addEventListener("click", closeDeleteFinanceModal);
-confirmDeleteFinance.addEventListener("click", deleteFinanceConfirmed);
-
-financeDeleteModal.addEventListener("click", function (event) {
-    if (event.target === financeDeleteModal) {
-        closeDeleteFinanceModal();
     }
 });
 

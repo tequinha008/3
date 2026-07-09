@@ -27,13 +27,13 @@
 
         <nav class="sidebar-nav">
             <a href="dashboard.html" class="nav-link">
-                <i data-lucide="layout-dashboard"></i><span>Início</span>
+                <i data-lucide="layout-dashboard"></i><span>Dashboard</span>
             </a>
             <a href="hotel.html" class="nav-link">
                 <i data-lucide="building-2"></i><span>Hotéis</span>
             </a>
             <a href="pagar.html" class="nav-link">
-                <i data-lucide="wallet-cards"></i><span>Contas a Pagar</span>
+                <i data-lucide="wallet-cards"></i><span>Valores a pagar</span>
             </a>
             <a href="reembolso.html" class="nav-link">
                 <i data-lucide="receipt-text"></i><span>Reembolsos</span>
@@ -156,6 +156,23 @@
                         </thead>
                         <tbody id="usersTableBody"></tbody>
                     </table>
+                </div>
+
+                <div class="table-pagination" id="usersPagination">
+                    <span id="usersPaginationInfo">Mostrando 0 de 0</span>
+                    <div class="table-pagination-actions">
+                        <label>
+                            Por página
+                            <select id="usersPageSize">
+                                <option value="10">10</option>
+                                <option value="25">25</option>
+                                <option value="50">50</option>
+                            </select>
+                        </label>
+                        <button type="button" class="btn btn-soft" id="usersPrevPage">Anterior</button>
+                        <span id="usersPageIndicator">Página 1 de 1</span>
+                        <button type="button" class="btn btn-soft" id="usersNextPage">Próxima</button>
+                    </div>
                 </div>
             </section>
         </div>

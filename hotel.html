@@ -37,7 +37,7 @@
         <nav class="sidebar-nav">
             <a href="dashboard.html" class="nav-link">
                 <i data-lucide="layout-dashboard"></i>
-                <span>Início</span>
+                <span>Dashboard</span>
             </a>
 
             <a href="hotel.html" class="nav-link active">
@@ -47,7 +47,7 @@
 
             <a href="pagar.html" class="nav-link">
                 <i data-lucide="wallet-cards"></i>
-                <span>Contas a Pagar</span>
+                <span>Valores a pagar</span>
             </a>
 
             <a href="reembolso.html" class="nav-link">
@@ -234,62 +234,54 @@
                     </table>
                 </div>
 
+                <div class="table-pagination" id="hotelPagination">
+                    <span id="hotelPaginationInfo">Mostrando 0 de 0</span>
+                    <div class="table-pagination-actions">
+                        <label>
+                            Por página
+                            <select id="hotelPageSize">
+                                <option value="10">10</option>
+                                <option value="25">25</option>
+                                <option value="50">50</option>
+                            </select>
+                        </label>
+                        <button type="button" class="btn btn-soft" id="hotelPrevPage">Anterior</button>
+                        <span id="hotelPageIndicator">Página 1 de 1</span>
+                        <button type="button" class="btn btn-soft" id="hotelNextPage">Próxima</button>
+                    </div>
+                </div>
+
             </div>
 
         </section>
 
     </main>
 
-<div id="hotelDetailModal" class="details-overlay hidden" aria-hidden="true">
+    <div
+        class="hotel-detail-backdrop hidden"
+        id="hotelDetailModal"
+        role="dialog"
+        aria-modal="true"
+        aria-hidden="true"
+        aria-labelledby="hotelDetailTitle">
+        <div class="hotel-detail-modal">
+            <header class="hotel-detail-header">
+                <div>
+                    <p class="eyebrow">Cadastro de hotel</p>
+                    <h2 id="hotelDetailTitle">Detalhes da solicitação</h2>
+                </div>
+                <button type="button" class="icon-button" id="hotelDetailClose" aria-label="Fechar detalhes">
+                    <i data-lucide="x"></i>
+                </button>
+            </header>
 
-    <div class="details-modal">
+            <div class="hotel-detail-grid" id="hotelDetailContent"></div>
 
-        <div class="details-header">
-            <div>
-                <p>Cadastro de hotel</p>
-                <h2 id="hotelDetailTitle">Detalhes do hotel</h2>
-            </div>
-
-            <button id="hotelDetailClose" class="details-close" type="button">
-                ×
-            </button>
-        </div>
-
-        <div id="hotelDetailContent" class="details-grid"></div>
-
-        <div class="details-actions">
-            <button id="hotelDetailDone" class="btn btn-soft" type="button">
-                Fechar
-            </button>
-        </div>
-
-    </div>
-
-</div>
-
-<div id="hotelDeleteModal" class="confirm-overlay hidden">
-    <div class="confirm-modal">
-        <div class="confirm-icon">
-            <i data-lucide="triangle-alert"></i>
-        </div>
-
-        <h3>Excluir solicitação</h3>
-
-        <p id="hotelDeleteText">
-            Deseja excluir esta solicitação? Esta ação não poderá ser desfeita.
-        </p>
-
-        <div class="confirm-actions">
-            <button class="btn btn-soft" id="cancelDeleteHotel" type="button">
-                Cancelar
-            </button>
-
-            <button class="btn btn-danger" id="confirmDeleteHotel" type="button">
-                Excluir
-            </button>
+            <footer class="hotel-detail-footer">
+                <button type="button" class="btn btn-soft" id="hotelDetailDone">Fechar</button>
+            </footer>
         </div>
     </div>
-</div>
 
     <div id="toast" class="toast hidden"></div>
 

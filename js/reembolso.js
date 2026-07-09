@@ -34,6 +34,11 @@ const refundStatusFilter = document.getElementById("refundStatusFilter");
 const refundSearch = document.getElementById("refundSearch");
 const refundTableBody = document.getElementById("refundTableBody");
 const selectAllRefunds = document.getElementById("selectAllRefunds");
+const refundPaginationInfo = document.getElementById("refundPaginationInfo");
+const refundPageSize = document.getElementById("refundPageSize");
+const refundPrevPage = document.getElementById("refundPrevPage");
+const refundNextPage = document.getElementById("refundNextPage");
+const refundPageIndicator = document.getElementById("refundPageIndicator");
 
 const toast = document.getElementById("toast");
 
@@ -149,6 +154,7 @@ let currentUser = null;
 let currentProfile = null;
 let refunds = [];
 let selectedRefunds = new Set();
+let refundCurrentPage = 1;
 let confirmationResolver = null;
 
 function todayISO() {
@@ -419,6 +425,43 @@ function getFilteredRefunds() {
     });
 }
 
+function resetRefundPagination() {
+    refundCurrentPage = 1;
+    renderRefunds();
+}
+
+function getRefundPageSize() {
+    return Number(refundPageSize?.value || 10);
+}
+
+function updateRefundPagination(totalItems) {
+    const pageSize = getRefundPageSize();
+    const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+
+    if (refundCurrentPage > totalPages) {
+        refundCurrentPage = totalPages;
+    }
+
+    const start = totalItems === 0 ? 0 : ((refundCurrentPage - 1) * pageSize) + 1;
+    const end = Math.min(totalItems, refundCurrentPage * pageSize);
+
+    if (refundPaginationInfo) {
+        refundPaginationInfo.textContent = `Mostrando ${start}-${end} de ${totalItems}`;
+    }
+
+    if (refundPageIndicator) {
+        refundPageIndicator.textContent = `Página ${refundCurrentPage} de ${totalPages}`;
+    }
+
+    if (refundPrevPage) {
+        refundPrevPage.disabled = refundCurrentPage <= 1;
+    }
+
+    if (refundNextPage) {
+        refundNextPage.disabled = refundCurrentPage >= totalPages;
+    }
+}
+
 function statusBadge(status) {
     if (status === "CONCLUIDO") {
         return `<span class="badge badge-concluido">CONCLUÍDO</span>`;
@@ -447,8 +490,10 @@ function updateSummary(filteredRefunds) {
 
 function renderRefunds() {
     const filtered = getFilteredRefunds();
+    const pageSize = getRefundPageSize();
 
     updateSummary(filtered);
+    updateRefundPagination(filtered.length);
 
     if (filtered.length === 0) {
         refundTableBody.innerHTML = `
@@ -463,7 +508,12 @@ function renderRefunds() {
         return;
     }
 
-    refundTableBody.innerHTML = filtered.map(function (item) {
+    const visible = filtered.slice(
+        (refundCurrentPage - 1) * pageSize,
+        refundCurrentPage * pageSize
+    );
+
+    refundTableBody.innerHTML = visible.map(function (item) {
         const checked = selectedRefunds.has(item.id) ? "checked" : "";
 
         return `
@@ -719,10 +769,22 @@ function setupEvents() {
     valorCobrado.addEventListener("input", updateRefundPreview);
     valorReembolsado.addEventListener("input", updateRefundPreview);
 
-    refundSearch.addEventListener("input", renderRefunds);
-    refundStatusFilter.addEventListener("change", renderRefunds);
-    startDate.addEventListener("change", renderRefunds);
-    endDate.addEventListener("change", renderRefunds);
+    refundSearch.addEventListener("input", resetRefundPagination);
+    refundStatusFilter.addEventListener("change", resetRefundPagination);
+    startDate.addEventListener("change", resetRefundPagination);
+    endDate.addEventListener("change", resetRefundPagination);
+
+    refundPageSize.addEventListener("change", resetRefundPagination);
+    refundPrevPage.addEventListener("click", function () {
+        if (refundCurrentPage > 1) {
+            refundCurrentPage -= 1;
+            renderRefunds();
+        }
+    });
+    refundNextPage.addEventListener("click", function () {
+        refundCurrentPage += 1;
+        renderRefunds();
+    });
 
     selectAllRefunds.addEventListener("change", function () {
         if (!isAdminOrMaster()) {

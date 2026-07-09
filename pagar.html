@@ -4,9 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TRES | Contas a Pagar</title>
+    <title>TRES | Valores a Pagar</title>
 
-    <link rel="icon" type="image/png" href="TRES_logo_transparente.png">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/pagar.css">
 
@@ -38,7 +37,7 @@
         <nav class="sidebar-nav">
             <a href="dashboard.html" class="nav-link">
                 <i data-lucide="layout-dashboard"></i>
-                <span>Início</span>
+                <span>Dashboard</span>
             </a>
 
             <a href="hotel.html" class="nav-link">
@@ -48,7 +47,7 @@
 
             <a href="pagar.html" class="nav-link active">
                 <i data-lucide="wallet-cards"></i>
-                <span>Contas a Pagar</span>
+                <span>Valores a pagar</span>
             </a>
 
             <a href="reembolso.html" class="nav-link">
@@ -81,7 +80,7 @@
         <header class="topbar">
             <div>
                 <p class="eyebrow">Módulo financeiro</p>
-                <h1>Contas a Pagar</h1>
+                <h1>Valores a Pagar</h1>
             </div>
 
             <div class="user-pill">
@@ -356,6 +355,23 @@
                     </table>
                 </div>
 
+                <div class="table-pagination" id="financePagination">
+                    <span id="financePaginationInfo">Mostrando 0 de 0</span>
+                    <div class="table-pagination-actions">
+                        <label>
+                            Por página
+                            <select id="financePageSize">
+                                <option value="10">10</option>
+                                <option value="25">25</option>
+                                <option value="50">50</option>
+                            </select>
+                        </label>
+                        <button type="button" class="btn btn-soft" id="financePrevPage">Anterior</button>
+                        <span id="financePageIndicator">Página 1 de 1</span>
+                        <button type="button" class="btn btn-soft" id="financeNextPage">Próxima</button>
+                    </div>
+                </div>
+
             </div>
 
         </section>
@@ -372,7 +388,7 @@
         <div class="finance-detail-modal">
             <header class="finance-detail-header">
                 <div>
-                    <p class="eyebrow">Contas a Pagar</p>
+                    <p class="eyebrow">Valores a pagar</p>
                     <h2 id="financeDetailTitle">Detalhes do lançamento</h2>
                 </div>
 
@@ -394,30 +410,6 @@
             </footer>
         </div>
     </div>
-
-    <div id="financeDeleteModal" class="confirm-overlay hidden">
-    <div class="confirm-modal">
-        <div class="confirm-icon">
-            <i data-lucide="triangle-alert"></i>
-        </div>
-
-        <h3>Excluir lançamento</h3>
-
-        <p id="financeDeleteText">
-            Deseja excluir este lançamento? Esta ação não poderá ser desfeita.
-        </p>
-
-        <div class="confirm-actions">
-            <button class="btn btn-soft" id="cancelDeleteFinance" type="button">
-                Cancelar
-            </button>
-
-            <button class="btn btn-danger" id="confirmDeleteFinance" type="button">
-                Excluir
-            </button>
-        </div>
-    </div>
-</div>
 
     <div id="toast" class="toast hidden"></div>
 

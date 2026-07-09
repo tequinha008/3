@@ -39,7 +39,7 @@
         <nav class="sidebar-nav">
             <a href="dashboard.html" class="nav-link">
                 <i data-lucide="layout-dashboard"></i>
-                <span>Início</span>
+                <span>Dashboard</span>
             </a>
 
             <a href="hotel.html" class="nav-link">
@@ -49,7 +49,7 @@
 
             <a href="pagar.html" class="nav-link">
                 <i data-lucide="wallet-cards"></i>
-                <span>Contas a Pagar</span>
+                <span>Valores a pagar</span>
             </a>
 
             <a href="reembolso.html" class="nav-link active">
@@ -247,6 +247,23 @@
                         </table>
                     </div>
 
+                    <div class="table-pagination" id="refundPagination">
+                        <span id="refundPaginationInfo">Mostrando 0 de 0</span>
+                        <div class="table-pagination-actions">
+                            <label>
+                                Por página
+                                <select id="refundPageSize">
+                                    <option value="10">10</option>
+                                    <option value="25">25</option>
+                                    <option value="50">50</option>
+                                </select>
+                            </label>
+                            <button type="button" class="btn btn-soft" id="refundPrevPage">Anterior</button>
+                            <span id="refundPageIndicator">Página 1 de 1</span>
+                            <button type="button" class="btn btn-soft" id="refundNextPage">Próxima</button>
+                        </div>
+                    </div>
+
                     <div class="refund-table-footer">
                         <button class="btn btn-soft hidden" id="completeSelectedButton">
                             Concluir selecionados
@@ -260,6 +277,34 @@
         </section>
 
     </main>
+
+    <div
+        class="modal-backdrop hidden"
+        id="confirmModal"
+        role="dialog"
+        aria-modal="true"
+        aria-hidden="true"
+        aria-labelledby="confirmModalTitle">
+        <div class="modal-card">
+            <div class="modal-icon" aria-hidden="true">
+                <i data-lucide="triangle-alert"></i>
+            </div>
+
+            <div class="modal-content">
+                <h2 id="confirmModalTitle">Confirmar ação</h2>
+                <p id="confirmModalMessage"></p>
+            </div>
+
+            <div class="modal-actions">
+                <button type="button" class="btn btn-soft" id="confirmModalCancel">
+                    Cancelar
+                </button>
+                <button type="button" class="btn btn-primary" id="confirmModalAction">
+                    Confirmar
+                </button>
+            </div>
+        </div>
+    </div>
 
     <div id="toast" class="toast hidden"></div>
 

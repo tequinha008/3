@@ -25,6 +25,11 @@ const userSearch = document.getElementById("userSearch");
 const userRoleFilter = document.getElementById("userRoleFilter");
 const userStatusFilter = document.getElementById("userStatusFilter");
 const usersTableBody = document.getElementById("usersTableBody");
+const usersPaginationInfo = document.getElementById("usersPaginationInfo");
+const usersPageSize = document.getElementById("usersPageSize");
+const usersPrevPage = document.getElementById("usersPrevPage");
+const usersNextPage = document.getElementById("usersNextPage");
+const usersPageIndicator = document.getElementById("usersPageIndicator");
 
 const editUserModal = document.getElementById("editUserModal");
 const editUserForm = document.getElementById("editUserForm");
@@ -50,6 +55,7 @@ let currentUser = null;
 let currentProfile = null;
 let users = [];
 let toastTimer = null;
+let usersCurrentPage = 1;
 
 function normalizeText(value) {
     return String(value || "").trim().toUpperCase();
@@ -132,6 +138,43 @@ function getFilteredUsers() {
     });
 }
 
+function resetUsersPagination() {
+    usersCurrentPage = 1;
+    renderUsers();
+}
+
+function getUsersPageSize() {
+    return Number(usersPageSize?.value || 10);
+}
+
+function updateUsersPagination(totalItems) {
+    const pageSize = getUsersPageSize();
+    const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+
+    if (usersCurrentPage > totalPages) {
+        usersCurrentPage = totalPages;
+    }
+
+    const start = totalItems === 0 ? 0 : ((usersCurrentPage - 1) * pageSize) + 1;
+    const end = Math.min(totalItems, usersCurrentPage * pageSize);
+
+    if (usersPaginationInfo) {
+        usersPaginationInfo.textContent = `Mostrando ${start}-${end} de ${totalItems}`;
+    }
+
+    if (usersPageIndicator) {
+        usersPageIndicator.textContent = `Página ${usersCurrentPage} de ${totalPages}`;
+    }
+
+    if (usersPrevPage) {
+        usersPrevPage.disabled = usersCurrentPage <= 1;
+    }
+
+    if (usersNextPage) {
+        usersNextPage.disabled = usersCurrentPage >= totalPages;
+    }
+}
+
 function updateSummary() {
     summaryUsers.textContent = users.length;
     summaryActive.textContent = users.filter(function (user) { return user.ativo; }).length;
@@ -142,7 +185,10 @@ function updateSummary() {
 
 function renderUsers() {
     const filtered = getFilteredUsers();
+    const pageSize = getUsersPageSize();
+
     updateSummary();
+    updateUsersPagination(filtered.length);
 
     if (filtered.length === 0) {
         usersTableBody.innerHTML = `
@@ -151,7 +197,12 @@ function renderUsers() {
         return;
     }
 
-    usersTableBody.innerHTML = filtered.map(function (user) {
+    const visible = filtered.slice(
+        (usersCurrentPage - 1) * pageSize,
+        usersCurrentPage * pageSize
+    );
+
+    usersTableBody.innerHTML = visible.map(function (user) {
         return `
             <tr>
                 <td><strong>${escapeHtml(user.nome || "-")}</strong></td>
@@ -331,9 +382,21 @@ clearUserForm.addEventListener("click", function () {
     newUserRole.value = "usuario";
 });
 refreshUsersButton.addEventListener("click", loadUsers);
-userSearch.addEventListener("input", renderUsers);
-userRoleFilter.addEventListener("change", renderUsers);
-userStatusFilter.addEventListener("change", renderUsers);
+userSearch.addEventListener("input", resetUsersPagination);
+userRoleFilter.addEventListener("change", resetUsersPagination);
+userStatusFilter.addEventListener("change", resetUsersPagination);
+
+usersPageSize.addEventListener("change", resetUsersPagination);
+usersPrevPage.addEventListener("click", function () {
+    if (usersCurrentPage > 1) {
+        usersCurrentPage -= 1;
+        renderUsers();
+    }
+});
+usersNextPage.addEventListener("click", function () {
+    usersCurrentPage += 1;
+    renderUsers();
+});
 
 usersTableBody.addEventListener("click", function (event) {
     const button = event.target.closest("button[data-action]");
@@ -378,6 +441,11 @@ async function startUsersModule() {
     if (!currentUser) return;
 
     currentProfile = await getUserProfile(currentUser.id);
+    if (currentProfile?.primeiro_acesso) {
+        window.location.href = "conta.html";
+        return;
+    }
+
     if (!currentProfile || currentProfile.perfil !== "master" || !currentProfile.ativo) {
         window.location.href = "dashboard.html";
         return;
