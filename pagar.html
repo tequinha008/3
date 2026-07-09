@@ -4,8 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TRES | Valores a Pagar</title>
+    <title>TRES | Contas a Pagar</title>
 
+    <link rel="icon" type="image/png" href="TRES_logo_transparente.png">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/pagar.css">
 
@@ -47,7 +48,7 @@
 
             <a href="pagar.html" class="nav-link active">
                 <i data-lucide="wallet-cards"></i>
-                <span>Valores a pagar</span>
+                <span>Contas a pagar</span>
             </a>
 
             <a href="reembolso.html" class="nav-link">
@@ -80,7 +81,7 @@
         <header class="topbar">
             <div>
                 <p class="eyebrow">Módulo financeiro</p>
-                <h1>Valores a Pagar</h1>
+                <h1>Contas a Pagar</h1>
             </div>
 
             <div class="user-pill">
@@ -214,22 +215,22 @@
 
                     <div class="form-field hidden" id="tarifaField">
                         <label id="tarifaLabel">Tarifa</label>
-                        <input type="number" step="0.01" id="tarifa">
+                        <input type="text" inputmode="decimal" id="tarifa" placeholder="0,00">
                     </div>
 
                     <div class="form-field hidden" id="taxaEmbarqueField">
                         <label id="taxaEmbarqueLabel">Taxa de embarque</label>
-                        <input type="number" step="0.01" id="taxaEmbarque">
+                        <input type="text" inputmode="decimal" id="taxaEmbarque" placeholder="0,00">
                     </div>
 
                     <div class="form-field hidden" id="rcField">
                         <label>RC (R$)</label>
-                        <input type="number" step="0.01" id="rc">
+                        <input type="text" inputmode="decimal" id="rc" placeholder="0,00">
                     </div>
 
                     <div class="form-field hidden" id="overField">
                         <label>Over (%)</label>
-                        <input type="number" step="0.01" id="overPercent">
+                        <input type="text" inputmode="decimal" id="overPercent" placeholder="0,00">
                     </div>
 
                     <div class="form-field hidden" id="cambioField">
@@ -242,12 +243,12 @@
 
                     <div class="form-field hidden" id="diariaField">
                         <label>Diária (R$)</label>
-                        <input type="number" step="0.01" id="diaria">
+                        <input type="text" inputmode="decimal" id="diaria" placeholder="0,00">
                     </div>
 
                     <div class="form-field hidden" id="valorPeriodoField">
                         <label>Valor total do período (R$)</label>
-                        <input type="number" step="0.01" id="valorPeriodo">
+                        <input type="text" inputmode="decimal" id="valorPeriodo" placeholder="0,00">
                     </div>
 
                     <div class="form-field hidden" id="taxasTipoField">
@@ -260,7 +261,7 @@
 
                     <div class="form-field hidden" id="taxasValorField">
                         <label>Valor da taxa</label>
-                        <input type="number" step="0.01" id="taxasValor">
+                        <input type="text" inputmode="decimal" id="taxasValor" placeholder="0,00">
                     </div>
 
                     <div class="form-field hidden" id="checkinField">
@@ -310,13 +311,17 @@
                     </button>
                 </div>
 
-                <div class="filters-grid">
+                <div class="filters-grid finance-filters">
                     <input type="search" id="financeSearch" placeholder="Pesquisar OS, fornecedor ou serviço">
 
                     <select id="financeStatusFilter">
                         <option value="">Todos os status</option>
                         <option value="PENDENTE">Pendente</option>
                         <option value="CONCLUIDO">Concluído</option>
+                    </select>
+
+                    <select id="financeClientFilter">
+                        <option value="">Todos os clientes</option>
                     </select>
 
                     <select id="financeServiceFilter">
@@ -389,7 +394,7 @@
         <div class="finance-detail-modal">
             <header class="finance-detail-header">
                 <div>
-                    <p class="eyebrow">Valores a pagar</p>
+                    <p class="eyebrow">Contas a pagar</p>
                     <h2 id="financeDetailTitle">Detalhes do lançamento</h2>
                 </div>
 

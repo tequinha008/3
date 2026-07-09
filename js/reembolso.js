@@ -156,6 +156,11 @@ let refunds = [];
 let selectedRefunds = new Set();
 let refundCurrentPage = 1;
 let confirmationResolver = null;
+let editingRefundId = null;
+let editingRefundOriginal = null;
+let allUsers = [];
+let refundEmitterSelect = null;
+let refundValueMessage = null;
 
 function todayISO() {
     return new Date().toISOString().split("T")[0];
@@ -176,7 +181,51 @@ function money(value) {
 }
 
 function numberValue(input) {
-    return Number(input.value || 0);
+    return parseMoneyValue(input.value);
+}
+
+function parseMoneyValue(value) {
+    const numbers = String(value || "").replace(/\D/g, "");
+    return numbers ? Number(numbers) / 100 : 0;
+}
+
+function formatMoneyInput(value) {
+    return Number(value || 0).toLocaleString("pt-BR", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
+}
+
+function applyMoneyMask(input) {
+    input.value = formatMoneyInput(parseMoneyValue(input.value));
+}
+
+function setMoneyField(input, value) {
+    input.value = value === null || value === undefined ? "" : formatMoneyInput(value);
+}
+
+function setupMoneyMasks() {
+    [valorCobrado, valorReembolsado].forEach(function (field) {
+        field.addEventListener("input", function () {
+            applyMoneyMask(field);
+            updateRefundPreview();
+        });
+
+        field.addEventListener("blur", function () {
+            applyMoneyMask(field);
+        });
+    });
+}
+
+function setupRefundValueValidation() {
+    if (refundValueMessage || !valorReembolsado?.parentElement) {
+        return;
+    }
+
+    refundValueMessage = document.createElement("small");
+    refundValueMessage.className = "field-message";
+    refundValueMessage.id = "refundValueMessage";
+    valorReembolsado.parentElement.appendChild(refundValueMessage);
 }
 
 function normalizeText(value) {
@@ -318,6 +367,27 @@ function calculateFinalRefund() {
 function updateRefundPreview() {
     taxaAdmPreview.value = money(calculateTax());
     valorFinalPreview.value = money(calculateFinalRefund());
+    validateRefundValues(false);
+}
+
+function validateRefundValues(showMessage = true) {
+    const charged = numberValue(valorCobrado);
+    const reimbursed = numberValue(valorReembolsado);
+    const invalid = reimbursed > charged;
+
+    if (refundValueMessage) {
+        refundValueMessage.textContent = invalid
+            ? "O valor a ser reembolsado não pode ser maior que o valor cobrado."
+            : "";
+    }
+
+    valorReembolsado.classList.toggle("field-invalid", invalid);
+
+    if (invalid && showMessage) {
+        showToast("O valor a ser reembolsado deve ser igual ou menor que o valor cobrado.");
+    }
+
+    return !invalid;
 }
 
 async function saveRefund(event) {
@@ -357,11 +427,168 @@ async function saveRefund(event) {
     saveRefundButton.textContent = "Salvar reembolso";
 }
 
+function getSelectedRefundEmitter() {
+    if (currentProfile?.perfil === "master" && editingRefundId && refundEmitterSelect?.value) {
+        return {
+            id: refundEmitterSelect.value,
+            nome: refundEmitterSelect.selectedOptions?.[0]?.textContent?.trim() || currentProfile.nome
+        };
+    }
+
+    return {
+        id: currentUser.id,
+        nome: currentProfile.nome
+    };
+}
+
+function buildRefundPayload() {
+    const emitter = getSelectedRefundEmitter();
+
+    return {
+        data_solicitacao: dataSolicitacao.value,
+        emissor_id: editingRefundId ? emitter.id : currentUser.id,
+        cliente_id: cliente.value,
+        os: normalizeText(os.value),
+        fornecedor: normalizeText(fornecedor.value),
+        valor_total_cobrado: numberValue(valorCobrado),
+        valor_total_reembolsado: numberValue(valorReembolsado),
+        status: "PENDENTE",
+        updated_by: currentUser.id
+    };
+}
+
+function shouldIgnoreHistoryField(key) {
+    return ["updated_by", "created_by", "concluido_por", "concluido_em"].includes(key);
+}
+
+function isNumericHistoryField(key) {
+    return [
+        "valor_total_cobrado",
+        "valor_total_reembolsado",
+        "taxa_adm",
+        "valor_final_reembolso"
+    ].includes(key);
+}
+
+function normalizedHistoryValue(key, value) {
+    if (value === undefined || value === "") return null;
+
+    if (isNumericHistoryField(key)) {
+        return Number(Number(value || 0).toFixed(2));
+    }
+
+    return value;
+}
+
+function getObjectChanges(before, after) {
+    const changes = {};
+
+    Object.keys(after).forEach(function (key) {
+        if (shouldIgnoreHistoryField(key)) return;
+
+        const oldValue = normalizedHistoryValue(key, before?.[key] ?? null);
+        const newValue = normalizedHistoryValue(key, after?.[key] ?? null);
+
+        if (String(oldValue ?? "") !== String(newValue ?? "")) {
+            changes[key] = {
+                antes: oldValue,
+                depois: newValue
+            };
+        }
+    });
+
+    if (changes.status?.depois === "PENDENTE" && Object.keys(changes).length > 1) {
+        delete changes.status;
+    }
+
+    return changes;
+}
+
+async function registerHistory(moduleName, before, after, action) {
+    await supabaseClient
+        .from("solicitacoes_historico")
+        .insert({
+            modulo: moduleName,
+            solicitacao_id: String(before?.id || after?.id || ""),
+            codigo_tres: before?.codigo_tres || after?.codigo_tres || null,
+            acao: action,
+            alterado_por: currentUser.id,
+            alterado_por_nome: currentProfile.nome,
+            alteracoes: getObjectChanges(before, after),
+            antes: before || {},
+            depois: after || {}
+        });
+}
+
+async function saveRefund(event) {
+    event.preventDefault();
+
+    if (!validateRefundValues(true)) {
+        return;
+    }
+
+    saveRefundButton.disabled = true;
+    saveRefundButton.textContent = "Salvando...";
+
+    const payload = buildRefundPayload();
+    let error = null;
+
+    if (editingRefundId) {
+        payload.concluido_por = null;
+        payload.concluido_em = null;
+
+        const result = await supabaseClient
+            .from("reembolsos")
+            .update(payload)
+            .eq("id", editingRefundId);
+
+        error = result.error;
+
+        if (!error) {
+            await registerHistory(
+                "REEMBOLSOS",
+                editingRefundOriginal,
+                { ...editingRefundOriginal, ...payload },
+                "EDIÇÃO"
+            );
+        }
+    } else {
+        payload.created_by = currentUser.id;
+
+        const result = await supabaseClient
+            .from("reembolsos")
+            .insert(payload);
+
+        error = result.error;
+    }
+
+    if (error) {
+        console.error(error);
+        showToast(`Erro ao salvar: ${error.message}`);
+    } else {
+        showToast(editingRefundId ? "Reembolso atualizado e voltou para pendente." : "Reembolso salvo com sucesso.");
+        refundForm.reset();
+        resetRefundForm();
+        await loadRefunds();
+    }
+
+    saveRefundButton.disabled = false;
+    saveRefundButton.textContent = "Salvar reembolso";
+}
+
 function resetRefundForm() {
+    editingRefundId = null;
+    editingRefundOriginal = null;
     dataSolicitacao.value = todayISO();
     emissorNome.value = currentProfile.nome;
     taxaAdmPreview.value = money(0);
     valorFinalPreview.value = money(0);
+    if (refundValueMessage) {
+        refundValueMessage.textContent = "";
+    }
+    valorReembolsado.classList.remove("field-invalid");
+    saveRefundButton.textContent = "Salvar reembolso";
+    fillRefundEmitterSelect(currentUser.id);
 }
 
 async function loadRefunds() {
@@ -380,6 +607,8 @@ async function loadRefunds() {
             valor_final_reembolso,
             status,
             cliente_id,
+            created_by,
+            created_at,
             clientes:cliente_id (id, nome)
         `)
         .order("created_at", {
@@ -435,6 +664,45 @@ async function attachEmitterNames(items) {
             emissor_nome: namesById.get(item.emissor_id) || null
         };
     });
+}
+
+async function loadUsersList() {
+    const { data, error } = await supabaseClient
+        .from("usuarios")
+        .select("id, nome, email")
+        .eq("ativo", true)
+        .order("nome");
+
+    if (error) {
+        console.error(error);
+        allUsers = [];
+        return;
+    }
+
+    allUsers = data || [];
+}
+
+function setupRefundEmitterSelect() {
+    if (refundEmitterSelect || !emissorNome?.parentElement) {
+        return;
+    }
+
+    refundEmitterSelect = document.createElement("select");
+    refundEmitterSelect.id = "refundEmitterSelect";
+    refundEmitterSelect.className = "hidden";
+    emissorNome.parentElement.appendChild(refundEmitterSelect);
+}
+
+function fillRefundEmitterSelect(selectedId) {
+    if (!refundEmitterSelect) return;
+
+    refundEmitterSelect.innerHTML = allUsers.map(function (user) {
+        return `<option value="${user.id}">${user.nome || user.email || "Usuário"}</option>`;
+    }).join("");
+
+    refundEmitterSelect.value = selectedId || currentUser.id;
+    refundEmitterSelect.classList.toggle("hidden", currentProfile?.perfil !== "master" || !editingRefundId);
+    emissorNome.classList.toggle("hidden", currentProfile?.perfil === "master" && Boolean(editingRefundId));
 }
 
 function getFilteredRefunds() {
@@ -583,6 +851,22 @@ function renderRefunds() {
                 <td>
                 <div class="action-buttons">
 
+                    <button
+                        class="icon-button"
+                        data-action="edit"
+                        data-id="${item.id}"
+                        title="Editar reembolso">
+                        <i data-lucide="pencil"></i>
+                    </button>
+
+                    <button
+                        class="icon-button"
+                        data-action="history"
+                        data-id="${item.id}"
+                        title="Histórico">
+                        <i data-lucide="history"></i>
+                    </button>
+
     ${
         isAdminOrMaster() && item.status !== "CONCLUIDO"
             ? `
@@ -625,11 +909,281 @@ function renderRefunds() {
     lucide.createIcons();
 }
 
+function escapeHtml(value) {
+    return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+function editRefund(id) {
+    const item = refunds.find(function (refund) {
+        return String(refund.id) === String(id);
+    });
+
+    if (!item) {
+        showToast("Não foi possível abrir a edição.");
+        return;
+    }
+
+    editingRefundId = item.id;
+    editingRefundOriginal = { ...item };
+
+    dataSolicitacao.value = item.data_solicitacao || todayISO();
+    cliente.value = item.cliente_id || "";
+    os.value = item.os || "";
+    fornecedor.value = item.fornecedor || "";
+    setMoneyField(valorCobrado, item.valor_total_cobrado);
+    setMoneyField(valorReembolsado, item.valor_total_reembolsado);
+    updateRefundPreview();
+    fillRefundEmitterSelect(item.emissor_id);
+
+    saveRefundButton.textContent = "Salvar alterações";
+    showToast("Editando reembolso. Ao salvar, ele voltará para PENDENTE.");
+}
+
+function ensureHistoryModal() {
+    let modal = document.getElementById("historyModal");
+
+    if (modal) {
+        return modal;
+    }
+
+    modal = document.createElement("div");
+    modal.id = "historyModal";
+    modal.className = "history-backdrop hidden";
+    modal.innerHTML = `
+        <div class="history-modal">
+            <header class="history-header">
+                <div>
+                    <p class="eyebrow">Histórico</p>
+                    <h2 id="historyTitle">Histórico da solicitação</h2>
+                </div>
+                <button type="button" class="icon-button" id="historyClose" aria-label="Fechar">
+                    <i data-lucide="x"></i>
+                </button>
+            </header>
+            <div class="history-list" id="historyContent"></div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+
+    modal.addEventListener("click", function (event) {
+        if (event.target === modal || event.target.closest("#historyClose")) {
+            modal.classList.add("hidden");
+        }
+    });
+
+    return modal;
+}
+
+function friendlyHistoryField(field) {
+    const labels = {
+        emissor_id: "Emissor",
+        cliente_id: "Cliente",
+        data_solicitacao: "Data",
+        os: "OS",
+        fornecedor: "Fornecedor",
+        valor_total_cobrado: "Valor cobrado",
+        valor_total_reembolsado: "Valor reembolsado",
+        status: "Status"
+    };
+
+    return labels[field] || field;
+}
+
+function userNameById(id) {
+    const user = allUsers.find(function (item) {
+        return String(item.id) === String(id);
+    });
+
+    return user?.nome || id || "—";
+}
+
+function clientNameById(id) {
+    const option = Array.from(cliente.options).find(function (item) {
+        return String(item.value) === String(id);
+    });
+
+    return option?.textContent?.trim() || id || "—";
+}
+
+function formatHistoryValue(field, value) {
+    if (value === null || value === undefined || value === "") return "—";
+
+    if (field === "emissor_id" || field === "updated_by" || field === "created_by" || field === "concluido_por") {
+        return userNameById(value);
+    }
+
+    if (field === "cliente_id") {
+        return clientNameById(value);
+    }
+
+    if (["valor_total_cobrado", "valor_total_reembolsado", "taxa_adm", "valor_final_reembolso"].includes(field)) {
+        return money(Number(value || 0));
+    }
+
+    return String(value);
+}
+
+function formatHistoryChanges(changes) {
+    const hiddenFields = new Set([
+        "updated_by",
+        "created_by",
+        "concluido_por",
+        "concluido_em"
+    ]);
+    const entries = Object.entries(changes || {}).filter(function ([field]) {
+        return !hiddenFields.has(field);
+    });
+
+    if (entries.length === 0) {
+        return `<div class="history-value">Sem campos alterados relevantes.</div>`;
+    }
+
+    return entries.map(function ([field, change]) {
+        return `
+            <div class="history-change">
+                <div class="history-field">${escapeHtml(friendlyHistoryField(field))}</div>
+                <div class="history-value"><strong>Antes</strong>${escapeHtml(formatHistoryValue(field, change.antes))}</div>
+                <div class="history-value after"><strong>Depois</strong>${escapeHtml(formatHistoryValue(field, change.depois))}</div>
+            </div>
+        `;
+    }).join("");
+}
+
+function cleanHistoryChanges(changes) {
+    const cleaned = {};
+
+    Object.entries(changes || {}).forEach(function ([field, change]) {
+        if (shouldIgnoreHistoryField(field)) return;
+
+        const oldValue = normalizedHistoryValue(field, change?.antes ?? null);
+        const newValue = normalizedHistoryValue(field, change?.depois ?? null);
+
+        if (String(oldValue ?? "") !== String(newValue ?? "")) {
+            cleaned[field] = {
+                antes: oldValue,
+                depois: newValue
+            };
+        }
+    });
+
+    if (cleaned.status?.depois === "PENDENTE" && Object.keys(cleaned).length > 1) {
+        delete cleaned.status;
+    }
+
+    return cleaned;
+}
+
+function formatTimelineDate(value) {
+    if (!value) return "Data não informada";
+    return new Date(value).toLocaleString("pt-BR");
+}
+
+function getCreationDate(currentItem) {
+    return currentItem?.created_at || currentItem?.data_solicitacao;
+}
+
+function buildCreationEvent(currentItem) {
+    if (!currentItem) return null;
+
+    const creator = userNameById(currentItem.created_by || currentItem.emissor_id) || currentItem.emissor_nome || "Usuário";
+
+    return {
+        title: `Solicitação criada por ${creator}`,
+        meta: formatTimelineDate(getCreationDate(currentItem)),
+        changes: ""
+    };
+}
+
+function describeHistoryEvent(item) {
+    const changes = cleanHistoryChanges(item.alteracoes || {});
+    const actor = item.alterado_por_nome || "Usuário";
+    let title = `Solicitação editada por ${actor}`;
+
+    if (changes.status) {
+        title = `Status atualizado para ${formatHistoryValue("status", changes.status.depois)} por ${actor}`;
+    } else if (changes.emissor_id) {
+        title = `Emissor alterado para ${formatHistoryValue("emissor_id", changes.emissor_id.depois)} por ${actor}`;
+    }
+
+    return {
+        title,
+        meta: formatTimelineDate(item.created_at),
+        changes: formatHistoryChanges(changes)
+    };
+}
+
+function renderTimeline(events) {
+    return events.map(function (event) {
+        return `
+            <article class="history-item">
+                <span class="history-dot"></span>
+                <div class="history-card">
+                    <span class="history-item-title">${escapeHtml(event.title)}</span>
+                    <span class="history-item-meta">${escapeHtml(event.meta)}</span>
+                    ${event.changes ? `<div class="history-changes">${event.changes}</div>` : ""}
+                </div>
+            </article>
+        `;
+    }).join("");
+}
+
+async function openHistory(moduleName, id, title, currentItem = null) {
+    const modal = ensureHistoryModal();
+    const content = document.getElementById("historyContent");
+    const heading = document.getElementById("historyTitle");
+
+    heading.textContent = title || "Histórico da solicitação";
+    content.innerHTML = `<div class="history-item">Carregando histórico...</div>`;
+    modal.classList.remove("hidden");
+
+    const { data, error } = await supabaseClient
+        .from("solicitacoes_historico")
+        .select("*")
+        .eq("modulo", moduleName)
+        .eq("solicitacao_id", String(id))
+        .order("created_at", { ascending: true });
+
+    if (error) {
+        console.error(error);
+        content.innerHTML = `<div class="history-item">Erro ao carregar histórico.</div>`;
+        return;
+    }
+
+    const events = [];
+    const creationEvent = buildCreationEvent(currentItem);
+
+    if (creationEvent) {
+        events.push(creationEvent);
+    }
+
+    (data || []).forEach(function (item) {
+        events.push(describeHistoryEvent(item));
+    });
+
+    if (events.length === 0) {
+        content.innerHTML = `<div class="history-item">Nenhuma edição registrada ainda.</div>`;
+        return;
+    }
+
+    content.innerHTML = renderTimeline(events);
+
+    lucide.createIcons();
+}
+
 async function completeRefund(id) {
     if (!isAdminOrMaster()) {
         showToast("Você não tem permissão para concluir reembolsos.");
         return;
     }
+
+    const before = refunds.find(function (item) {
+        return String(item.id) === String(id);
+    });
 
     const { error } = await supabaseClient
         .from("reembolsos")
@@ -648,6 +1202,15 @@ async function completeRefund(id) {
     }
 
     showToast("Reembolso concluído.");
+    if (before) {
+        await registerHistory(
+            "REEMBOLSOS",
+            before,
+            { ...before, status: "CONCLUIDO" },
+            "STATUS"
+        );
+    }
+
     await loadRefunds();
 }
 
@@ -711,6 +1274,9 @@ async function completeSelectedRefunds() {
     }
 
     const ids = Array.from(selectedRefunds);
+    const beforeItems = refunds.filter(function (item) {
+        return ids.map(String).includes(String(item.id));
+    });
 
     const { error } = await supabaseClient
         .from("reembolsos")
@@ -726,6 +1292,15 @@ async function completeSelectedRefunds() {
         console.error(error);
         showToast("Erro ao concluir selecionados.");
         return;
+    }
+
+    for (const before of beforeItems) {
+        await registerHistory(
+            "REEMBOLSOS",
+            before,
+            { ...before, status: "CONCLUIDO" },
+            "STATUS"
+        );
     }
 
     selectedRefunds.clear();
@@ -803,9 +1378,6 @@ function setupEvents() {
         resetRefundForm();
     });
 
-    valorCobrado.addEventListener("input", updateRefundPreview);
-    valorReembolsado.addEventListener("input", updateRefundPreview);
-
     refundSearch.addEventListener("input", resetRefundPagination);
     refundStatusFilter.addEventListener("change", resetRefundPagination);
     startDate.addEventListener("change", resetRefundPagination);
@@ -875,6 +1447,16 @@ function setupEvents() {
         const id = button.dataset.id;
 
         switch (action) {
+            case "edit":
+                editRefund(id);
+                break;
+            case "history": {
+                const refund = refunds.find(function (item) {
+                    return String(item.id) === String(id);
+                });
+                await openHistory("REEMBOLSOS", id, `Histórico ${refund?.codigo_tres || ""}`, refund);
+                break;
+            }
             case "complete":
                 await completeRefund(id);
                 break;
@@ -953,6 +1535,10 @@ async function startRefundModule() {
 
     applyUserProfile(currentProfile, currentUser);
 
+    setupRefundEmitterSelect();
+    setupRefundValueValidation();
+    setupMoneyMasks();
+    await loadUsersList();
     await loadClientes();
 
     dataSolicitacao.value = todayISO();

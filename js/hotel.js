@@ -45,6 +45,10 @@ let currentProfile = null;
 let hotels = [];
 let selectedHotels = new Set();
 let hotelCurrentPage = 1;
+let editingHotelId = null;
+let editingHotelOriginal = null;
+let allUsers = [];
+let hotelEmitterSelect = null;
 
 function todayISO() {
     return new Date().toISOString().split("T")[0];
@@ -212,6 +216,10 @@ async function validateCNPJBeforeSave() {
     const duplicate = await checkDuplicateCNPJ(cnpjNumbers);
 
     if (duplicate) {
+        if (editingHotelId && String(duplicate.id) === String(editingHotelId)) {
+            return true;
+        }
+
         showError(
             `Este CNPJ já existe no sistema: ${duplicate.codigo_tres || "sem código"} - ${duplicate.nome_hotel}.`
         );
@@ -298,6 +306,189 @@ async function saveHotel(event) {
     saveHotelButton.textContent = "Salvar solicitação";
 }
 
+async function loadUsersList() {
+    const { data, error } = await supabaseClient
+        .from("usuarios")
+        .select("id, nome, email")
+        .eq("ativo", true)
+        .order("nome");
+
+    if (error) {
+        console.error(error);
+        allUsers = [];
+        return;
+    }
+
+    allUsers = data || [];
+}
+
+function setupHotelEmitterSelect() {
+    if (hotelEmitterSelect || !emissorNome?.parentElement) {
+        return;
+    }
+
+    hotelEmitterSelect = document.createElement("select");
+    hotelEmitterSelect.id = "hotelEmitterSelect";
+    hotelEmitterSelect.className = "hidden";
+    emissorNome.parentElement.appendChild(hotelEmitterSelect);
+}
+
+function fillHotelEmitterSelect(selectedId) {
+    if (!hotelEmitterSelect) return;
+
+    hotelEmitterSelect.innerHTML = allUsers.map(function (user) {
+        return `<option value="${user.id}">${escapeHtml(user.nome || user.email || "Usuário")}</option>`;
+    }).join("");
+
+    hotelEmitterSelect.value = selectedId || currentUser.id;
+    hotelEmitterSelect.classList.toggle("hidden", currentProfile?.perfil !== "master" || !editingHotelId);
+    emissorNome.classList.toggle("hidden", currentProfile?.perfil === "master" && Boolean(editingHotelId));
+}
+
+function getSelectedHotelEmitter() {
+    if (currentProfile?.perfil === "master" && editingHotelId && hotelEmitterSelect?.value) {
+        return {
+            id: hotelEmitterSelect.value,
+            nome: hotelEmitterSelect.selectedOptions?.[0]?.textContent?.trim() || currentProfile.nome
+        };
+    }
+
+    return {
+        id: currentUser.id,
+        nome: currentProfile.nome
+    };
+}
+
+function buildHotelPayload() {
+    const emitter = getSelectedHotelEmitter();
+
+    return {
+        data_solicitacao: dataSolicitacao.value,
+        emissor_id: editingHotelId ? emitter.id : currentUser.id,
+        emissor_nome: editingHotelId ? emitter.nome : currentProfile.nome,
+        nome_hotel: normalizeText(nomeHotel.value),
+        rua_numero: normalizeText(ruaNumero.value),
+        bairro: normalizeText(bairro.value),
+        cidade_estado: normalizeText(cidadeEstado.value),
+        pais: normalizeText(pais.value),
+        tipo: tipoHotel.value,
+        cnpj: tipoHotel.value === "NACIONAL" ? onlyNumbers(cnpj.value) : null,
+        status: "PENDENTE",
+        updated_by: currentUser.id
+    };
+}
+
+function shouldIgnoreHistoryField(key) {
+    return ["updated_by", "created_by", "concluido_por", "concluido_em", "concluido_por_nome"].includes(key);
+}
+
+function normalizedHistoryValue(key, value) {
+    if (value === undefined || value === "") return null;
+    return value;
+}
+
+function getObjectChanges(before, after) {
+    const changes = {};
+
+    Object.keys(after).forEach(function (key) {
+        if (shouldIgnoreHistoryField(key)) return;
+
+        const oldValue = normalizedHistoryValue(key, before?.[key] ?? null);
+        const newValue = normalizedHistoryValue(key, after?.[key] ?? null);
+
+        if (String(oldValue ?? "") !== String(newValue ?? "")) {
+            changes[key] = {
+                antes: oldValue,
+                depois: newValue
+            };
+        }
+    });
+
+    if (changes.status?.depois === "PENDENTE" && Object.keys(changes).length > 1) {
+        delete changes.status;
+    }
+
+    return changes;
+}
+
+async function registerHistory(moduleName, before, after, action) {
+    await supabaseClient
+        .from("solicitacoes_historico")
+        .insert({
+            modulo: moduleName,
+            solicitacao_id: String(before?.id || after?.id || ""),
+            codigo_tres: before?.codigo_tres || after?.codigo_tres || null,
+            acao: action,
+            alterado_por: currentUser.id,
+            alterado_por_nome: currentProfile.nome,
+            alteracoes: getObjectChanges(before, after),
+            antes: before || {},
+            depois: after || {}
+        });
+}
+
+async function saveHotel(event) {
+    event.preventDefault();
+
+    saveHotelButton.disabled = true;
+    saveHotelButton.textContent = "Salvando...";
+
+    const validCNPJ = await validateCNPJBeforeSave();
+
+    if (!validCNPJ) {
+        saveHotelButton.disabled = false;
+        saveHotelButton.textContent = editingHotelId ? "Salvar alterações" : "Salvar solicitação";
+        return;
+    }
+
+    const payload = buildHotelPayload();
+    let error = null;
+
+    if (editingHotelId) {
+        payload.concluido_por = null;
+        payload.concluido_por_nome = null;
+        payload.concluido_em = null;
+
+        const result = await supabaseClient
+            .from("solicitacoes_hotel")
+            .update(payload)
+            .eq("id", editingHotelId);
+
+        error = result.error;
+
+        if (!error) {
+            await registerHistory(
+                "HOTEIS",
+                editingHotelOriginal,
+                { ...editingHotelOriginal, ...payload },
+                "EDIÇÃO"
+            );
+        }
+    } else {
+        payload.codigo_tres = await generateHotelCode();
+        payload.created_by = currentUser.id;
+
+        const result = await supabaseClient
+            .from("solicitacoes_hotel")
+            .insert(payload);
+
+        error = result.error;
+    }
+
+    if (error) {
+        console.error(error);
+        showToast("Erro ao salvar solicitação.");
+    } else {
+        showToast(editingHotelId ? "Solicitação atualizada e voltou para pendente." : "Solicitação cadastrada com sucesso.");
+        hotelForm.reset();
+        resetHotelForm();
+        await loadHotels();
+    }
+
+    saveHotelButton.disabled = false;
+    saveHotelButton.textContent = "Salvar solicitação";
+}
+
 async function loadHotels() {
     const { data, error } = await supabaseClient
         .from("solicitacoes_hotel")
@@ -318,6 +509,7 @@ async function loadHotels() {
             emissor_nome,
             concluido_por_nome,
             concluido_em,
+            created_by,
             created_at
         `)
         .order("created_at", {
@@ -539,6 +731,265 @@ function openHotelDetails(id) {
     hotelDetailClose.focus();
 }
 
+function editHotel(id) {
+    const hotel = hotels.find(function (item) {
+        return String(item.id) === String(id);
+    });
+
+    if (!hotel) {
+        showToast("Não foi possível abrir a edição.");
+        return;
+    }
+
+    editingHotelId = hotel.id;
+    editingHotelOriginal = { ...hotel };
+
+    dataSolicitacao.value = hotel.data_solicitacao || todayISO();
+    nomeHotel.value = hotel.nome_hotel || "";
+    ruaNumero.value = hotel.rua_numero || "";
+    bairro.value = hotel.bairro || "";
+    cidadeEstado.value = hotel.cidade_estado || "";
+    pais.value = hotel.pais || "";
+    tipoHotel.value = hotel.tipo || "NACIONAL";
+    cnpj.value = hotel.cnpj ? formatCNPJ(hotel.cnpj) : "";
+    fillHotelEmitterSelect(hotel.emissor_id);
+    handleTipoChange();
+
+    tabButtons.forEach(function (button) {
+        if (button.dataset.tab === "newHotel") {
+            button.click();
+        }
+    });
+
+    saveHotelButton.textContent = "Salvar alterações";
+    showToast("Editando hotel. Ao salvar, ele voltará para PENDENTE.");
+}
+
+function ensureHistoryModal() {
+    let modal = document.getElementById("historyModal");
+
+    if (modal) {
+        return modal;
+    }
+
+    modal = document.createElement("div");
+    modal.id = "historyModal";
+    modal.className = "history-backdrop hidden";
+    modal.innerHTML = `
+        <div class="history-modal">
+            <header class="history-header">
+                <div>
+                    <p class="eyebrow">Histórico</p>
+                    <h2 id="historyTitle">Histórico da solicitação</h2>
+                </div>
+                <button type="button" class="icon-button" id="historyClose" aria-label="Fechar">
+                    <i data-lucide="x"></i>
+                </button>
+            </header>
+            <div class="history-list" id="historyContent"></div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+
+    modal.addEventListener("click", function (event) {
+        if (event.target === modal || event.target.closest("#historyClose")) {
+            modal.classList.add("hidden");
+        }
+    });
+
+    return modal;
+}
+
+function friendlyHistoryField(field) {
+    const labels = {
+        emissor_id: "Emissor",
+        emissor_nome: "Nome do emissor",
+        data_solicitacao: "Data",
+        nome_hotel: "Nome do hotel",
+        rua_numero: "Rua e número",
+        bairro: "Bairro",
+        cidade_estado: "Cidade / Estado",
+        pais: "País",
+        tipo: "Tipo",
+        cnpj: "CNPJ",
+        codigo_integracao: "Cód. integração",
+        status: "Status"
+    };
+
+    return labels[field] || field;
+}
+
+function userNameById(id) {
+    const user = allUsers.find(function (item) {
+        return String(item.id) === String(id);
+    });
+
+    return user?.nome || id || "—";
+}
+
+function formatHistoryValue(field, value) {
+    if (value === null || value === undefined || value === "") return "—";
+
+    if (field === "emissor_id" || field === "updated_by" || field === "created_by" || field === "concluido_por") {
+        return userNameById(value);
+    }
+
+    if (field === "cnpj") {
+        return formatCNPJ(value);
+    }
+
+    return String(value);
+}
+
+function formatHistoryChanges(changes) {
+    const hiddenFields = new Set([
+        "updated_by",
+        "created_by",
+        "concluido_por",
+        "concluido_em",
+        "concluido_por_nome"
+    ]);
+    const entries = Object.entries(changes || {}).filter(function ([field]) {
+        return !hiddenFields.has(field);
+    });
+
+    if (entries.length === 0) {
+        return `<div class="history-value">Sem campos alterados relevantes.</div>`;
+    }
+
+    return entries.map(function ([field, change]) {
+        return `
+            <div class="history-change">
+                <div class="history-field">${escapeHtml(friendlyHistoryField(field))}</div>
+                <div class="history-value"><strong>Antes</strong>${escapeHtml(formatHistoryValue(field, change.antes))}</div>
+                <div class="history-value after"><strong>Depois</strong>${escapeHtml(formatHistoryValue(field, change.depois))}</div>
+            </div>
+        `;
+    }).join("");
+}
+
+function cleanHistoryChanges(changes) {
+    const cleaned = {};
+
+    Object.entries(changes || {}).forEach(function ([field, change]) {
+        if (shouldIgnoreHistoryField(field)) return;
+
+        const oldValue = normalizedHistoryValue(field, change?.antes ?? null);
+        const newValue = normalizedHistoryValue(field, change?.depois ?? null);
+
+        if (String(oldValue ?? "") !== String(newValue ?? "")) {
+            cleaned[field] = {
+                antes: oldValue,
+                depois: newValue
+            };
+        }
+    });
+
+    if (cleaned.status?.depois === "PENDENTE" && Object.keys(cleaned).length > 1) {
+        delete cleaned.status;
+    }
+
+    return cleaned;
+}
+
+function formatTimelineDate(value) {
+    if (!value) return "Data não informada";
+    return new Date(value).toLocaleString("pt-BR");
+}
+
+function getCreationDate(currentItem) {
+    return currentItem?.created_at || currentItem?.data_solicitacao;
+}
+
+function buildCreationEvent(currentItem) {
+    if (!currentItem) return null;
+
+    const creator = currentItem.emissor_nome || userNameById(currentItem.created_by || currentItem.emissor_id) || "Usuário";
+
+    return {
+        title: `Solicitação criada por ${creator}`,
+        meta: formatTimelineDate(getCreationDate(currentItem)),
+        changes: ""
+    };
+}
+
+function describeHistoryEvent(item) {
+    const changes = cleanHistoryChanges(item.alteracoes || {});
+    const actor = item.alterado_por_nome || "Usuário";
+    let title = `Solicitação editada por ${actor}`;
+
+    if (changes.status) {
+        title = `Status atualizado para ${formatHistoryValue("status", changes.status.depois)} por ${actor}`;
+    } else if (changes.emissor_id || changes.emissor_nome) {
+        const emitterName = changes.emissor_nome?.depois || formatHistoryValue("emissor_id", changes.emissor_id?.depois);
+        title = `Emissor alterado para ${emitterName} por ${actor}`;
+    }
+
+    return {
+        title,
+        meta: formatTimelineDate(item.created_at),
+        changes: formatHistoryChanges(changes)
+    };
+}
+
+function renderTimeline(events) {
+    return events.map(function (event) {
+        return `
+            <article class="history-item">
+                <span class="history-dot"></span>
+                <div class="history-card">
+                    <span class="history-item-title">${escapeHtml(event.title)}</span>
+                    <span class="history-item-meta">${escapeHtml(event.meta)}</span>
+                    ${event.changes ? `<div class="history-changes">${event.changes}</div>` : ""}
+                </div>
+            </article>
+        `;
+    }).join("");
+}
+
+async function openHistory(moduleName, id, title, currentItem = null) {
+    const modal = ensureHistoryModal();
+    const content = document.getElementById("historyContent");
+    const heading = document.getElementById("historyTitle");
+
+    heading.textContent = title || "Histórico da solicitação";
+    content.innerHTML = `<div class="history-item">Carregando histórico...</div>`;
+    modal.classList.remove("hidden");
+
+    const { data, error } = await supabaseClient
+        .from("solicitacoes_historico")
+        .select("*")
+        .eq("modulo", moduleName)
+        .eq("solicitacao_id", String(id))
+        .order("created_at", { ascending: true });
+
+    if (error) {
+        console.error(error);
+        content.innerHTML = `<div class="history-item">Erro ao carregar histórico.</div>`;
+        return;
+    }
+
+    const events = [];
+    const creationEvent = buildCreationEvent(currentItem);
+
+    if (creationEvent) {
+        events.push(creationEvent);
+    }
+
+    (data || []).forEach(function (item) {
+        events.push(describeHistoryEvent(item));
+    });
+
+    if (events.length === 0) {
+        content.innerHTML = `<div class="history-item">Nenhuma edição registrada ainda.</div>`;
+        return;
+    }
+
+    content.innerHTML = renderTimeline(events);
+
+    lucide.createIcons();
+}
+
 function renderHotels() {
 
     const filteredHotels = getFilteredHotels();
@@ -630,6 +1081,26 @@ function renderHotels() {
 
                     </button>
 
+                    <button
+                        class="icon-button"
+                        data-action="edit"
+                        data-id="${hotel.id}"
+                        title="Editar solicitação">
+
+                        <i data-lucide="pencil"></i>
+
+                    </button>
+
+                    <button
+                        class="icon-button"
+                        data-action="history"
+                        data-id="${hotel.id}"
+                        title="Histórico">
+
+                        <i data-lucide="history"></i>
+
+                    </button>
+
                     ${
                         isAdminOrMaster()
 
@@ -691,6 +1162,9 @@ function renderHotels() {
 }
 
 async function updateHotelStatus(id, status) {
+    const before = hotels.find(function (item) {
+        return String(item.id) === String(id);
+    });
 
     const { error } = await supabaseClient
         .from("solicitacoes_hotel")
@@ -712,6 +1186,15 @@ async function updateHotelStatus(id, status) {
 
         return;
 
+    }
+
+    if (before) {
+        await registerHistory(
+            "HOTEIS",
+            before,
+            { ...before, status },
+            "STATUS"
+        );
     }
 
     showToast("Status atualizado.");
@@ -744,20 +1227,25 @@ async function duplicateHotel(id) {
 
 }
 
+function resetHotelForm() {
+    editingHotelId = null;
+    editingHotelOriginal = null;
+    hotelForm.reset();
+    dataSolicitacao.value = todayISO();
+    emissorNome.value = currentProfile.nome;
+    pais.value = "Brasil";
+    tipoHotel.value = "NACIONAL";
+    saveHotelButton.textContent = "Salvar solicitação";
+    fillHotelEmitterSelect(currentUser.id);
+    handleTipoChange();
+}
+
 hotelForm.addEventListener("submit", saveHotel);
 
 tipoHotel.addEventListener("change", handleTipoChange);
 
 clearHotelForm.addEventListener("click", function () {
-
-    hotelForm.reset();
-
-    dataSolicitacao.value = todayISO();
-    emissorNome.value = currentProfile.nome;
-    pais.value = "Brasil";
-    tipoHotel.value = "NACIONAL";
-
-    handleTipoChange();
+    resetHotelForm();
 
 });
 
@@ -815,6 +1303,23 @@ hotelTableBody.addEventListener("click", async function (event) {
             openHotelDetails(id);
 
             break;
+
+        case "edit":
+
+            editHotel(id);
+
+            break;
+
+        case "history": {
+
+            const hotel = hotels.find(function (item) {
+                return String(item.id) === String(id);
+            });
+
+            await openHistory("HOTEIS", id, `Histórico ${hotel?.codigo_tres || ""}`, hotel);
+
+            break;
+        }
 
         case "complete":
 
@@ -894,6 +1399,8 @@ async function start() {
 
     dataSolicitacao.value = todayISO();
 
+    setupHotelEmitterSelect();
+    await loadUsersList();
     handleTipoChange();
 
     setupTabs();

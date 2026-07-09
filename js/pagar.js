@@ -78,6 +78,7 @@ const saveFinanceButton = document.getElementById("saveFinanceButton");
 
 const financeSearch = document.getElementById("financeSearch");
 const financeStatusFilter = document.getElementById("financeStatusFilter");
+const financeClientFilter = document.getElementById("financeClientFilter");
 const financeServiceFilter = document.getElementById("financeServiceFilter");
 const financeTableBody = document.getElementById("financeTableBody");
 const selectAllFinance = document.getElementById("selectAllFinance");
@@ -101,6 +102,9 @@ let selectedSubtype = "AEREO";
 let lancamentos = [];
 let selectedLancamentos = new Set();
 let financeCurrentPage = 1;
+let editingFinanceId = null;
+let editingFinanceOriginal = null;
+let allUsers = [];
 
 function todayISO() {
     return new Date().toISOString().split("T")[0];
@@ -120,7 +124,36 @@ function normalizeText(value) {
 }
 
 function numberValue(input) {
-    return Number(input.value || 0);
+    return parseMoneyValue(input.value);
+}
+
+function parseMoneyValue(value) {
+    const numbers = String(value || "").replace(/\D/g, "");
+    return numbers ? Number(numbers) / 100 : 0;
+}
+
+function formatMoneyInput(value) {
+    return Number(value || 0).toLocaleString("pt-BR", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
+}
+
+function applyMoneyMask(input) {
+    input.value = formatMoneyInput(parseMoneyValue(input.value));
+}
+
+function setupMoneyMasks() {
+    [tarifa, taxaEmbarque, rc, overPercent, diaria, valorPeriodo, taxasValor].forEach(function (field) {
+        field.addEventListener("input", function () {
+            applyMoneyMask(field);
+            updateTotalPreview();
+        });
+
+        field.addEventListener("blur", function () {
+            applyMoneyMask(field);
+        });
+    });
 }
 
 function showToast(message) {
@@ -192,13 +225,41 @@ async function loadClientes() {
 
     cliente.innerHTML = `<option value="">Selecione</option>`;
 
+    if (financeClientFilter) {
+        financeClientFilter.innerHTML = `<option value="">Todos os clientes</option>`;
+    }
+
     data.forEach(function (item) {
         cliente.innerHTML += `
             <option value="${item.id}">
                 ${item.nome}
             </option>
         `;
+
+        if (financeClientFilter) {
+            financeClientFilter.innerHTML += `
+                <option value="${item.id}">
+                    ${item.nome}
+                </option>
+            `;
+        }
     });
+}
+
+async function loadUsersList() {
+    const { data, error } = await supabaseClient
+        .from("usuarios")
+        .select("id, nome, email")
+        .eq("ativo", true)
+        .order("nome");
+
+    if (error) {
+        console.error(error);
+        allUsers = [];
+        return;
+    }
+
+    allUsers = data || [];
 }
 
 function hideAllDynamicFields() {
@@ -467,7 +528,212 @@ const payload = {
     saveFinanceButton.textContent = "Salvar lançamento";
 }
 
+let financeEmitterSelect = null;
+
+function setupFinanceEmitterSelect() {
+    if (financeEmitterSelect || !emissorNome?.parentElement) {
+        return;
+    }
+
+    financeEmitterSelect = document.createElement("select");
+    financeEmitterSelect.id = "financeEmitterSelect";
+    financeEmitterSelect.className = "hidden";
+    emissorNome.parentElement.appendChild(financeEmitterSelect);
+}
+
+function fillFinanceEmitterSelect(selectedId) {
+    if (!financeEmitterSelect) return;
+
+    financeEmitterSelect.innerHTML = allUsers.map(function (user) {
+        return `<option value="${user.id}">${escapeHtml(user.nome || user.email || "Usuário")}</option>`;
+    }).join("");
+
+    financeEmitterSelect.value = selectedId || currentUser.id;
+    financeEmitterSelect.classList.toggle("hidden", currentProfile?.perfil !== "master" || !editingFinanceId);
+    emissorNome.classList.toggle("hidden", currentProfile?.perfil === "master" && Boolean(editingFinanceId));
+}
+
+function getSelectedFinanceEmitter() {
+    if (currentProfile?.perfil === "master" && editingFinanceId && financeEmitterSelect?.value) {
+        return {
+            id: financeEmitterSelect.value,
+            nome: financeEmitterSelect.selectedOptions?.[0]?.textContent?.trim() || currentProfile.nome
+        };
+    }
+
+    return {
+        id: currentUser.id,
+        nome: currentProfile.nome
+    };
+}
+
+function buildFinancePayload() {
+    const selectedService = servico.value;
+    const isAirService = selectedService === "AEREO";
+    const isHotelService = selectedService === "HOTEL";
+    const finalService = isAirService ? selectedSubtype : selectedService;
+    const emitter = getSelectedFinanceEmitter();
+
+    return {
+        data_lancamento: dataLancamento.value,
+        emissor_id: editingFinanceId ? emitter.id : currentUser.id,
+        tipo: tipoLancamento.value,
+        os: normalizeText(os.value),
+        cliente_id: cliente.value,
+        servico: finalService,
+        subtipo: isAirService ? selectedSubtype : null,
+        outro_servico: selectedService === "OUTROS" ? normalizeText(outroServico.value) : null,
+        consolidador: isAirService ? consolidador.value || null : null,
+        fornecedor: normalizeText(fornecedor.value),
+        localizador: isAirService ? normalizeText(localizador.value) || null : null,
+        bilhete: isAirService ? normalizeText(bilhete.value) || null : null,
+        moeda: isAirService ? moedaPreview.value : "BRL",
+        tarifa: isAirService ? numberValue(tarifa) || null : null,
+        taxa_embarque: isAirService ? numberValue(taxaEmbarque) || null : null,
+        rc: isAirService ? numberValue(rc) || null : null,
+        over_percent: isAirService ? numberValue(overPercent) || null : null,
+        cambio: null,
+        diaria: isHotelService ? numberValue(diaria) || null : null,
+        valor_periodo: !isAirService && !isHotelService ? numberValue(valorPeriodo) || null : null,
+        taxas_tipo: !isAirService ? taxasTipo.value || null : null,
+        taxas_valor: !isAirService ? numberValue(taxasValor) || null : null,
+        checkin: isHotelService ? checkin.value || null : null,
+        checkout: isHotelService ? checkout.value || null : null,
+        quantidade_diarias: isHotelService ? getQuantidadeDiarias() || null : null,
+        total: calculateTotal(),
+        total_final: calculateTotal(),
+        status: "PENDENTE",
+        updated_by: currentUser.id
+    };
+}
+
+function shouldIgnoreHistoryField(key) {
+    return ["updated_by", "created_by", "concluido_por", "concluido_em"].includes(key);
+}
+
+function isNumericHistoryField(key) {
+    return [
+        "tarifa",
+        "taxa_embarque",
+        "rc",
+        "over_percent",
+        "cambio",
+        "diaria",
+        "valor_periodo",
+        "taxas_valor",
+        "quantidade_diarias",
+        "total",
+        "total_final"
+    ].includes(key);
+}
+
+function normalizedHistoryValue(key, value) {
+    if (value === undefined || value === "") return null;
+
+    if (isNumericHistoryField(key)) {
+        return Number(Number(value || 0).toFixed(2));
+    }
+
+    return value;
+}
+
+function getObjectChanges(before, after) {
+    const changes = {};
+
+    Object.keys(after).forEach(function (key) {
+        if (shouldIgnoreHistoryField(key)) return;
+
+        const oldValue = normalizedHistoryValue(key, before?.[key] ?? null);
+        const newValue = normalizedHistoryValue(key, after?.[key] ?? null);
+
+        if (String(oldValue ?? "") !== String(newValue ?? "")) {
+            changes[key] = {
+                antes: oldValue,
+                depois: newValue
+            };
+        }
+    });
+
+    if (changes.status?.depois === "PENDENTE" && Object.keys(changes).length > 1) {
+        delete changes.status;
+    }
+
+    return changes;
+}
+
+async function registerHistory(moduleName, before, after, action) {
+    await supabaseClient
+        .from("solicitacoes_historico")
+        .insert({
+            modulo: moduleName,
+            solicitacao_id: String(before?.id || after?.id || ""),
+            codigo_tres: before?.codigo_tres || after?.codigo_tres || null,
+            acao: action,
+            alterado_por: currentUser.id,
+            alterado_por_nome: currentProfile.nome,
+            alteracoes: getObjectChanges(before, after),
+            antes: before || {},
+            depois: after || {}
+        });
+}
+
+async function saveFinance(event) {
+    event.preventDefault();
+
+    saveFinanceButton.disabled = true;
+    saveFinanceButton.textContent = "Salvando...";
+
+    const payload = buildFinancePayload();
+    let error = null;
+
+    if (editingFinanceId) {
+        payload.concluido_por = null;
+        payload.concluido_em = null;
+
+        const result = await supabaseClient
+            .from("lancamentos")
+            .update(payload)
+            .eq("id", editingFinanceId);
+
+        error = result.error;
+
+        if (!error) {
+            await registerHistory(
+                "VALORES_A_PAGAR",
+                editingFinanceOriginal,
+                { ...editingFinanceOriginal, ...payload },
+                "EDIÇÃO"
+            );
+        }
+    } else {
+        payload.created_by = currentUser.id;
+
+        const result = await supabaseClient
+            .from("lancamentos")
+            .insert(payload)
+            .select("id")
+            .single();
+
+        error = result.error;
+    }
+
+    if (error) {
+        console.error(error);
+        showToast(`Erro ao salvar: ${error.message}`);
+    } else {
+        showToast(editingFinanceId ? "Lançamento atualizado e voltou para pendente." : "Lançamento salvo com sucesso.");
+        financeForm.reset();
+        resetFinanceForm();
+        await loadLancamentos();
+    }
+
+    saveFinanceButton.disabled = false;
+    saveFinanceButton.textContent = "Salvar lançamento";
+}
+
 function resetFinanceForm() {
+    editingFinanceId = null;
+    editingFinanceOriginal = null;
     dataLancamento.value = todayISO();
     emissorNome.value = currentProfile.nome;
     tipoLancamento.value = "NACIONAL";
@@ -484,6 +750,8 @@ function resetFinanceForm() {
     hideAllDynamicFields();
     totalPreview.value = "R$ 0,00";
     moedaPreview.value = "BRL";
+    saveFinanceButton.textContent = "Salvar lançamento";
+    fillFinanceEmitterSelect(currentUser.id);
 }
 
 async function loadLancamentos() {
@@ -496,6 +764,7 @@ async function loadLancamentos() {
             emissor_id,
             tipo,
             os,
+            cliente_id,
             servico,
             subtipo,
             outro_servico,
@@ -519,6 +788,8 @@ async function loadLancamentos() {
             total_final,
             moeda,
             status,
+            created_by,
+            created_at,
             clientes:cliente_id (nome)
         `)
         .order("created_at", {
@@ -579,6 +850,7 @@ async function attachEmitterNames(items) {
 function getFilteredLancamentos() {
     const search = normalizeText(financeSearch.value);
     const status = financeStatusFilter.value;
+    const client = financeClientFilter?.value || "";
     const service = financeServiceFilter.value;
 
     return lancamentos.filter(function (item) {
@@ -589,9 +861,10 @@ function getFilteredLancamentos() {
             normalizeText(item.servico).includes(search);
 
         const matchStatus = !status || item.status === status;
+        const matchClient = !client || String(item.cliente_id) === String(client);
         const matchService = !service || item.servico === service;
 
-        return matchSearch && matchStatus && matchService;
+        return matchSearch && matchStatus && matchClient && matchService;
     });
 }
 
@@ -784,6 +1057,333 @@ function openFinanceDetails(id) {
     financeDetailClose.focus();
 }
 
+function setMoneyField(input, value) {
+    input.value = value === null || value === undefined ? "" : formatMoneyInput(value);
+}
+
+function editFinance(id) {
+    const item = lancamentos.find(function (lancamento) {
+        return String(lancamento.id) === String(id);
+    });
+
+    if (!item) {
+        showToast("Não foi possível abrir a edição.");
+        return;
+    }
+
+    editingFinanceId = item.id;
+    editingFinanceOriginal = { ...item };
+
+    dataLancamento.value = item.data_lancamento || todayISO();
+    tipoLancamento.value = item.tipo || "NACIONAL";
+    os.value = item.os || "";
+    cliente.value = item.cliente_id || "";
+
+    if (["AEREO", "ASSENTO", "BAGAGEM EXTRA"].includes(item.servico)) {
+        servico.value = "AEREO";
+        selectedSubtype = item.servico || item.subtipo || "AEREO";
+    } else {
+        servico.value = item.servico || "";
+        selectedSubtype = "AEREO";
+    }
+
+    choiceButtons.forEach(function (button) {
+        button.classList.toggle("active", button.dataset.subtipo === selectedSubtype);
+    });
+
+    handleServiceChange();
+
+    outroServico.value = item.outro_servico || "";
+    consolidador.value = item.consolidador || "";
+    fornecedor.value = item.fornecedor || "";
+    localizador.value = item.localizador || "";
+    bilhete.value = item.bilhete || "";
+    setMoneyField(tarifa, item.tarifa);
+    setMoneyField(taxaEmbarque, item.taxa_embarque);
+    setMoneyField(rc, item.rc);
+    setMoneyField(overPercent, item.over_percent);
+    setMoneyField(diaria, item.diaria);
+    setMoneyField(valorPeriodo, item.valor_periodo);
+    taxasTipo.value = item.taxas_tipo || "R$";
+    setMoneyField(taxasValor, item.taxas_valor);
+    checkin.value = item.checkin || "";
+    checkout.value = item.checkout || "";
+
+    handleServiceChange();
+    updateTotalPreview();
+    fillFinanceEmitterSelect(item.emissor_id);
+
+    tabButtons.forEach(function (button) {
+        if (button.dataset.tab === "newFinance") {
+            button.click();
+        }
+    });
+
+    saveFinanceButton.textContent = "Salvar alterações";
+    showToast("Editando lançamento. Ao salvar, ele voltará para PENDENTE.");
+}
+
+function ensureHistoryModal() {
+    let modal = document.getElementById("historyModal");
+
+    if (modal) {
+        return modal;
+    }
+
+    modal = document.createElement("div");
+    modal.id = "historyModal";
+    modal.className = "history-backdrop hidden";
+    modal.innerHTML = `
+        <div class="history-modal">
+            <header class="history-header">
+                <div>
+                    <p class="eyebrow">Histórico</p>
+                    <h2 id="historyTitle">Histórico da solicitação</h2>
+                </div>
+                <button type="button" class="icon-button" id="historyClose" aria-label="Fechar">
+                    <i data-lucide="x"></i>
+                </button>
+            </header>
+            <div class="history-list" id="historyContent"></div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+
+    modal.addEventListener("click", function (event) {
+        if (event.target === modal || event.target.closest("#historyClose")) {
+            modal.classList.add("hidden");
+        }
+    });
+
+    return modal;
+}
+
+function friendlyHistoryField(field) {
+    const labels = {
+        emissor_id: "Emissor",
+        cliente_id: "Cliente",
+        data_lancamento: "Data",
+        os: "OS",
+        servico: "Serviço",
+        subtipo: "Classificação",
+        fornecedor: "Fornecedor",
+        localizador: "Localizador",
+        bilhete: "Bilhete",
+        tarifa: "Tarifa",
+        taxa_embarque: "Taxa de embarque",
+        rc: "RC",
+        over_percent: "Over",
+        diaria: "Diária",
+        valor_periodo: "Valor do período",
+        taxas_tipo: "Tipo da taxa",
+        taxas_valor: "Taxa",
+        checkin: "Check-in",
+        checkout: "Check-out",
+        quantidade_diarias: "Diárias",
+        total: "Total",
+        total_final: "Total final",
+        status: "Status"
+    };
+
+    return labels[field] || field;
+}
+
+function userNameById(id) {
+    const user = allUsers.find(function (item) {
+        return String(item.id) === String(id);
+    });
+
+    return user?.nome || id || "—";
+}
+
+function clientNameById(id) {
+    const option = Array.from(cliente.options).find(function (item) {
+        return String(item.value) === String(id);
+    });
+
+    return option?.textContent?.trim() || id || "—";
+}
+
+function formatHistoryValue(field, value) {
+    if (value === null || value === undefined || value === "") return "—";
+
+    if (field === "emissor_id" || field === "updated_by" || field === "created_by" || field === "concluido_por") {
+        return userNameById(value);
+    }
+
+    if (field === "cliente_id") {
+        return clientNameById(value);
+    }
+
+    if ([
+        "tarifa",
+        "taxa_embarque",
+        "rc",
+        "diaria",
+        "valor_periodo",
+        "taxas_valor",
+        "total",
+        "total_final"
+    ].includes(field)) {
+        return money(Number(value || 0));
+    }
+
+    if (field === "over_percent") {
+        return `${Number(value || 0).toLocaleString("pt-BR", { maximumFractionDigits: 2 })}%`;
+    }
+
+    return String(value);
+}
+
+function formatHistoryChanges(changes) {
+    const hiddenFields = new Set([
+        "updated_by",
+        "created_by",
+        "concluido_por",
+        "concluido_em",
+        "concluido_por_nome",
+        "cambio"
+    ]);
+    const entries = Object.entries(changes || {}).filter(function ([field]) {
+        return !hiddenFields.has(field);
+    });
+
+    if (entries.length === 0) {
+        return `<div class="history-value">Sem campos alterados relevantes.</div>`;
+    }
+
+    return entries.map(function ([field, change]) {
+        return `
+            <div class="history-change">
+                <div class="history-field">${escapeHtml(friendlyHistoryField(field))}</div>
+                <div class="history-value"><strong>Antes</strong>${escapeHtml(formatHistoryValue(field, change.antes))}</div>
+                <div class="history-value after"><strong>Depois</strong>${escapeHtml(formatHistoryValue(field, change.depois))}</div>
+            </div>
+        `;
+    }).join("");
+}
+
+function cleanHistoryChanges(changes) {
+    const cleaned = {};
+
+    Object.entries(changes || {}).forEach(function ([field, change]) {
+        if (shouldIgnoreHistoryField(field)) return;
+
+        const oldValue = normalizedHistoryValue(field, change?.antes ?? null);
+        const newValue = normalizedHistoryValue(field, change?.depois ?? null);
+
+        if (String(oldValue ?? "") !== String(newValue ?? "")) {
+            cleaned[field] = {
+                antes: oldValue,
+                depois: newValue
+            };
+        }
+    });
+
+    if (cleaned.status?.depois === "PENDENTE" && Object.keys(cleaned).length > 1) {
+        delete cleaned.status;
+    }
+
+    return cleaned;
+}
+
+function formatTimelineDate(value) {
+    if (!value) return "Data não informada";
+    return new Date(value).toLocaleString("pt-BR");
+}
+
+function getCreationDate(currentItem) {
+    return currentItem?.created_at || currentItem?.data_lancamento;
+}
+
+function buildCreationEvent(currentItem) {
+    if (!currentItem) return null;
+
+    const creator = userNameById(currentItem.created_by || currentItem.emissor_id) || currentItem.emissor_nome || "Usuário";
+
+    return {
+        title: `Solicitação criada por ${creator}`,
+        meta: formatTimelineDate(getCreationDate(currentItem)),
+        changes: ""
+    };
+}
+
+function describeHistoryEvent(item) {
+    const changes = cleanHistoryChanges(item.alteracoes || {});
+    const actor = item.alterado_por_nome || "Usuário";
+    let title = `Solicitação editada por ${actor}`;
+
+    if (changes.status) {
+        title = `Status atualizado para ${formatHistoryValue("status", changes.status.depois)} por ${actor}`;
+    } else if (changes.emissor_id) {
+        title = `Emissor alterado para ${formatHistoryValue("emissor_id", changes.emissor_id.depois)} por ${actor}`;
+    }
+
+    return {
+        title,
+        meta: formatTimelineDate(item.created_at),
+        changes: formatHistoryChanges(changes)
+    };
+}
+
+function renderTimeline(events) {
+    return events.map(function (event) {
+        return `
+            <article class="history-item">
+                <span class="history-dot"></span>
+                <div class="history-card">
+                    <span class="history-item-title">${escapeHtml(event.title)}</span>
+                    <span class="history-item-meta">${escapeHtml(event.meta)}</span>
+                    ${event.changes ? `<div class="history-changes">${event.changes}</div>` : ""}
+                </div>
+            </article>
+        `;
+    }).join("");
+}
+
+async function openHistory(moduleName, id, title, currentItem = null) {
+    const modal = ensureHistoryModal();
+    const content = document.getElementById("historyContent");
+    const heading = document.getElementById("historyTitle");
+
+    heading.textContent = title || "Histórico da solicitação";
+    content.innerHTML = `<div class="history-item">Carregando histórico...</div>`;
+    modal.classList.remove("hidden");
+
+    const { data, error } = await supabaseClient
+        .from("solicitacoes_historico")
+        .select("*")
+        .eq("modulo", moduleName)
+        .eq("solicitacao_id", String(id))
+        .order("created_at", { ascending: true });
+
+    if (error) {
+        console.error(error);
+        content.innerHTML = `<div class="history-item">Erro ao carregar histórico.</div>`;
+        return;
+    }
+
+    const events = [];
+    const creationEvent = buildCreationEvent(currentItem);
+
+    if (creationEvent) {
+        events.push(creationEvent);
+    }
+
+    (data || []).forEach(function (item) {
+        events.push(describeHistoryEvent(item));
+    });
+
+    if (events.length === 0) {
+        content.innerHTML = `<div class="history-item">Nenhuma edição registrada ainda.</div>`;
+        return;
+    }
+
+    content.innerHTML = renderTimeline(events);
+
+    lucide.createIcons();
+}
+
 function renderLancamentos() {
     const filtered = getFilteredLancamentos();
     const pageSize = getFinancePageSize();
@@ -842,6 +1442,22 @@ function renderLancamentos() {
 
                         <button
                             class="icon-button"
+                            data-action="edit"
+                            data-id="${item.id}"
+                            title="Editar lançamento">
+                            <i data-lucide="pencil"></i>
+                        </button>
+
+                        <button
+                            class="icon-button"
+                            data-action="history"
+                            data-id="${item.id}"
+                            title="Histórico">
+                            <i data-lucide="history"></i>
+                        </button>
+
+                        <button
+                            class="icon-button"
                             data-action="complete"
                             data-id="${item.id}"
                             title="Concluir">
@@ -862,6 +1478,10 @@ function renderLancamentos() {
 }
 
 async function completeLancamento(id) {
+    const before = lancamentos.find(function (item) {
+        return String(item.id) === String(id);
+    });
+
     const { error } = await supabaseClient
         .from("lancamentos")
         .update({
@@ -879,6 +1499,15 @@ async function completeLancamento(id) {
     }
 
     showToast("Lançamento concluído.");
+    if (before) {
+        await registerHistory(
+            "VALORES_A_PAGAR",
+            before,
+            { ...before, status: "CONCLUIDO" },
+            "STATUS"
+        );
+    }
+
     await loadLancamentos();
 }
 
@@ -896,6 +1525,9 @@ async function completeSelectedLancamentos() {
     }
 
     const ids = Array.from(selectedLancamentos);
+    const beforeItems = lancamentos.filter(function (item) {
+        return ids.map(String).includes(String(item.id));
+    });
 
     const { error } = await supabaseClient
         .from("lancamentos")
@@ -911,6 +1543,15 @@ async function completeSelectedLancamentos() {
         console.error(error);
         showToast("Erro ao concluir selecionados.");
         return;
+    }
+
+    for (const before of beforeItems) {
+        await registerHistory(
+            "VALORES_A_PAGAR",
+            before,
+            { ...before, status: "CONCLUIDO" },
+            "STATUS"
+        );
     }
 
     selectedLancamentos.clear();
@@ -987,6 +1628,9 @@ clearFinanceForm.addEventListener("click", function () {
 
 financeSearch.addEventListener("input", resetFinancePagination);
 financeStatusFilter.addEventListener("change", resetFinancePagination);
+if (financeClientFilter) {
+    financeClientFilter.addEventListener("change", resetFinancePagination);
+}
 financeServiceFilter.addEventListener("change", resetFinancePagination);
 
 if (financePageSize) {
@@ -1046,6 +1690,17 @@ financeTableBody.addEventListener("click", async function (event) {
 
     if (button.dataset.action === "details") {
         openFinanceDetails(button.dataset.id);
+    }
+
+    if (button.dataset.action === "edit") {
+        editFinance(button.dataset.id);
+    }
+
+    if (button.dataset.action === "history") {
+        const item = lancamentos.find(function (lancamento) {
+            return String(lancamento.id) === String(button.dataset.id);
+        });
+        await openHistory("VALORES_A_PAGAR", button.dataset.id, `Histórico ${item?.codigo_tres || ""}`, item);
     }
 
     if (button.dataset.action === "complete") {
@@ -1109,6 +1764,9 @@ async function startFinanceModule() {
 
     applyUserProfile(currentProfile, currentUser);
 
+    setupFinanceEmitterSelect();
+    setupMoneyMasks();
+    await loadUsersList();
     await loadClientes();
 
     resetFinanceForm();
