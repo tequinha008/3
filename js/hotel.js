@@ -305,6 +305,7 @@ async function loadHotels() {
             id,
             codigo_tres,
             data_solicitacao,
+            emissor_id,
             nome_hotel,
             rua_numero,
             bairro,
@@ -317,8 +318,7 @@ async function loadHotels() {
             emissor_nome,
             concluido_por_nome,
             concluido_em,
-            created_at,
-            usuarios:emissor_id (nome)
+            created_at
         `)
         .order("created_at", {
             ascending: false
@@ -327,7 +327,7 @@ async function loadHotels() {
     if (error) {
         hotelTableBody.innerHTML = `
             <tr>
-                <td colspan="9" class="empty-table-message">
+                <td colspan="10" class="empty-table-message">
                     Erro ao carregar solicitações.
                 </td>
             </tr>
@@ -337,8 +337,43 @@ async function loadHotels() {
         return;
     }
 
-    hotels = data || [];
+    hotels = await attachHotelEmitterNames(data || []);
     renderHotels();
+}
+
+async function attachHotelEmitterNames(items) {
+    const missingEmitterIds = Array.from(new Set(
+        items
+            .filter(function (item) { return !item.emissor_nome && item.emissor_id; })
+            .map(function (item) { return item.emissor_id; })
+    ));
+
+    if (missingEmitterIds.length === 0) {
+        return items;
+    }
+
+    const { data, error } = await supabaseClient
+        .from("usuarios")
+        .select("id, nome")
+        .in("id", missingEmitterIds);
+
+    if (error) {
+        console.error(error);
+        return items;
+    }
+
+    const namesById = new Map(
+        (data || []).map(function (user) {
+            return [user.id, user.nome];
+        })
+    );
+
+    return items.map(function (item) {
+        return {
+            ...item,
+            emissor_nome: item.emissor_nome || namesById.get(item.emissor_id) || null
+        };
+    });
 }
 function getFilteredHotels() {
 
@@ -471,7 +506,7 @@ function openHotelDetails(id) {
         return;
     }
 
-    const emissor = hotel.emissor_nome || hotel.usuarios?.nome;
+    const emissor = hotel.emissor_nome;
     const details = [
         hotelDetailItem("Código TRES", detailValue(hotel.codigo_tres), "highlight"),
         hotelDetailItem("Data da solicitação", detailDate(hotel.data_solicitacao)),
@@ -515,7 +550,7 @@ function renderHotels() {
 
         hotelTableBody.innerHTML = `
             <tr>
-                <td colspan="9" class="empty-table-message">
+                <td colspan="10" class="empty-table-message">
                     Nenhuma solicitação encontrada.
                 </td>
             </tr>
@@ -551,6 +586,8 @@ function renderHotels() {
             </td>
 
             <td>${hotel.codigo_tres}</td>
+
+            <td>${hotel.emissor_nome || "-"}</td>
 
             <td>${hotel.nome_hotel}</td>
 
@@ -734,17 +771,25 @@ hotelSearch.addEventListener("input", resetHotelPagination);
 statusFilter.addEventListener("change", resetHotelPagination);
 tipoFilter.addEventListener("change", resetHotelPagination);
 
-hotelPageSize.addEventListener("change", resetHotelPagination);
-hotelPrevPage.addEventListener("click", function () {
-    if (hotelCurrentPage > 1) {
-        hotelCurrentPage -= 1;
+if (hotelPageSize) {
+    hotelPageSize.addEventListener("change", resetHotelPagination);
+}
+
+if (hotelPrevPage) {
+    hotelPrevPage.addEventListener("click", function () {
+        if (hotelCurrentPage > 1) {
+            hotelCurrentPage -= 1;
+            renderHotels();
+        }
+    });
+}
+
+if (hotelNextPage) {
+    hotelNextPage.addEventListener("click", function () {
+        hotelCurrentPage += 1;
         renderHotels();
-    }
-});
-hotelNextPage.addEventListener("click", function () {
-    hotelCurrentPage += 1;
-    renderHotels();
-});
+    });
+}
 
 logoutButton.addEventListener("click", async function () {
 

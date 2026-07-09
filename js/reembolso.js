@@ -371,6 +371,7 @@ async function loadRefunds() {
             id,
             codigo_tres,
             data_solicitacao,
+            emissor_id,
             os,
             fornecedor,
             valor_total_cobrado,
@@ -389,7 +390,7 @@ async function loadRefunds() {
         console.error(error);
         refundTableBody.innerHTML = `
             <tr>
-                <td colspan="12" class="empty-table-message">
+                <td colspan="13" class="empty-table-message">
                     Erro ao carregar reembolsos.
                 </td>
             </tr>
@@ -397,8 +398,43 @@ async function loadRefunds() {
         return;
     }
 
-    refunds = data || [];
+    refunds = await attachEmitterNames(data || []);
     renderRefunds();
+}
+
+async function attachEmitterNames(items) {
+    const emitterIds = Array.from(new Set(
+        items
+            .map(function (item) { return item.emissor_id; })
+            .filter(Boolean)
+    ));
+
+    if (emitterIds.length === 0) {
+        return items;
+    }
+
+    const { data, error } = await supabaseClient
+        .from("usuarios")
+        .select("id, nome")
+        .in("id", emitterIds);
+
+    if (error) {
+        console.error(error);
+        return items;
+    }
+
+    const namesById = new Map(
+        (data || []).map(function (user) {
+            return [user.id, user.nome];
+        })
+    );
+
+    return items.map(function (item) {
+        return {
+            ...item,
+            emissor_nome: namesById.get(item.emissor_id) || null
+        };
+    });
 }
 
 function getFilteredRefunds() {
@@ -498,7 +534,7 @@ function renderRefunds() {
     if (filtered.length === 0) {
         refundTableBody.innerHTML = `
             <tr>
-                <td colspan="12" class="empty-table-message">
+                <td colspan="13" class="empty-table-message">
                     Nenhum reembolso encontrado.
                 </td>
             </tr>
@@ -534,6 +570,7 @@ function renderRefunds() {
 
                 <td>${item.codigo_tres || "-"}</td>
                 <td>${item.data_solicitacao || "-"}</td>
+                <td>${item.emissor_nome || "-"}</td>
                 <td>${item.clientes?.nome || "-"}</td>
                 <td>${item.os || "-"}</td>
                 <td>${item.fornecedor || "-"}</td>
@@ -774,17 +811,25 @@ function setupEvents() {
     startDate.addEventListener("change", resetRefundPagination);
     endDate.addEventListener("change", resetRefundPagination);
 
-    refundPageSize.addEventListener("change", resetRefundPagination);
-    refundPrevPage.addEventListener("click", function () {
-        if (refundCurrentPage > 1) {
-            refundCurrentPage -= 1;
+    if (refundPageSize) {
+        refundPageSize.addEventListener("change", resetRefundPagination);
+    }
+
+    if (refundPrevPage) {
+        refundPrevPage.addEventListener("click", function () {
+            if (refundCurrentPage > 1) {
+                refundCurrentPage -= 1;
+                renderRefunds();
+            }
+        });
+    }
+
+    if (refundNextPage) {
+        refundNextPage.addEventListener("click", function () {
+            refundCurrentPage += 1;
             renderRefunds();
-        }
-    });
-    refundNextPage.addEventListener("click", function () {
-        refundCurrentPage += 1;
-        renderRefunds();
-    });
+        });
+    }
 
     selectAllRefunds.addEventListener("change", function () {
         if (!isAdminOrMaster()) {

@@ -386,17 +386,25 @@ userSearch.addEventListener("input", resetUsersPagination);
 userRoleFilter.addEventListener("change", resetUsersPagination);
 userStatusFilter.addEventListener("change", resetUsersPagination);
 
-usersPageSize.addEventListener("change", resetUsersPagination);
-usersPrevPage.addEventListener("click", function () {
-    if (usersCurrentPage > 1) {
-        usersCurrentPage -= 1;
+if (usersPageSize) {
+    usersPageSize.addEventListener("change", resetUsersPagination);
+}
+
+if (usersPrevPage) {
+    usersPrevPage.addEventListener("click", function () {
+        if (usersCurrentPage > 1) {
+            usersCurrentPage -= 1;
+            renderUsers();
+        }
+    });
+}
+
+if (usersNextPage) {
+    usersNextPage.addEventListener("click", function () {
+        usersCurrentPage += 1;
         renderUsers();
-    }
-});
-usersNextPage.addEventListener("click", function () {
-    usersCurrentPage += 1;
-    renderUsers();
-});
+    });
+}
 
 usersTableBody.addEventListener("click", function (event) {
     const button = event.target.closest("button[data-action]");

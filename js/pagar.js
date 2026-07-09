@@ -493,6 +493,7 @@ async function loadLancamentos() {
             id,
             codigo_tres,
             data_lancamento,
+            emissor_id,
             tipo,
             os,
             servico,
@@ -528,7 +529,7 @@ async function loadLancamentos() {
         console.error(error);
         financeTableBody.innerHTML = `
             <tr>
-                <td colspan="10" class="empty-table-message">
+                <td colspan="11" class="empty-table-message">
                     Erro ao carregar lançamentos.
                 </td>
             </tr>
@@ -536,8 +537,43 @@ async function loadLancamentos() {
         return;
     }
 
-    lancamentos = data || [];
+    lancamentos = await attachEmitterNames(data || []);
     renderLancamentos();
+}
+
+async function attachEmitterNames(items) {
+    const emitterIds = Array.from(new Set(
+        items
+            .map(function (item) { return item.emissor_id; })
+            .filter(Boolean)
+    ));
+
+    if (emitterIds.length === 0) {
+        return items;
+    }
+
+    const { data, error } = await supabaseClient
+        .from("usuarios")
+        .select("id, nome")
+        .in("id", emitterIds);
+
+    if (error) {
+        console.error(error);
+        return items;
+    }
+
+    const namesById = new Map(
+        (data || []).map(function (user) {
+            return [user.id, user.nome];
+        })
+    );
+
+    return items.map(function (item) {
+        return {
+            ...item,
+            emissor_nome: namesById.get(item.emissor_id) || null
+        };
+    });
 }
 
 function getFilteredLancamentos() {
@@ -757,7 +793,7 @@ function renderLancamentos() {
     if (filtered.length === 0) {
         financeTableBody.innerHTML = `
             <tr>
-                <td colspan="10" class="empty-table-message">
+                <td colspan="11" class="empty-table-message">
                     Nenhum lançamento encontrado.
                 </td>
             </tr>
@@ -786,6 +822,7 @@ function renderLancamentos() {
 
                 <td>${item.codigo_tres || "-"}</td>
                 <td>${item.data_lancamento || "-"}</td>
+                <td>${item.emissor_nome || "-"}</td>
                 <td>${item.os || "-"}</td>
                 <td>${item.clientes?.nome || "-"}</td>
                 <td>${item.servico || "-"}</td>
@@ -952,17 +989,25 @@ financeSearch.addEventListener("input", resetFinancePagination);
 financeStatusFilter.addEventListener("change", resetFinancePagination);
 financeServiceFilter.addEventListener("change", resetFinancePagination);
 
-financePageSize.addEventListener("change", resetFinancePagination);
-financePrevPage.addEventListener("click", function () {
-    if (financeCurrentPage > 1) {
-        financeCurrentPage -= 1;
+if (financePageSize) {
+    financePageSize.addEventListener("change", resetFinancePagination);
+}
+
+if (financePrevPage) {
+    financePrevPage.addEventListener("click", function () {
+        if (financeCurrentPage > 1) {
+            financeCurrentPage -= 1;
+            renderLancamentos();
+        }
+    });
+}
+
+if (financeNextPage) {
+    financeNextPage.addEventListener("click", function () {
+        financeCurrentPage += 1;
         renderLancamentos();
-    }
-});
-financeNextPage.addEventListener("click", function () {
-    financeCurrentPage += 1;
-    renderLancamentos();
-});
+    });
+}
 
 selectAllFinance.addEventListener("change", function () {
     selectedLancamentos.clear();
