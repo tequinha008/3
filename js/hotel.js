@@ -747,7 +747,7 @@ function openHotelDetails(id) {
         hotelDetailItem("Bairro", detailValue(hotel.bairro)),
         hotelDetailItem("Cidade / Estado", detailValue(hotel.cidade_estado), "wide"),
         hotelDetailItem("País", detailValue(hotel.pais)),
-        hotelDetailItem("Telefone", detailValue(hotel.telefone), "wide")
+        hotelDetailItem("Telefone", detailValue(hotel.telefone), "wide"),
         hotelDetailItem(
             "CNPJ",
             hotel.cnpj ? escapeHtml(formatCNPJ(hotel.cnpj)) : "Não se aplica",
