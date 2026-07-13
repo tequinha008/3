@@ -1088,7 +1088,7 @@ function renderHotels() {
                     isAdminOrMaster()
 
                         ? `<input
-                                class="table-input"
+                                class="table-input integration-input"
                                 data-id="${hotel.id}"
                                 value="${hotel.codigo_integracao || ""}"
                                 placeholder="Código">`
@@ -1235,6 +1235,34 @@ async function updateHotelStatus(id, status) {
 
 }
 
+async function updateIntegrationCode(id, value) {
+    const normalizedValue = normalizeText(value);
+
+    const { error } = await supabaseClient
+        .from("solicitacoes_hotel")
+        .update({
+            codigo_integracao: normalizedValue || null,
+            updated_by: currentUser.id
+        })
+        .eq("id", id);
+
+    if (error) {
+        console.error(error);
+        showToast("Erro ao salvar código de integração.");
+        return;
+    }
+
+    const hotel = hotels.find(function (item) {
+        return String(item.id) === String(id);
+    });
+
+    if (hotel) {
+        hotel.codigo_integracao = normalizedValue || null;
+    }
+
+    showToast("Código de integração salvo.");
+}
+
 async function duplicateHotel(id) {
 
     const hotel =
@@ -1331,6 +1359,25 @@ logoutButton.addEventListener("click", async function () {
 
     window.location.href = "index.html";
 
+});
+
+hotelTableBody.addEventListener("change", async function (event) {
+    const target = event.target;
+
+    if (!target.classList.contains("integration-input")) {
+        return;
+    }
+
+    target.disabled = true;
+
+    try {
+        await updateIntegrationCode(
+            target.dataset.id,
+            target.value
+        );
+    } finally {
+        target.disabled = false;
+    }
 });
 
 hotelTableBody.addEventListener("click", async function (event) {
