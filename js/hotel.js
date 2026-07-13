@@ -16,6 +16,7 @@ const ruaNumero = document.getElementById("ruaNumero");
 const bairro = document.getElementById("bairro");
 const cidadeEstado = document.getElementById("cidadeEstado");
 const pais = document.getElementById("pais");
+cont telefone = document.getElementById("telefone");
 const tipoHotel = document.getElementById("tipoHotel");
 const cnpj = document.getElementById("cnpj");
 const cnpjMessage = document.getElementById("cnpjMessage");
@@ -282,6 +283,7 @@ async function saveHotel(event) {
         bairro: normalizeText(bairro.value),
         cidade_estado: normalizeText(cidadeEstado.value),
         pais: normalizeText(pais.value),
+        telefone: normalizeText(telefone.value),
         tipo: tipoHotel.value,
         cnpj: tipoHotel.value === "NACIONAL" ? onlyNumbers(cnpj.value) : null,
         status: "PENDENTE",
@@ -379,6 +381,7 @@ function buildHotelPayload() {
         bairro: normalizeText(bairro.value),
         cidade_estado: normalizeText(cidadeEstado.value),
         pais: normalizeText(pais.value),
+        telefone: normalizeText(telefone.value),
         tipo: tipoHotel.value,
         cnpj: tipoHotel.value === "NACIONAL" ? onlyNumbers(cnpj.value) : null,
         status: "PENDENTE",
@@ -510,6 +513,7 @@ async function loadHotels() {
             bairro,
             cidade_estado,
             pais,
+            telefone,
             tipo,
             cnpj,
             codigo_integracao,
@@ -592,6 +596,7 @@ function getFilteredHotels() {
             hotel.bairro,
             hotel.cidade_estado,
             hotel.pais,
+            hotel.telefone,
             hotel.tipo,
             hotel.codigo_integracao
         ].map(normalizeSearchText).join(" ");
@@ -742,6 +747,7 @@ function openHotelDetails(id) {
         hotelDetailItem("Bairro", detailValue(hotel.bairro)),
         hotelDetailItem("Cidade / Estado", detailValue(hotel.cidade_estado), "wide"),
         hotelDetailItem("País", detailValue(hotel.pais)),
+        hotelDetailItel("Telefone", detailValue(hotel.telefone), "wide")
         hotelDetailItem(
             "CNPJ",
             hotel.cnpj ? escapeHtml(formatCNPJ(hotel.cnpj)) : "Não se aplica",
@@ -782,6 +788,7 @@ function editHotel(id) {
     bairro.value = hotel.bairro || "";
     cidadeEstado.value = hotel.cidade_estado || "";
     pais.value = hotel.pais || "";
+    telefone.value = hotel.telefone || "";
     tipoHotel.value = hotel.tipo || "NACIONAL";
     cnpj.value = hotel.cnpj ? formatCNPJ(hotel.cnpj) : "";
     fillHotelEmitterSelect(hotel.emissor_id);
@@ -842,6 +849,7 @@ function friendlyHistoryField(field) {
         bairro: "Bairro",
         cidade_estado: "Cidade / Estado",
         pais: "País",
+        telefone: "Telefone",
         tipo: "Tipo",
         cnpj: "CNPJ",
         codigo_integracao: "Cód. integração",
@@ -1275,6 +1283,7 @@ async function duplicateHotel(id) {
     bairro.value = hotel.bairro;
     cidadeEstado.value = hotel.cidade_estado;
     pais.value = hotel.pais;
+    telefone.value = hotel.telefone;
     tipoHotel.value = hotel.tipo;
 
     cnpj.value = "";
