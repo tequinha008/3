@@ -16,6 +16,7 @@ const ruaNumero = document.getElementById("ruaNumero");
 const bairro = document.getElementById("bairro");
 const cidadeEstado = document.getElementById("cidadeEstado");
 const pais = document.getElementById("pais");
+const telefone = document.getElementById("telefone");
 const tipoHotel = document.getElementById("tipoHotel");
 const cnpj = document.getElementById("cnpj");
 const cnpjMessage = document.getElementById("cnpjMessage");
@@ -282,6 +283,7 @@ async function saveHotel(event) {
         bairro: normalizeText(bairro.value),
         cidade_estado: normalizeText(cidadeEstado.value),
         pais: normalizeText(pais.value),
+        telefone: normalizeText(telefone.value),
         tipo: tipoHotel.value,
         cnpj: tipoHotel.value === "NACIONAL" ? onlyNumbers(cnpj.value) : null,
         status: "PENDENTE",
@@ -379,6 +381,7 @@ function buildHotelPayload() {
         bairro: normalizeText(bairro.value),
         cidade_estado: normalizeText(cidadeEstado.value),
         pais: normalizeText(pais.value),
+        telefone: normalizeText(telefone.value),
         tipo: tipoHotel.value,
         cnpj: tipoHotel.value === "NACIONAL" ? onlyNumbers(cnpj.value) : null,
         status: "PENDENTE",
@@ -510,6 +513,7 @@ async function loadHotels() {
             bairro,
             cidade_estado,
             pais,
+            telefone,
             tipo,
             cnpj,
             codigo_integracao,
@@ -592,6 +596,7 @@ function getFilteredHotels() {
             hotel.bairro,
             hotel.cidade_estado,
             hotel.pais,
+            hotel.telefone,
             hotel.tipo,
             hotel.codigo_integracao
         ].map(normalizeSearchText).join(" ");
@@ -742,6 +747,7 @@ function openHotelDetails(id) {
         hotelDetailItem("Bairro", detailValue(hotel.bairro)),
         hotelDetailItem("Cidade / Estado", detailValue(hotel.cidade_estado), "wide"),
         hotelDetailItem("País", detailValue(hotel.pais)),
+        hotelDetailItem("Telefone", detailValue(hotel.telefone), "wide"),
         hotelDetailItem(
             "CNPJ",
             hotel.cnpj ? escapeHtml(formatCNPJ(hotel.cnpj)) : "Não se aplica",
@@ -782,6 +788,7 @@ function editHotel(id) {
     bairro.value = hotel.bairro || "";
     cidadeEstado.value = hotel.cidade_estado || "";
     pais.value = hotel.pais || "";
+    telefone.value = hotel.telefone || "";
     tipoHotel.value = hotel.tipo || "NACIONAL";
     cnpj.value = hotel.cnpj ? formatCNPJ(hotel.cnpj) : "";
     fillHotelEmitterSelect(hotel.emissor_id);
@@ -842,6 +849,7 @@ function friendlyHistoryField(field) {
         bairro: "Bairro",
         cidade_estado: "Cidade / Estado",
         pais: "País",
+        telefone: "Telefone",
         tipo: "Tipo",
         cnpj: "CNPJ",
         codigo_integracao: "Cód. integração",
@@ -1088,7 +1096,7 @@ function renderHotels() {
                     isAdminOrMaster()
 
                         ? `<input
-                                class="table-input"
+                                class="table-input integration-input"
                                 data-id="${hotel.id}"
                                 value="${hotel.codigo_integracao || ""}"
                                 placeholder="Código">`
@@ -1235,6 +1243,34 @@ async function updateHotelStatus(id, status) {
 
 }
 
+async function updateIntegrationCode(id, value) {
+    const normalizedValue = normalizeText(value);
+
+    const { error } = await supabaseClient
+        .from("solicitacoes_hotel")
+        .update({
+            codigo_integracao: normalizedValue || null,
+            updated_by: currentUser.id
+        })
+        .eq("id", id);
+
+    if (error) {
+        console.error(error);
+        showToast("Erro ao salvar código de integração.");
+        return;
+    }
+
+    const hotel = hotels.find(function (item) {
+        return String(item.id) === String(id);
+    });
+
+    if (hotel) {
+        hotel.codigo_integracao = normalizedValue || null;
+    }
+
+    showToast("Código de integração salvo.");
+}
+
 async function duplicateHotel(id) {
 
     const hotel =
@@ -1247,6 +1283,7 @@ async function duplicateHotel(id) {
     bairro.value = hotel.bairro;
     cidadeEstado.value = hotel.cidade_estado;
     pais.value = hotel.pais;
+    telefone.value = hotel.telefone;
     tipoHotel.value = hotel.tipo;
 
     cnpj.value = "";
@@ -1331,6 +1368,25 @@ logoutButton.addEventListener("click", async function () {
 
     window.location.href = "index.html";
 
+});
+
+hotelTableBody.addEventListener("change", async function (event) {
+    const target = event.target;
+
+    if (!target.classList.contains("integration-input")) {
+        return;
+    }
+
+    target.disabled = true;
+
+    try {
+        await updateIntegrationCode(
+            target.dataset.id,
+            target.value
+        );
+    } finally {
+        target.disabled = false;
+    }
 });
 
 hotelTableBody.addEventListener("click", async function (event) {

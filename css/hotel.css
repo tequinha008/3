@@ -1,4 +1,6 @@
-/* TRES — Hotéis */
+/* =========================================================
+   TRES — Hotéis
+   ========================================================= */
 
 .hotel-module {
     border-left: 5px solid var(--hotel);
@@ -35,113 +37,180 @@
 #selectAllHotels {
     accent-color: var(--hotel);
 }
-.details-overlay {
+
+/* =========================================================
+   MODAL DE DETALHES DO HOTEL
+   ========================================================= */
+
+.hotel-detail-backdrop {
     position: fixed;
     inset: 0;
-    z-index: 999;
-    background: rgba(15, 23, 42, 0.62);
-    backdrop-filter: blur(4px);
+    z-index: 1200;
+
     display: flex;
     align-items: center;
     justify-content: center;
+
     padding: 24px;
+
+    background: rgba(15, 23, 42, 0.62);
+    backdrop-filter: blur(4px);
 }
 
-.details-modal {
-    width: min(680px, 94vw);
+.hotel-detail-backdrop.hidden {
+    display: none;
+}
+
+.hotel-detail-modal {
+    width: min(760px, 95vw);
     max-height: 90vh;
+
     overflow-y: auto;
+
+    border: 1px solid var(--line);
     border-radius: 24px;
+
+    padding: 24px;
+
     background: #ffffff;
-    padding: 26px;
+
     box-shadow: 0 34px 90px rgba(15, 23, 42, 0.38);
 }
 
-.details-header {
+.hotel-detail-header {
     display: flex;
+    align-items: flex-start;
     justify-content: space-between;
     gap: 18px;
+
+    margin-bottom: 22px;
     padding-bottom: 18px;
-    margin-bottom: 18px;
+
     border-bottom: 1px solid var(--line);
 }
 
-.details-header p {
+.hotel-detail-header .eyebrow {
     margin: 0 0 8px;
+
     color: var(--hotel);
+
     font-size: 12px;
     font-weight: 900;
-    letter-spacing: .12em;
+    letter-spacing: 0.12em;
     text-transform: uppercase;
 }
 
-.details-header h2 {
+.hotel-detail-header h2 {
     margin: 0;
+
     color: var(--text-strong);
-    font-size: 22px;
+
+    font-size: 24px;
+    line-height: 1.25;
 }
 
-.details-close {
-    width: 36px;
-    height: 36px;
-    border: 1px solid var(--line);
-    border-radius: 12px;
-    background: #ffffff;
-    color: var(--muted);
-    font-size: 20px;
+.hotel-detail-header .icon-button {
+    width: 40px;
+    height: 40px;
+
+    flex-shrink: 0;
 }
 
-.details-grid {
+.hotel-detail-grid {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 12px;
 }
 
-.details-item {
-    border: 1px solid var(--line);
-    border-radius: 14px;
-    padding: 13px;
+.hotel-detail-item {
+    min-width: 0;
+    min-height: 76px;
+
+    border: 1px solid #dbe4ee;
+    border-radius: 16px;
+
+    padding: 14px;
+
     background: #f8fafc;
 }
 
-.details-item.wide {
+.hotel-detail-item.wide {
     grid-column: span 2;
 }
 
-.details-item.full {
+.hotel-detail-item.full {
     grid-column: 1 / -1;
 }
 
-.details-item span {
+.hotel-detail-item.highlight {
+    border-color: #99f6e4;
+    background: #f0fdfa;
+}
+
+.hotel-detail-item span {
     display: block;
+
     margin-bottom: 7px;
-    color: var(--muted);
+
+    color: #64748b;
+
     font-size: 11px;
-    font-weight: 900;
-    letter-spacing: .06em;
+    font-weight: 800;
+    letter-spacing: 0.05em;
     text-transform: uppercase;
 }
 
-.details-item strong {
-    color: var(--text-strong);
-    font-size: 14px;
+.hotel-detail-item strong {
+    display: block;
+
+    color: #1e293b;
+
+    font-size: 15px;
+    font-weight: 800;
+    line-height: 1.35;
+
+    overflow-wrap: anywhere;
 }
 
-.details-actions {
+.hotel-detail-footer {
     display: flex;
     justify-content: flex-end;
-    margin-top: 18px;
-    padding-top: 16px;
+
+    margin-top: 22px;
+    padding-top: 18px;
+
     border-top: 1px solid var(--line);
 }
 
+.hotel-detail-open {
+    overflow: hidden;
+}
+
+/* =========================================================
+   RESPONSIVO
+   ========================================================= */
+
 @media (max-width: 760px) {
-    .details-grid {
+    .hotel-detail-backdrop {
+        padding: 14px;
+    }
+
+    .hotel-detail-modal {
+        width: 100%;
+        padding: 18px;
+        border-radius: 20px;
+    }
+
+    .hotel-detail-header h2 {
+        font-size: 20px;
+    }
+
+    .hotel-detail-grid {
         grid-template-columns: 1fr;
     }
 
-    .details-item.wide,
-    .details-item.full {
+    .hotel-detail-item.wide,
+    .hotel-detail-item.full {
         grid-column: auto;
     }
 }
