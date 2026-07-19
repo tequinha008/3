@@ -83,6 +83,8 @@ const clearFinanceForm = document.getElementById("clearFinanceForm");
 const saveFinanceButton = document.getElementById("saveFinanceButton");
 
 const financeSearch = document.getElementById("financeSearch");
+const financeStartDate = document.getElementById("financeStartDate");
+const financeEndDate = document.getElementById("financeEndDate");
 const financeStatusFilter = document.getElementById("financeStatusFilter");
 const financeClientFilter = document.getElementById("financeClientFilter");
 const financeServiceFilter = document.getElementById("financeServiceFilter");
@@ -119,6 +121,11 @@ let allUsers = [];
 
 function todayISO() {
     return new Date().toISOString().split("T")[0];
+}
+
+function firstDayOfMonthISO() {
+    const date = new Date();
+    return new Date(date.getFullYear(), date.getMonth(), 1).toISOString().split("T")[0];
 }
 
 function money(value, currency = "BRL") {
@@ -643,14 +650,14 @@ const payload = {
         console.error(error);
         showToast(`Erro ao salvar: ${error.message}`);
     } else {
-        showToast("Lançamento salvo com sucesso.");
+        showToast("Lan\u00e7amento salvo com sucesso.");
         financeForm.reset();
         resetFinanceForm();
         await loadLancamentos();
     }
 
     saveFinanceButton.disabled = false;
-    saveFinanceButton.textContent = "Salvar lançamento";
+    saveFinanceButton.textContent = "Salvar lan\u00e7amento";
 }
 
 let financeEmitterSelect = null;
@@ -670,7 +677,7 @@ function fillFinanceEmitterSelect(selectedId) {
     if (!financeEmitterSelect) return;
 
     financeEmitterSelect.innerHTML = allUsers.map(function (user) {
-        return `<option value="${user.id}">${escapeHtml(user.nome || user.email || "Usuário")}</option>`;
+        return `<option value="${user.id}">${escapeHtml(user.nome || user.email || "Usu\u00e1rio")}</option>`;
     }).join("");
 
     financeEmitterSelect.value = selectedId || currentUser.id;
@@ -878,7 +885,7 @@ async function saveFinance(event) {
                 "VALORES_A_PAGAR",
                 editingFinanceOriginal,
                 { ...editingFinanceOriginal, ...payload },
-                "EDIÇÃO"
+                "EDI\u00c7\u00c3O"
             );
         }
     } else {
@@ -931,14 +938,14 @@ async function saveFinance(event) {
         console.error(error);
         showToast(`Erro ao salvar: ${error.message}`);
     } else {
-        showToast(editingFinanceId ? "Lançamento atualizado e voltou para pendente." : "Lançamento salvo com sucesso.");
+        showToast(editingFinanceId ? "Lan\u00e7amento atualizado e voltou para pendente." : "Lan\u00e7amento salvo com sucesso.");
         financeForm.reset();
         resetFinanceForm();
         await loadLancamentos();
     }
 
     saveFinanceButton.disabled = false;
-    saveFinanceButton.textContent = "Salvar lançamento";
+    saveFinanceButton.textContent = "Salvar lan\u00e7amento";
 }
 
 function resetFinanceForm() {
@@ -961,7 +968,7 @@ function resetFinanceForm() {
     hideAllDynamicFields();
     totalPreview.value = "R$ 0,00";
     moedaPreview.value = "BRL";
-    saveFinanceButton.textContent = "Salvar lançamento";
+    saveFinanceButton.textContent = "Salvar lan\u00e7amento";
     fillFinanceEmitterSelect(currentUser.id);
     updateLinkedFinanceContext();
 }
@@ -973,7 +980,7 @@ function updateLinkedFinanceContext() {
     financeItemContext.classList.toggle("hidden", !active);
 
     if (active) {
-        financeItemContextTitle.textContent = `${linkedFinanceGroup.codigo_tres || "-"} · OS ${linkedFinanceGroup.os || "-"}`;
+        financeItemContextTitle.textContent = `${linkedFinanceGroup.codigo_tres || "-"} \u00b7 OS ${linkedFinanceGroup.os || "-"}`;
     }
 }
 
@@ -981,7 +988,7 @@ function addItemToFinanceGroup(id) {
     const group = findFinanceGroup(id);
 
     if (!group) {
-        showToast("Não foi possível localizar a solicitação.");
+        showToast("N\u00e3o foi poss\u00edvel localizar a solicita\u00e7\u00e3o.");
         return;
     }
 
@@ -995,6 +1002,8 @@ function addItemToFinanceGroup(id) {
     os.value = group.os || "";
     cliente.value = group.cliente_id || "";
     emissorNome.value = group.emissor_nome || currentProfile.nome;
+    tipoLancamento.dispatchEvent(new Event("change", { bubbles: true }));
+    cliente.dispatchEvent(new Event("change", { bubbles: true }));
 
     updateLinkedFinanceContext();
     hideAllDynamicFields();
@@ -1062,7 +1071,7 @@ async function loadLancamentos() {
         financeTableBody.innerHTML = `
             <tr>
                 <td colspan="11" class="empty-table-message">
-                    Erro ao carregar lançamentos.
+                    Erro ao carregar lan\u00e7amentos.
                 </td>
             </tr>
         `;
@@ -1110,15 +1119,20 @@ async function attachEmitterNames(items) {
 
 function getFilteredLancamentos() {
     const search = normalizeText(financeSearch.value);
+    const start = financeStartDate?.value || "";
+    const end = financeEndDate?.value || "";
     const status = financeStatusFilter.value;
     const client = financeClientFilter?.value || "";
     const service = financeServiceFilter.value;
 
     return getFinanceGroups().filter(function (item) {
+        const date = item.data_lancamento || "";
+
         const matchSearch =
             !search ||
             normalizeText(item.codigo_tres).includes(search) ||
             normalizeText(item.os).includes(search) ||
+            normalizeText(item.emissor_nome).includes(search) ||
             normalizeText(item.clientes?.nome).includes(search) ||
             item.itens.some(function (subitem) {
                 return normalizeText(subitem.fornecedor).includes(search) ||
@@ -1131,14 +1145,16 @@ function getFilteredLancamentos() {
         const matchService = !service || item.itens.some(function (subitem) {
             return subitem.servico === service;
         });
+        const matchStart = !start || date >= start;
+        const matchEnd = !end || date <= end;
 
-        return matchSearch && matchStatus && matchClient && matchService;
+        return matchSearch && matchStatus && matchClient && matchService && matchStart && matchEnd;
     });
 }
 
 function statusBadge(status) {
     if (status === "CONCLUIDO") {
-        return `<span class="badge badge-concluido">CONCLUÍDO</span>`;
+        return `<span class="badge badge-concluido">CONCLU\u00cdDO</span>`;
     }
 
     return `<span class="badge badge-pendente">PENDENTE</span>`;
@@ -1169,7 +1185,7 @@ function updateFinancePagination(totalItems) {
     }
 
     if (financePageIndicator) {
-        financePageIndicator.textContent = `Página ${financeCurrentPage} de ${totalPages}`;
+        financePageIndicator.textContent = `P\u00e1gina ${financeCurrentPage} de ${totalPages}`;
     }
 
     if (financePrevPage) {
@@ -1192,7 +1208,7 @@ function escapeHtml(value) {
 
 function detailValue(value) {
     if (value === null || value === undefined || value === "") {
-        return "—";
+        return "-";
     }
 
     return escapeHtml(value);
@@ -1200,7 +1216,7 @@ function detailValue(value) {
 
 function detailMoney(value, currency) {
     if (value === null || value === undefined || value === "") {
-        return "—";
+        return "-";
     }
 
     return money(value, currency);
@@ -1208,11 +1224,34 @@ function detailMoney(value, currency) {
 
 function detailDate(value) {
     if (!value) {
-        return "—";
+        return "-";
     }
 
     const parts = String(value).split("-");
     return parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : value;
+}
+
+function financeDateTimeLabel(dateValue, timeValue) {
+    const date = detailDate(dateValue);
+
+    if (!timeValue) {
+        return date;
+    }
+
+    const parsed = new Date(timeValue);
+
+    if (Number.isNaN(parsed.getTime())) {
+        return date;
+    }
+
+    return `${date} às ${parsed.toLocaleTimeString("pt-BR", {
+        hour: "2-digit",
+        minute: "2-digit"
+    })}`;
+}
+
+function financeCreatedAtLabel(dateValue, timeValue) {
+    return `Solicitação criada em ${financeDateTimeLabel(dateValue, timeValue)} (horário de Brasília)`;
 }
 
 function detailItem(label, value, className = "") {
@@ -1237,26 +1276,26 @@ function openFinanceDetails(id) {
     });
 
     if (!item) {
-        showToast("Não foi possível carregar os detalhes.");
+        showToast("N\u00e3o foi poss\u00edvel carregar os detalhes.");
         return;
     }
 
     const isAir = ["AEREO", "ASSENTO", "BAGAGEM EXTRA"].includes(item.servico);
     const currency = item.moeda || "BRL";
     const details = [
-        detailItem("Código", detailValue(item.codigo_tres)),
+        detailItem("C\u00f3digo", detailValue(item.codigo_tres)),
         detailItem("Data", detailDate(item.data_lancamento)),
         detailItem("Status", detailValue(item.status)),
         detailItem("Cliente", detailValue(item.clientes?.nome), "wide"),
         detailItem("OS", detailValue(item.os)),
         detailItem("Tipo", detailValue(item.tipo)),
-        detailItem("Serviço", detailValue(item.servico)),
+        detailItem("Servi\u00e7o", detailValue(item.servico)),
         detailItem("Fornecedor", detailValue(item.fornecedor), "wide")
     ];
 
     if (isAir) {
         details.push(
-            detailItem("Classificação", detailValue(item.subtipo)),
+            detailItem("Classifica\u00e7\u00e3o", detailValue(item.subtipo)),
             detailItem("Consolidador", detailValue(item.consolidador)),
             detailItem("Moeda", detailValue(currency)),
             detailItem("Localizador", detailValue(item.localizador)),
@@ -1267,13 +1306,13 @@ function openFinanceDetails(id) {
             detailItem(
                 "Over",
                 item.over_percent === null || item.over_percent === undefined
-                    ? "—"
+                    ? "-"
                     : `${Number(item.over_percent).toLocaleString("pt-BR")} %`
             ),
             detailItem(
-                "Câmbio",
+                "C\u00e2mbio",
                 item.cambio === null || item.cambio === undefined
-                    ? "—"
+                    ? "-"
                     : Number(item.cambio).toLocaleString("pt-BR", {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 6
@@ -1282,7 +1321,7 @@ function openFinanceDetails(id) {
         );
     } else if (item.servico === "HOTEL") {
         details.push(
-            detailItem("Diária", detailMoney(item.diaria, "BRL")),
+            detailItem("Di\u00e1ria", detailMoney(item.diaria, "BRL")),
             detailItem("Tipo da taxa", detailValue(item.taxas_tipo)),
             detailItem(
                 "Taxas / impostos",
@@ -1292,17 +1331,17 @@ function openFinanceDetails(id) {
             ),
             detailItem("Check-in", detailDate(item.checkin)),
             detailItem("Check-out", detailDate(item.checkout)),
-            detailItem("Quantidade de diárias", detailValue(item.quantidade_diarias))
+            detailItem("Quantidade de di\u00e1rias", detailValue(item.quantidade_diarias))
         );
     } else {
         if (item.servico === "OUTROS") {
             details.push(
-                detailItem("Descrição do serviço", detailValue(item.outro_servico), "wide")
+                detailItem("Descri\u00e7\u00e3o do servi\u00e7o", detailValue(item.outro_servico), "wide")
             );
         }
 
         details.push(
-            detailItem("Valor total do período", detailMoney(item.valor_periodo, "BRL")),
+            detailItem("Valor total do per\u00edodo", detailMoney(item.valor_periodo, "BRL")),
             detailItem("Tipo da taxa", detailValue(item.taxas_tipo)),
             detailItem(
                 "Taxas / impostos",
@@ -1318,7 +1357,7 @@ function openFinanceDetails(id) {
         detailItem("Total final", detailMoney(item.total_final, currency), "total")
     );
 
-    financeDetailTitle.textContent = `${item.codigo_tres || "Lançamento"} · ${item.servico || "Detalhes"}`;
+    financeDetailTitle.textContent = `${item.codigo_tres || "Lan\u00e7amento"} \u00b7 ${item.servico || "Detalhes"}`;
     financeDetailContent.innerHTML = details.join("");
     financeDetailModal.classList.remove("hidden");
     financeDetailModal.setAttribute("aria-hidden", "false");
@@ -1335,7 +1374,7 @@ function renderFinanceItemDetails(item, index) {
 
     if (isAir) {
         details.push(
-            detailItem("Classificação", detailValue(item.subtipo)),
+            detailItem("Classifica\u00e7\u00e3o", detailValue(item.subtipo)),
             detailItem("Consolidador", detailValue(item.consolidador)),
             detailItem("Moeda", detailValue(currency)),
             detailItem("Localizador", detailValue(item.localizador)),
@@ -1346,13 +1385,13 @@ function renderFinanceItemDetails(item, index) {
             detailItem(
                 "Over",
                 item.over_percent === null || item.over_percent === undefined
-                    ? "—"
+                    ? "-"
                     : `${Number(item.over_percent).toLocaleString("pt-BR")} %`
             )
         );
     } else if (item.servico === "HOTEL") {
         details.push(
-            detailItem("Diária", detailMoney(item.diaria, "BRL")),
+            detailItem("Di\u00e1ria", detailMoney(item.diaria, "BRL")),
             detailItem("Tipo da taxa", detailValue(item.taxas_tipo)),
             detailItem(
                 "Taxas / impostos",
@@ -1360,18 +1399,18 @@ function renderFinanceItemDetails(item, index) {
                     ? `${Number(item.taxas_valor || 0).toLocaleString("pt-BR")} %`
                     : detailMoney(item.taxas_valor, "BRL")
             ),
-            detailItem("Comissão", item.tarifa_net ? "Tarifa NET" : `${Number(item.comissao_percent || 0).toLocaleString("pt-BR")} %`),
+            detailItem("Comiss\u00e3o", item.tarifa_net ? "Tarifa NET" : `${Number(item.comissao_percent || 0).toLocaleString("pt-BR")} %`),
             detailItem("Check-in", detailDate(item.checkin)),
             detailItem("Check-out", detailDate(item.checkout)),
-            detailItem("Quantidade de diárias", detailValue(item.quantidade_diarias))
+            detailItem("Quantidade de di\u00e1rias", detailValue(item.quantidade_diarias))
         );
     } else {
         if (item.servico === "OUTROS") {
-            details.push(detailItem("Descrição do serviço", detailValue(item.outro_servico), "wide"));
+            details.push(detailItem("Descri\u00e7\u00e3o do servi\u00e7o", detailValue(item.outro_servico), "wide"));
         }
 
         details.push(
-            detailItem("Valor total do período", detailMoney(item.valor_periodo, "BRL")),
+            detailItem("Valor total do per\u00edodo", detailMoney(item.valor_periodo, "BRL")),
             detailItem("Tipo da taxa", detailValue(item.taxas_tipo)),
             detailItem(
                 "Taxas / impostos",
@@ -1379,7 +1418,7 @@ function renderFinanceItemDetails(item, index) {
                     ? `${Number(item.taxas_valor || 0).toLocaleString("pt-BR")} %`
                     : detailMoney(item.taxas_valor, "BRL")
             ),
-            detailItem("Comissão", item.tarifa_net ? "Tarifa NET" : `${Number(item.comissao_percent || 0).toLocaleString("pt-BR")} %`)
+            detailItem("Comiss\u00e3o", item.tarifa_net ? "Tarifa NET" : `${Number(item.comissao_percent || 0).toLocaleString("pt-BR")} %`)
         );
     }
 
@@ -1393,7 +1432,7 @@ function renderFinanceItemDetails(item, index) {
             <header>
                 <div>
                     <span>Item ${index + 1}</span>
-                    <strong>${escapeHtml(item.servico || "Serviço")}</strong>
+                    <strong>${escapeHtml(item.servico || "Servi\u00e7o")}</strong>
                 </div>
                 <button type="button" class="icon-button" data-action="edit-detail-item" data-id="${item.id}" title="Editar item">
                     <i data-lucide="pencil"></i>
@@ -1408,12 +1447,12 @@ function openFinanceDetails(id) {
     const group = findFinanceGroup(id);
 
     if (!group) {
-        showToast("Não foi possível carregar os detalhes.");
+        showToast("N\u00e3o foi poss\u00edvel carregar os detalhes.");
         return;
     }
 
     const summary = [
-        detailItem("Código", detailValue(group.codigo_tres)),
+        detailItem("C\u00f3digo", detailValue(group.codigo_tres)),
         detailItem("Data", detailDate(group.data_lancamento)),
         detailItem("Status", detailValue(group.status)),
         detailItem("Cliente", detailValue(group.clientes?.nome), "wide"),
@@ -1422,7 +1461,7 @@ function openFinanceDetails(id) {
         detailItem("Total geral", escapeHtml(formatGroupTotal(group)), "total")
     ];
 
-    financeDetailTitle.textContent = `${group.codigo_tres || "Solicitação"} · OS ${group.os || "-"}`;
+    financeDetailTitle.textContent = `${group.codigo_tres || "Solicita\u00e7\u00e3o"} \u00b7 OS ${group.os || "-"}`;
     financeDetailContent.classList.add("finance-detail-content-group");
     financeDetailContent.innerHTML = `
         <div class="finance-detail-grid finance-group-summary">${summary.join("")}</div>
@@ -1437,9 +1476,9 @@ function openFinanceDetails(id) {
     lucide.createIcons();
 }
 
-function financeCompactDetail(label, value) {
+function financeCompactDetail(label, value, className = "") {
     return `
-        <div class="finance-compact-detail">
+        <div class="finance-compact-detail ${className}">
             <span>${escapeHtml(label)}</span>
             <strong>${value}</strong>
         </div>
@@ -1464,7 +1503,7 @@ function renderFinanceItemDetails(item, index) {
 
     if (isAir) {
         details.push(
-            financeCompactDetail("Classificação", detailValue(item.subtipo)),
+            financeCompactDetail("Classifica\u00e7\u00e3o", detailValue(item.subtipo)),
             financeCompactDetail("Consolidador", detailValue(item.consolidador)),
             financeCompactDetail("Moeda", detailValue(currency)),
             financeCompactDetail("Localizador", detailValue(item.localizador)),
@@ -1475,28 +1514,28 @@ function renderFinanceItemDetails(item, index) {
             financeCompactDetail(
                 "Over",
                 item.over_percent === null || item.over_percent === undefined
-                    ? "—"
+                    ? "-"
                     : `${Number(item.over_percent).toLocaleString("pt-BR")} %`
             )
         );
     } else if (item.servico === "HOTEL") {
         details.push(
-            financeCompactDetail("Diária", detailMoney(item.diaria, "BRL")),
+            financeCompactDetail("Di\u00e1ria", detailMoney(item.diaria, "BRL")),
             financeCompactDetail("Taxas / impostos", item.taxas_tipo === "%" ? `${Number(item.taxas_valor || 0).toLocaleString("pt-BR")} %` : detailMoney(item.taxas_valor, "BRL")),
-            financeCompactDetail("Comissão", item.tarifa_net ? "Tarifa NET" : `${Number(item.comissao_percent || 0).toLocaleString("pt-BR")} %`),
+            financeCompactDetail("Comiss\u00e3o", item.tarifa_net ? "Tarifa NET" : `${Number(item.comissao_percent || 0).toLocaleString("pt-BR")} %`),
             financeCompactDetail("Check-in", detailDate(item.checkin)),
             financeCompactDetail("Check-out", detailDate(item.checkout)),
-            financeCompactDetail("Diárias", detailValue(item.quantidade_diarias))
+            financeCompactDetail("Di\u00e1rias", detailValue(item.quantidade_diarias))
         );
     } else {
         if (item.servico === "OUTROS") {
-            details.push(financeCompactDetail("Descrição", detailValue(item.outro_servico)));
+            details.push(financeCompactDetail("Descri\u00e7\u00e3o", detailValue(item.outro_servico)));
         }
 
         details.push(
-            financeCompactDetail("Valor do período", detailMoney(item.valor_periodo, "BRL")),
+            financeCompactDetail("Valor do per\u00edodo", detailMoney(item.valor_periodo, "BRL")),
             financeCompactDetail("Taxas / impostos", item.taxas_tipo === "%" ? `${Number(item.taxas_valor || 0).toLocaleString("pt-BR")} %` : detailMoney(item.taxas_valor, "BRL")),
-            financeCompactDetail("Comissão", item.tarifa_net ? "Tarifa NET" : `${Number(item.comissao_percent || 0).toLocaleString("pt-BR")} %`)
+            financeCompactDetail("Comiss\u00e3o", item.tarifa_net ? "Tarifa NET" : `${Number(item.comissao_percent || 0).toLocaleString("pt-BR")} %`)
         );
     }
 
@@ -1505,15 +1544,21 @@ function renderFinanceItemDetails(item, index) {
             <header class="finance-clean-item-header">
                 <div>
                     <span>Item ${index + 1}</span>
-                    <strong>${escapeHtml(item.servico || "Serviço")}</strong>
+                    <strong>${escapeHtml(item.servico || "Servi\u00e7o")}</strong>
                 </div>
                 <div class="finance-clean-item-actions">
                     <button type="button" class="icon-button" data-action="edit-detail-item" data-id="${item.id}" title="Editar item">
                         <i data-lucide="pencil"></i>
                     </button>
-                    <button type="button" class="icon-button danger-icon" data-action="delete-detail-item" data-id="${item.id}" title="Excluir item">
-                        <i data-lucide="trash-2"></i>
-                    </button>
+                    ${
+                        isAdminOrMaster()
+                            ? `
+                                <button type="button" class="icon-button danger-icon" data-action="delete-detail-item" data-id="${item.id}" title="Excluir item">
+                                    <i data-lucide="trash-2"></i>
+                                </button>
+                            `
+                            : ""
+                    }
                 </div>
             </header>
             <div class="finance-compact-grid">${details.join("")}</div>
@@ -1526,21 +1571,21 @@ function openFinanceDetails(id) {
     const group = findFinanceGroup(id);
 
     if (!group) {
-        showToast("Não foi possível carregar os detalhes.");
+        showToast("N\u00e3o foi poss\u00edvel carregar os detalhes.");
         return;
     }
 
     const summary = [
-        financeCompactDetail("Código", detailValue(group.codigo_tres)),
+        financeCompactDetail("C\u00f3digo", detailValue(group.codigo_tres)),
         financeCompactDetail("OS", detailValue(group.os)),
         financeCompactDetail("Cliente", detailValue(group.clientes?.nome)),
         financeCompactDetail("Emissor", detailValue(group.emissor_nome)),
-        financeCompactDetail("Data", detailDate(group.data_lancamento)),
+        financeCompactDetail("Criação", financeCreatedAtLabel(group.data_lancamento, group.created_at), "wide"),
         financeCompactDetail("Status", detailValue(group.status)),
         financeCompactDetail("Total geral", escapeHtml(formatGroupTotal(group)))
     ];
 
-    financeDetailTitle.textContent = `${group.codigo_tres || "Solicitação"} · OS ${group.os || "-"}`;
+    financeDetailTitle.textContent = `${group.codigo_tres || "Solicita\u00e7\u00e3o"} \u00b7 OS ${group.os || "-"}`;
     financeDetailContent.classList.add("finance-detail-content-group");
     financeDetailContent.innerHTML = `
         <section class="finance-clean-summary">
@@ -1567,7 +1612,7 @@ function editFinance(id) {
     });
 
     if (!item) {
-        showToast("Não foi possível abrir a edição.");
+        showToast("N\u00e3o foi poss\u00edvel abrir a edi\u00e7\u00e3o.");
         return;
     }
 
@@ -1621,8 +1666,8 @@ function editFinance(id) {
         }
     });
 
-    saveFinanceButton.textContent = "Salvar alterações";
-    showToast("Editando lançamento. Ao salvar, ele voltará para PENDENTE.");
+    saveFinanceButton.textContent = "Salvar altera\u00e7\u00f5es";
+    showToast("Editando lan\u00e7amento. Ao salvar, ele voltar\u00e1 para PENDENTE.");
 }
 
 function ensureHistoryModal() {
@@ -1639,8 +1684,8 @@ function ensureHistoryModal() {
         <div class="history-modal">
             <header class="history-header">
                 <div>
-                    <p class="eyebrow">Histórico</p>
-                    <h2 id="historyTitle">Histórico da solicitação</h2>
+                    <p class="eyebrow">Hist\u00f3rico</p>
+                    <h2 id="historyTitle">Hist\u00f3rico da solicita\u00e7\u00e3o</h2>
                 </div>
                 <button type="button" class="icon-button" id="historyClose" aria-label="Fechar">
                     <i data-lucide="x"></i>
@@ -1666,8 +1711,8 @@ function friendlyHistoryField(field) {
         cliente_id: "Cliente",
         data_lancamento: "Data",
         os: "OS",
-        servico: "Serviço",
-        subtipo: "Classificação",
+        servico: "Servi\u00e7o",
+        subtipo: "Classifica\u00e7\u00e3o",
         fornecedor: "Fornecedor",
         localizador: "Localizador",
         bilhete: "Bilhete",
@@ -1675,15 +1720,15 @@ function friendlyHistoryField(field) {
         taxa_embarque: "Taxa de embarque",
         rc: "RC",
         over_percent: "Over",
-        diaria: "Diária",
-        valor_periodo: "Valor do período",
+        diaria: "Di\u00e1ria",
+        valor_periodo: "Valor do per\u00edodo",
         taxas_tipo: "Tipo da taxa",
         taxas_valor: "Taxa",
-        comissao_percent: "Comissão",
+        comissao_percent: "Comiss\u00e3o",
         tarifa_net: "Tarifa NET",
         checkin: "Check-in",
         checkout: "Check-out",
-        quantidade_diarias: "Diárias",
+        quantidade_diarias: "Di\u00e1rias",
         total: "Total",
         total_final: "Total final",
         status: "Status"
@@ -1697,7 +1742,7 @@ function userNameById(id) {
         return String(item.id) === String(id);
     });
 
-    return user?.nome || id || "—";
+    return user?.nome || id || "-";
 }
 
 function clientNameById(id) {
@@ -1705,11 +1750,11 @@ function clientNameById(id) {
         return String(item.value) === String(id);
     });
 
-    return option?.textContent?.trim() || id || "—";
+    return option?.textContent?.trim() || id || "-";
 }
 
 function formatHistoryValue(field, value) {
-    if (value === null || value === undefined || value === "") return "—";
+    if (value === null || value === undefined || value === "") return "-";
 
     if (field === "emissor_id" || field === "updated_by" || field === "created_by" || field === "concluido_por") {
         return userNameById(value);
@@ -1738,7 +1783,7 @@ function formatHistoryValue(field, value) {
     }
 
     if (field === "tarifa_net") {
-        return value ? "Sim" : "Não";
+        return value ? "Sim" : "N\u00e3o";
     }
 
     return String(value);
@@ -1797,7 +1842,7 @@ function cleanHistoryChanges(changes) {
 }
 
 function formatTimelineDate(value) {
-    if (!value) return "Data não informada";
+    if (!value) return "Data n\u00e3o informada";
     return new Date(value).toLocaleString("pt-BR");
 }
 
@@ -1808,10 +1853,10 @@ function getCreationDate(currentItem) {
 function buildCreationEvent(currentItem) {
     if (!currentItem) return null;
 
-    const creator = userNameById(currentItem.created_by || currentItem.emissor_id) || currentItem.emissor_nome || "Usuário";
+    const creator = userNameById(currentItem.created_by || currentItem.emissor_id) || currentItem.emissor_nome || "Usu\u00e1rio";
 
     return {
-        title: `Solicitação criada por ${creator}`,
+        title: `Solicita\u00e7\u00e3o criada por ${creator}`,
         meta: formatTimelineDate(getCreationDate(currentItem)),
         changes: ""
     };
@@ -1819,7 +1864,7 @@ function buildCreationEvent(currentItem) {
 
 function describeHistoryEvent(item) {
     if (item.acao === "ITEM_ADICIONADO" || item.acao === "ITEM_EXCLUIDO") {
-        const actorName = item.alterado_por_nome || "Usuário";
+        const actorName = item.alterado_por_nome || "Usu\u00e1rio";
         const after = item.depois || {};
         const service = after.servico || "item";
         const total = after.total ? money(after.total, after.moeda || "BRL") : "";
@@ -1833,8 +1878,8 @@ function describeHistoryEvent(item) {
     }
 
     const changes = cleanHistoryChanges(item.alteracoes || {});
-    const actor = item.alterado_por_nome || "Usuário";
-    let title = `Solicitação editada por ${actor}`;
+    const actor = item.alterado_por_nome || "Usu\u00e1rio";
+    let title = `Solicita\u00e7\u00e3o editada por ${actor}`;
 
     if (changes.status) {
         title = `Status atualizado para ${formatHistoryValue("status", changes.status.depois)} por ${actor}`;
@@ -1871,8 +1916,8 @@ async function openHistory(moduleName, id, title, currentItem = null) {
     const content = document.getElementById("historyContent");
     const heading = document.getElementById("historyTitle");
 
-    heading.textContent = title || "Histórico da solicitação";
-    content.innerHTML = `<div class="history-item">Carregando histórico...</div>`;
+    heading.textContent = title || "Hist\u00f3rico da solicita\u00e7\u00e3o";
+    content.innerHTML = `<div class="history-item">Carregando hist\u00f3rico...</div>`;
     modal.classList.remove("hidden");
 
     const { data, error } = await supabaseClient
@@ -1884,7 +1929,7 @@ async function openHistory(moduleName, id, title, currentItem = null) {
 
     if (error) {
         console.error(error);
-        content.innerHTML = `<div class="history-item">Erro ao carregar histórico.</div>`;
+        content.innerHTML = `<div class="history-item">Erro ao carregar hist\u00f3rico.</div>`;
         return;
     }
 
@@ -1900,7 +1945,7 @@ async function openHistory(moduleName, id, title, currentItem = null) {
     });
 
     if (events.length === 0) {
-        content.innerHTML = `<div class="history-item">Nenhuma edição registrada ainda.</div>`;
+        content.innerHTML = `<div class="history-item">Nenhuma edi\u00e7\u00e3o registrada ainda.</div>`;
         return;
     }
 
@@ -1919,7 +1964,7 @@ function renderLancamentos() {
         financeTableBody.innerHTML = `
             <tr>
                 <td colspan="11" class="empty-table-message">
-                    Nenhum lançamento encontrado.
+                    Nenhum lan\u00e7amento encontrado.
                 </td>
             </tr>
         `;
@@ -1988,7 +2033,7 @@ function renderLancamentos() {
                             class="icon-button"
                             data-action="edit"
                             data-id="${item.itens[0]?.id || item.id}"
-                            title="Editar lançamento">
+                            title="Editar lan\u00e7amento">
                             <i data-lucide="pencil"></i>
                         </button>
 
@@ -1996,7 +2041,7 @@ function renderLancamentos() {
                             class="icon-button"
                             data-action="history"
                             data-id="${item.id}"
-                            title="Histórico">
+                            title="Hist\u00f3rico">
                             <i data-lucide="history"></i>
                         </button>
 
@@ -2007,14 +2052,19 @@ function renderLancamentos() {
                             title="Concluir">
                             <i data-lucide="check"></i>
                         </button>
-
-                        <button
-                            class="icon-button danger-icon"
-                            data-action="delete-group"
-                            data-id="${item.id}"
-                            title="Excluir solicitação inteira">
-                            <i data-lucide="trash-2"></i>
-                        </button>
+                        ${
+                            isAdminOrMaster()
+                                ? `
+                                    <button
+                                        class="icon-button danger-icon"
+                                        data-action="delete-group"
+                                        data-id="${item.id}"
+                                        title="Excluir solicitação inteira">
+                                        <i data-lucide="trash-2"></i>
+                                    </button>
+                                `
+                                : ""
+                        }
                     </div>
                 </td>
             </tr>
@@ -2050,11 +2100,11 @@ async function completeLancamento(id) {
 
     if (error) {
         console.error(error);
-        showToast("Erro ao concluir lançamento.");
+        showToast("Erro ao concluir lan\u00e7amento.");
         return;
     }
 
-    showToast("Lançamento concluído.");
+    showToast("Lan\u00e7amento conclu\u00eddo.");
     if (before) {
         await registerHistory(
             "VALORES_A_PAGAR",
@@ -2068,16 +2118,21 @@ async function completeLancamento(id) {
 }
 
 async function deleteFinanceGroup(id, skipConfirm = false) {
+    if (!isAdminOrMaster()) {
+        showToast("Você não tem permissão para excluir lançamentos.");
+        return;
+    }
+
     const group = findFinanceGroup(id);
 
     if (!group) {
-        showToast("Não foi possível localizar a solicitação.");
+        showToast("N\u00e3o foi poss\u00edvel localizar a solicita\u00e7\u00e3o.");
         return;
     }
 
     const ok = skipConfirm || await confirmFinanceAction({
-        title: "Excluir solicitação",
-        message: `Deseja excluir ${group.codigo_tres || "esta solicitação"} e todos os ${group.item_count} item(ns)? Esta ação não poderá ser desfeita.`
+        title: "Excluir solicita\u00e7\u00e3o",
+        message: `Deseja excluir ${group.codigo_tres || "esta solicita\u00e7\u00e3o"} e todos os ${group.item_count} item(ns)? Esta a\u00e7\u00e3o n\u00e3o poder\u00e1 ser desfeita.`
     });
 
     if (!ok) return;
@@ -2093,22 +2148,27 @@ async function deleteFinanceGroup(id, skipConfirm = false) {
 
     if (error) {
         console.error(error);
-        showToast("Erro ao excluir solicitação.");
+        showToast("Erro ao excluir solicita\u00e7\u00e3o.");
         return;
     }
 
     selectedLancamentos.delete(group.id);
-    showToast("Solicitação excluída.");
+    showToast("Solicita\u00e7\u00e3o exclu\u00edda.");
     await loadLancamentos();
 }
 
 async function deleteFinanceItem(id) {
+    if (!isAdminOrMaster()) {
+        showToast("Você não tem permissão para excluir lançamentos.");
+        return;
+    }
+
     const item = lancamentos.find(function (lancamento) {
         return String(lancamento.id) === String(id);
     });
 
     if (!item) {
-        showToast("Não foi possível localizar o item.");
+        showToast("N\u00e3o foi poss\u00edvel localizar o item.");
         return;
     }
 
@@ -2116,8 +2176,8 @@ async function deleteFinanceItem(id) {
 
     if (group && group.item_count <= 1) {
         const okGroup = await confirmFinanceAction({
-            title: "Excluir solicitação",
-            message: "Esta solicitação possui apenas 1 item. Ao excluir o item, a solicitação inteira será excluída. Deseja continuar?"
+            title: "Excluir solicita\u00e7\u00e3o",
+            message: "Esta solicita\u00e7\u00e3o possui apenas 1 item. Ao excluir o item, a solicita\u00e7\u00e3o inteira ser\u00e1 exclu\u00edda. Deseja continuar?"
         });
 
         if (!okGroup) return;
@@ -2128,7 +2188,7 @@ async function deleteFinanceItem(id) {
 
     const ok = await confirmFinanceAction({
         title: "Excluir item",
-        message: `Deseja excluir o item ${item.servico || ""} desta OS? Esta ação não poderá ser desfeita.`
+        message: `Deseja excluir o item ${item.servico || ""} desta OS? Esta a\u00e7\u00e3o n\u00e3o poder\u00e1 ser desfeita.`
     });
 
     if (!ok) return;
@@ -2160,7 +2220,7 @@ async function deleteFinanceItem(id) {
         );
     }
 
-    showToast("Item excluído.");
+    showToast("Item exclu\u00eddo.");
     closeFinanceDetails();
     await loadLancamentos();
 }
@@ -2171,7 +2231,7 @@ async function completeSelectedLancamentos() {
     }
 
     const confirmAction = confirm(
-        `Deseja concluir ${selectedLancamentos.size} lançamento(s)?`
+        `Deseja concluir ${selectedLancamentos.size} lan\u00e7amento(s)?`
     );
 
     if (!confirmAction) {
@@ -2215,7 +2275,7 @@ async function completeSelectedLancamentos() {
 
     selectedLancamentos.clear();
     selectAllFinance.checked = false;
-    showToast("Lançamentos concluídos.");
+    showToast("Lan\u00e7amentos conclu\u00eddos.");
     await loadLancamentos();
 }
 
@@ -2291,11 +2351,13 @@ if (cancelLinkedItemButton) {
     cancelLinkedItemButton.addEventListener("click", function () {
         financeForm.reset();
         resetFinanceForm();
-        showToast("Vínculo cancelado.");
+        showToast("V\u00ednculo cancelado.");
     });
 }
 
 financeSearch.addEventListener("input", resetFinancePagination);
+financeStartDate?.addEventListener("change", resetFinancePagination);
+financeEndDate?.addEventListener("change", resetFinancePagination);
 financeStatusFilter.addEventListener("change", resetFinancePagination);
 if (financeClientFilter) {
     financeClientFilter.addEventListener("change", resetFinancePagination);
@@ -2328,7 +2390,7 @@ if (refreshFinanceButton) {
 
         try {
             await loadLancamentos();
-            showToast("Lançamentos atualizados.");
+            showToast("Lan\u00e7amentos atualizados.");
         } finally {
             refreshFinanceButton.disabled = false;
             lucide.createIcons();
@@ -2386,14 +2448,14 @@ financeTableBody.addEventListener("click", async function (event) {
     if (button.dataset.action === "history") {
         const group = findFinanceGroup(button.dataset.id);
         if (group) {
-            await openHistory("VALORES_A_PAGAR", button.dataset.id, `Histórico ${group.codigo_tres || ""}`, group);
+            await openHistory("VALORES_A_PAGAR", button.dataset.id, `Hist\u00f3rico ${group.codigo_tres || ""}`, group);
             return;
         }
 
         const item = lancamentos.find(function (lancamento) {
             return String(lancamento.id) === String(button.dataset.id);
         });
-        await openHistory("VALORES_A_PAGAR", button.dataset.id, `Histórico ${item?.codigo_tres || ""}`, item);
+        await openHistory("VALORES_A_PAGAR", button.dataset.id, `Hist\u00f3rico ${item?.codigo_tres || ""}`, item);
     }
 
     if (button.dataset.action === "complete") {
@@ -2467,7 +2529,7 @@ async function startFinanceModule() {
     currentProfile = await getUserProfile(currentUser.id);
 
     if (!currentProfile) {
-        alert("Usuário não encontrado na tabela usuarios.");
+        alert("Usu\u00e1rio n\u00e3o encontrado na tabela usuarios.");
         return;
     }
 
@@ -2477,6 +2539,10 @@ async function startFinanceModule() {
     }
 
     applyUserProfile(currentProfile, currentUser);
+
+    if (financeStartDate) financeStartDate.value = firstDayOfMonthISO();
+    if (financeEndDate) financeEndDate.value = todayISO();
+    window.TRESDatePickers?.refresh();
 
     setupFinanceEmitterSelect();
     setupMoneyMasks();
@@ -2491,3 +2557,6 @@ async function startFinanceModule() {
 }
 
 startFinanceModule();
+
+
+

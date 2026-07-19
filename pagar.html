@@ -37,12 +37,12 @@
         <nav class="sidebar-nav">
             <a href="dashboard.html" class="nav-link">
                 <i data-lucide="layout-dashboard"></i>
-                <span>Dashboard</span>
+                <span>Início</span>
             </a>
 
             <a href="hotel.html" class="nav-link">
                 <i data-lucide="building-2"></i>
-                <span>Hotéis</span>
+                <span>Hot&eacute;is</span>
             </a>
 
             <a href="pagar.html" class="nav-link active">
@@ -57,7 +57,7 @@
 
             <a href="usuarios.html" class="nav-link admin-link hidden">
                 <i data-lucide="users-round"></i>
-                <span>Usuários</span>
+                <span>Usu&aacute;rios</span>
             </a>
         </nav>
 
@@ -79,7 +79,7 @@
 
         <header class="topbar">
             <div>
-                <p class="eyebrow">Módulo financeiro</p>
+                <p class="eyebrow">M&oacute;dulo financeiro</p>
                 <h1>Valores a Pagar</h1>
             </div>
 
@@ -87,7 +87,7 @@
                 <div class="avatar" id="avatar">T</div>
 
                 <div>
-                    <strong id="userName">Usuário</strong>
+                    <strong id="userName">Usu&aacute;rio</strong>
                     <small id="userRole">perfil</small>
                 </div>
             </div>
@@ -96,9 +96,9 @@
         <section class="module-header finance-module">
             <div>
                 <p class="eyebrow">Financeiro</p>
-                <h2>Lançamentos de valores a pagar</h2>
+                <h2>Lan&ccedil;amentos de valores a pagar</h2>
                 <p>
-                    Registre valores por serviço, acompanhe pendências e conclua lançamentos já tratados.
+                    Registre valores por servi&ccedil;o, acompanhe pend&ecirc;ncias e conclua lan&ccedil;amentos j&aacute; tratados.
                 </p>
             </div>
         </section>
@@ -107,11 +107,11 @@
 
             <div class="tabs-header">
                 <button class="tab-button active finance-tab" data-tab="newFinance">
-                    Novo lançamento
+                    Novo lan&ccedil;amento
                 </button>
 
                 <button class="tab-button finance-tab" data-tab="allFinance">
-                    Todos os lançamentos
+                    Todos os lan&ccedil;amentos
                 </button>
             </div>
 
@@ -124,7 +124,7 @@
                     </div>
 
                     <button type="button" class="btn btn-soft" id="cancelLinkedItemButton">
-                        Cancelar vínculo
+                        Cancelar v&iacute;nculo
                     </button>
                 </div>
 
@@ -161,29 +161,29 @@
                     </div>
 
                     <div class="form-field">
-                        <label>Serviço</label>
+                        <label>Servi&ccedil;o</label>
                         <select id="servico" required>
                             <option value="">Selecione</option>
-                            <option value="AEREO">AÉREO</option>
+                            <option value="AEREO">A&Eacute;REO</option>
                             <option value="HOTEL">HOTEL</option>
                             <option value="SEGURO VIAGEM">SEGURO VIAGEM</option>
-                            <option value="LOCACAO">LOCAÇÃO</option>
+                            <option value="LOCACAO">LOCA&Ccedil;&Atilde;O</option>
                             <option value="TRANSFER">TRANSFER</option>
                             <option value="OUTROS">OUTROS</option>
                         </select>
                     </div>
 
                     <div class="form-field span-2 hidden" id="outroServicoField">
-                        <label>Descreva o serviço</label>
-                        <input type="text" id="outroServico" placeholder="Informe qual é o serviço">
+                        <label>Descreva o servi&ccedil;o</label>
+                        <input type="text" id="outroServico" placeholder="Informe qual &eacute; o servi&ccedil;o">
                     </div>
 
                     <div class="form-field span-2 hidden" id="aereoSubtypeField">
-                        <label>Classificação do aéreo</label>
+                        <label>Classifica&ccedil;&atilde;o do a&eacute;reo</label>
 
                         <div class="choice-row">
                             <button type="button" class="choice-button active" data-subtipo="AEREO">
-                                Aéreo
+                                A&eacute;reo
                             </button>
 
                             <button type="button" class="choice-button" data-subtipo="ASSENTO">
@@ -244,20 +244,20 @@
                     </div>
 
                     <div class="form-field hidden" id="cambioField">
-                        <label>Câmbio</label>
+                        <label>C&acirc;mbio</label>
                         <input type="number" step="0.0001" id="cambio" disabled>
                         <small class="field-message neutral">
-                            O câmbio será preenchido por administrador.
+                            O c&acirc;mbio ser&aacute; preenchido por administrador.
                         </small>
                     </div>
 
                     <div class="form-field hidden" id="diariaField">
-                        <label>Diária (R$)</label>
+                        <label>Di&aacute;ria (R$)</label>
                         <input type="text" inputmode="decimal" id="diaria" placeholder="0,00">
                     </div>
 
                     <div class="form-field hidden" id="valorPeriodoField">
-                        <label>Valor total do período (R$)</label>
+                        <label>Valor total do per&iacute;odo (R$)</label>
                         <input type="text" inputmode="decimal" id="valorPeriodo" placeholder="0,00">
                     </div>
 
@@ -275,7 +275,7 @@
                     </div>
 
                     <div class="form-field hidden" id="comissaoField">
-                        <label>Comissão (%)</label>
+                        <label>Comiss&atilde;o (%)</label>
                         <input type="text" inputmode="decimal" id="comissaoPercent" placeholder="0,00">
                     </div>
 
@@ -312,7 +312,7 @@
                         </button>
 
                         <button type="submit" class="btn btn-finance" id="saveFinanceButton">
-                            Salvar lançamento
+                            Salvar lan&ccedil;amento
                         </button>
                     </div>
 
@@ -325,7 +325,7 @@
                 <div class="panel-header table-header">
                     <div>
                         <p class="eyebrow">Consulta</p>
-                        <h3>Lançamentos financeiros</h3>
+                        <h3>Lan&ccedil;amentos financeiros</h3>
                     </div>
 
                     <div class="table-header-actions">
@@ -340,12 +340,15 @@
                 </div>
 
                 <div class="filters-grid finance-filters">
-                    <input type="search" id="financeSearch" placeholder="Pesquisar OS, fornecedor ou serviço">
+                    <input type="search" id="financeSearch" placeholder="Pesquisar OS, emissor, fornecedor ou servi&ccedil;o">
+
+                    <input type="date" id="financeStartDate">
+                    <input type="date" id="financeEndDate">
 
                     <select id="financeStatusFilter">
                         <option value="">Todos os status</option>
                         <option value="PENDENTE">Pendente</option>
-                        <option value="CONCLUIDO">Concluído</option>
+                        <option value="CONCLUIDO">Conclu&iacute;do</option>
                     </select>
 
                     <select id="financeClientFilter">
@@ -353,13 +356,13 @@
                     </select>
 
                     <select id="financeServiceFilter">
-                        <option value="">Todos os serviços</option>
-                        <option value="AEREO">Aéreo</option>
+                        <option value="">Todos os servi&ccedil;os</option>
+                        <option value="AEREO">A&eacute;reo</option>
                         <option value="ASSENTO">Assento</option>
                         <option value="BAGAGEM EXTRA">Bagagem extra</option>
                         <option value="HOTEL">Hotel</option>
                         <option value="SEGURO VIAGEM">Seguro viagem</option>
-                        <option value="LOCACAO">Locação</option>
+                        <option value="LOCACAO">Loca&ccedil;&atilde;o</option>
                         <option value="TRANSFER">Transfer</option>
                         <option value="OUTROS">Outros</option>
                     </select>
@@ -372,16 +375,16 @@
                                 <th>
                                     <input type="checkbox" id="selectAllFinance">
                                 </th>
-                                <th>Código</th>
+                                <th>C&oacute;digo</th>
                                 <th>Data</th>
                                 <th>Emissor</th>
                                 <th>OS</th>
                                 <th>Cliente</th>
                                 <th>Itens</th>
-                                <th>Serviços / fornecedores</th>
+                                <th>Servi&ccedil;os / fornecedores</th>
                                 <th>Total</th>
                                 <th>Status</th>
-                                <th>Ações</th>
+                                <th>A&ccedil;&otilde;es</th>
                             </tr>
                         </thead>
 
@@ -393,7 +396,7 @@
                     <span id="financePaginationInfo">Mostrando 0 de 0</span>
                     <div class="table-pagination-actions">
                         <label>
-                            Por página
+                            Por p&aacute;gina
                             <select id="financePageSize">
                                 <option value="10">10</option>
                                 <option value="25">25</option>
@@ -401,8 +404,8 @@
                             </select>
                         </label>
                         <button type="button" class="btn btn-soft" id="financePrevPage">Anterior</button>
-                        <span id="financePageIndicator">Página 1 de 1</span>
-                        <button type="button" class="btn btn-soft" id="financeNextPage">Próxima</button>
+                        <span id="financePageIndicator">P&aacute;gina 1 de 1</span>
+                        <button type="button" class="btn btn-soft" id="financeNextPage">Pr&oacute;xima</button>
                     </div>
                 </div>
 
@@ -423,7 +426,7 @@
             <header class="finance-detail-header">
                 <div>
                     <p class="eyebrow">Valores a pagar</p>
-                    <h2 id="financeDetailTitle">Detalhes do lançamento</h2>
+                    <h2 id="financeDetailTitle">Detalhes do lan&ccedil;amento</h2>
                 </div>
 
                 <button
@@ -448,8 +451,12 @@
     <div id="toast" class="toast hidden"></div>
 
     <script src="js/config.js"></script>
+    <script src="js/ui-selects.js"></script>
+    <script src="js/ui-dates.js"></script>
     <script src="js/pagar.js"></script>
 
 </body>
 
 </html>
+
+

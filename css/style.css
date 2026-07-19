@@ -561,7 +561,9 @@ body.module-users {
     align-items: center;
     justify-content: space-between;
     gap: 16px;
-    margin-bottom: 20px;
+    margin-bottom: 16px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--line);
 }
 
 .table-header-actions {
@@ -577,25 +579,32 @@ body.module-users {
     grid-template-columns: 1fr 220px 220px;
     align-items: center;
     gap: 12px;
-    margin-bottom: 18px;
+    margin-bottom: 16px;
 }
 
 .filters-grid input,
 .filters-grid select {
-    height: 42px;
+    height: 40px;
     border: 1px solid var(--line);
-    border-radius: 12px;
+    border-radius: 14px;
     padding: 0 14px;
-    background: #ffffff;
+    background: #f8fafc;
     color: var(--text);
-    font-size: 14px;
+    font-size: 13px;
+    font-weight: 700;
+    transition: border-color 0.16s ease, box-shadow 0.16s ease, background 0.16s ease;
 }
 
 .filters-grid input:focus,
 .filters-grid select:focus {
     border-color: var(--action);
+    background: #ffffff;
     box-shadow: 0 0 0 4px rgba(20, 61, 89, 0.10);
     outline: none;
+}
+
+.filters-grid.hotel-filters {
+    grid-template-columns: minmax(240px, 1fr) 160px 160px 200px 200px;
 }
 
 input.field-invalid,
@@ -604,27 +613,475 @@ select.field-invalid {
     box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.10) !important;
 }
 
+/* Custom selects */
+
+.tres-select-native {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
+.tres-select {
+    position: relative;
+    width: 100%;
+}
+
+.tres-select-button {
+    display: flex;
+    width: 100%;
+    height: 40px;
+    align-items: center;
+    gap: 9px;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 0 12px;
+    background: #f8fafc;
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 800;
+    text-align: left;
+    transition: border-color 0.16s ease, box-shadow 0.16s ease, background 0.16s ease;
+}
+
+.form-field .tres-select-button {
+    height: 48px;
+    background: #ffffff;
+    font-size: 14px;
+}
+
+.table-pagination .tres-select-button {
+    height: 34px;
+    min-width: 72px;
+    border-radius: 11px;
+}
+
+.table-pagination .tres-select {
+    width: auto;
+    flex: 0 0 auto;
+}
+
+.table-pagination .tres-select-menu {
+    left: auto;
+    right: 0;
+    width: 100%;
+    min-width: 86px;
+    max-height: 178px;
+    padding: 6px;
+    border-radius: 14px;
+}
+
+.table-pagination .tres-select-option {
+    min-height: 32px;
+    padding: 7px 9px;
+    font-size: 12px;
+}
+
+.tres-select-button:hover,
+.tres-select.open .tres-select-button {
+    border-color: var(--action);
+    background: #ffffff;
+    box-shadow: 0 0 0 4px rgba(20, 61, 89, 0.08);
+}
+
+.tres-select-button svg {
+    width: 15px;
+    height: 15px;
+    flex: 0 0 auto;
+    color: var(--action);
+}
+
+.tres-select-label {
+    overflow: hidden;
+    flex: 1;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.tres-select-chevron {
+    margin-left: auto;
+    color: var(--muted) !important;
+    transition: transform 0.16s ease;
+}
+
+.tres-select.open .tres-select-chevron {
+    transform: rotate(180deg);
+}
+
+.tres-select-menu {
+    position: absolute;
+    top: calc(100% + 7px);
+    bottom: auto;
+    left: 0;
+    z-index: 80;
+    display: none;
+    width: max(100%, 190px);
+    max-height: 260px;
+    overflow-y: auto;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 7px;
+    background: #ffffff;
+    box-shadow: 0 18px 44px rgba(15, 23, 42, 0.16);
+}
+
+.tres-select.open .tres-select-menu {
+    display: grid;
+    gap: 3px;
+}
+
+.tres-select.open-up .tres-select-menu {
+    top: auto;
+    bottom: calc(100% + 7px);
+}
+
+.tres-select-option {
+    display: flex;
+    width: 100%;
+    min-height: 36px;
+    align-items: center;
+    gap: 9px;
+    border: 0;
+    border-radius: 12px;
+    padding: 9px 10px;
+    background: transparent;
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 800;
+    text-align: left;
+}
+
+.tres-select-option svg {
+    width: 15px;
+    height: 15px;
+    flex: 0 0 auto;
+    color: var(--action);
+}
+
+.tres-select-option:hover {
+    background: #f1f5f9;
+}
+
+.tres-select-option.active {
+    color: var(--action);
+    background: var(--action-soft);
+}
+
+.module-hotel .tres-select-button svg,
+.module-hotel .tres-select-option svg,
+.module-hotel .tres-select-option.active {
+    color: var(--hotel);
+}
+
+.module-hotel .tres-select-option.active {
+    background: #ecfdf8;
+}
+
+.module-finance .tres-select-button svg,
+.module-finance .tres-select-option svg,
+.module-finance .tres-select-option.active {
+    color: var(--finance);
+}
+
+.module-finance .tres-select-option.active {
+    background: #fff1f2;
+}
+
+.module-refund .tres-select-button svg,
+.module-refund .tres-select-option svg,
+.module-refund .tres-select-option.active {
+    color: var(--refund);
+}
+
+.module-refund .tres-select-option.active {
+    background: #fffbeb;
+}
+
+/* Custom date pickers */
+
+.tres-date-native {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
+.tres-date {
+    position: relative;
+    width: 100%;
+}
+
+.tres-date-button {
+    display: flex;
+    width: 100%;
+    height: 48px;
+    align-items: center;
+    gap: 9px;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 0 13px;
+    background: #ffffff;
+    color: var(--text);
+    font-size: 14px;
+    font-weight: 800;
+    text-align: left;
+    transition: border-color 0.16s ease, box-shadow 0.16s ease, background 0.16s ease;
+}
+
+.filters-grid .tres-date-button {
+    height: 40px;
+    background: #f8fafc;
+    font-size: 13px;
+}
+
+.tres-date-button:hover,
+.tres-date.open .tres-date-button {
+    border-color: var(--action);
+    background: #ffffff;
+    box-shadow: 0 0 0 4px rgba(20, 61, 89, 0.08);
+}
+
+.tres-date-button svg {
+    width: 15px;
+    height: 15px;
+    flex: 0 0 auto;
+    color: var(--action);
+}
+
+.tres-date-label {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.tres-date-chevron {
+    margin-left: auto;
+    color: var(--muted) !important;
+    transition: transform 0.16s ease;
+}
+
+.tres-date.open .tres-date-chevron {
+    transform: rotate(180deg);
+}
+
+.tres-date-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    bottom: auto;
+    left: 0;
+    z-index: 90;
+    display: none;
+    width: 286px;
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 12px;
+    background: #ffffff;
+    box-shadow: 0 18px 44px rgba(15, 23, 42, 0.16);
+}
+
+.tres-date.open .tres-date-menu {
+    display: block;
+}
+
+.tres-date.open-up .tres-date-menu {
+    top: auto;
+    bottom: calc(100% + 8px);
+}
+
+.tres-date-head {
+    display: grid;
+    grid-template-columns: 32px 1fr 32px;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.tres-date-head strong {
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 900;
+    text-align: center;
+    text-transform: lowercase;
+}
+
+.tres-date-nav {
+    display: grid;
+    width: 32px;
+    height: 32px;
+    place-items: center;
+    border: 0;
+    border-radius: 10px;
+    background: transparent;
+    color: var(--muted);
+}
+
+.tres-date-nav:hover {
+    color: var(--action);
+    background: var(--action-soft);
+}
+
+.tres-date-nav svg {
+    width: 17px;
+    height: 17px;
+}
+
+.tres-date-weekdays,
+.tres-date-days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+}
+
+.tres-date-weekdays {
+    margin-bottom: 5px;
+}
+
+.tres-date-weekdays span {
+    display: grid;
+    height: 24px;
+    place-items: center;
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 900;
+}
+
+.tres-date-day {
+    display: grid;
+    height: 32px;
+    place-items: center;
+    border: 0;
+    border-radius: 10px;
+    background: transparent;
+    color: var(--text);
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.tres-date-day:hover {
+    color: var(--action);
+    background: var(--action-soft);
+}
+
+.tres-date-day.muted {
+    color: #cbd5e1;
+}
+
+.tres-date-day.today {
+    outline: 1px solid var(--line);
+}
+
+.tres-date-day.selected {
+    color: #ffffff;
+    background: var(--action);
+}
+
+.tres-date-day:disabled {
+    cursor: not-allowed;
+    color: #cbd5e1;
+    background: #f8fafc;
+    opacity: 0.7;
+}
+
+.tres-date-footer {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 10px;
+    padding-top: 9px;
+    border-top: 1px solid var(--line);
+}
+
+.tres-date-footer button {
+    border: 0;
+    border-radius: 10px;
+    padding: 8px 10px;
+    background: transparent;
+    color: var(--action);
+    font-size: 12px;
+    font-weight: 900;
+}
+
+.tres-date-footer button:hover {
+    background: var(--action-soft);
+}
+
+.module-hotel .tres-date-button svg,
+.module-hotel .tres-date-nav:hover,
+.module-hotel .tres-date-day:hover,
+.module-hotel .tres-date-footer button {
+    color: var(--hotel);
+}
+
+.module-hotel .tres-date-day.selected {
+    background: var(--hotel);
+}
+
+.module-hotel .tres-date-day:hover,
+.module-hotel .tres-date-footer button:hover,
+.module-hotel .tres-date-nav:hover {
+    background: #ecfdf8;
+}
+
+.module-finance .tres-date-button svg,
+.module-finance .tres-date-nav:hover,
+.module-finance .tres-date-day:hover,
+.module-finance .tres-date-footer button {
+    color: var(--finance);
+}
+
+.module-finance .tres-date-day.selected {
+    background: var(--finance);
+}
+
+.module-finance .tres-date-day:hover,
+.module-finance .tres-date-footer button:hover,
+.module-finance .tres-date-nav:hover {
+    background: #fff1f2;
+}
+
+.module-refund .tres-date-button svg,
+.module-refund .tres-date-nav:hover,
+.module-refund .tres-date-day:hover,
+.module-refund .tres-date-footer button {
+    color: var(--refund);
+}
+
+.module-refund .tres-date-day.selected {
+    background: var(--refund);
+}
+
+.module-refund .tres-date-day:hover,
+.module-refund .tres-date-footer button:hover,
+.module-refund .tres-date-nav:hover {
+    background: #fffbeb;
+}
+
 .table-wrapper {
     width: 100%;
     overflow-x: auto;
     border: 1px solid var(--line);
-    border-radius: 20px;
+    border-radius: 18px;
     background: #ffffff;
+    box-shadow: 0 10px 26px rgba(15, 23, 42, 0.035);
 }
 
 table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 14px;
+    font-size: 13px;
 }
 
-thead { background: #f8fafc; }
+thead {
+    background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+}
 
 th {
-    padding: 16px 14px;
+    padding: 13px 14px;
     color: #475569;
-    font-size: 11px;
-    font-weight: 800;
+    font-size: 10px;
+    font-weight: 900;
     text-align: left;
     text-transform: uppercase;
     letter-spacing: 0.08em;
@@ -632,31 +1089,42 @@ th {
 }
 
 td {
-    padding: 16px 14px;
+    padding: 13px 14px;
     color: var(--text);
     border-top: 1px solid var(--line);
     white-space: nowrap;
+    font-weight: 700;
+    vertical-align: middle;
 }
 
-tbody tr:hover { background: #f8fafc; }
+tbody tr {
+    transition: background 0.16s ease, box-shadow 0.16s ease;
+}
+
+tbody tr:hover {
+    background: #f8fafc;
+}
 
 .table-input {
     width: 150px;
-    height: 36px;
+    height: 34px;
     border: 1px solid var(--line);
-    border-radius: 10px;
+    border-radius: 11px;
     padding: 0 10px;
-    font-size: 13px;
+    background: #ffffff;
+    font-size: 12px;
+    font-weight: 700;
 }
 
 .empty-table-message {
-    padding: 28px;
+    padding: 34px;
     text-align: center;
     color: var(--muted);
+    font-weight: 700;
 }
 
 .filters-grid.finance-filters {
-    grid-template-columns: minmax(240px, 1fr) 200px 220px 220px;
+    grid-template-columns: minmax(240px, 1fr) 160px 160px 190px 220px 220px;
 }
 
 .table-pagination {
@@ -664,35 +1132,42 @@ tbody tr:hover { background: #f8fafc; }
     align-items: center;
     justify-content: space-between;
     gap: 14px;
-    margin-top: 14px;
+    margin-top: 16px;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 10px 12px;
+    background: #ffffff;
     color: var(--muted);
-    font-size: 13px;
+    font-size: 12px;
+    font-weight: 800;
 }
 
 .table-pagination-actions {
     display: flex;
     align-items: center;
     gap: 10px;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     justify-content: flex-end;
 }
 
 .table-pagination label {
     display: inline-flex;
     align-items: center;
+    flex: 0 0 auto;
     gap: 8px;
     color: var(--muted);
     font-weight: 700;
+    white-space: nowrap;
 }
 
 .table-pagination select {
-    height: 36px;
+    height: 34px;
     border: 1px solid var(--line);
-    border-radius: 10px;
+    border-radius: 11px;
     padding: 0 10px;
-    background: #ffffff;
+    background: #f8fafc;
     color: var(--text);
-    font-weight: 700;
+    font-weight: 800;
 }
 
 .table-pagination .btn {
@@ -855,10 +1330,14 @@ tbody tr:hover { background: #f8fafc; }
 .badge {
     display: inline-flex;
     align-items: center;
+    justify-content: center;
+    min-width: 78px;
     border-radius: 999px;
-    padding: 5px 10px;
-    font-size: 12px;
-    font-weight: 800;
+    padding: 5px 9px;
+    font-size: 10px;
+    font-weight: 900;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
 }
 
 .badge-pendente {
@@ -880,13 +1359,17 @@ tbody tr:hover { background: #f8fafc; }
 
 .action-buttons {
     display: flex;
-    gap: 8px;
+    align-items: center;
+    gap: 7px;
+    white-space: nowrap;
 }
 
 .icon-button {
     border: 1px solid var(--line);
-    border-radius: 10px;
-    padding: 8px;
+    border-radius: 12px;
+    padding: 0;
+    width: 34px;
+    height: 34px;
     background: #ffffff;
     color: var(--muted);
     display: inline-grid;
@@ -897,6 +1380,8 @@ tbody tr:hover { background: #f8fafc; }
 .icon-button:hover {
     color: var(--action);
     background: var(--action-soft);
+    border-color: rgba(20, 61, 89, 0.20);
+    transform: translateY(-1px);
 }
 
 .icon-button svg {

@@ -93,8 +93,25 @@ async function countRows(tableName, status = null) {
     return count || 0;
 }
 
+async function countRowsDifferentFrom(tableName, status) {
+    const { count, error } = await supabaseClient
+        .from(tableName)
+        .select("*", {
+            count: "exact",
+            head: true
+        })
+        .neq("status", status);
+
+    if (error) {
+        console.warn(`NÃ£o foi possÃ­vel contar ${tableName}.`, error);
+        return 0;
+    }
+
+    return count || 0;
+}
+
 async function loadMetrics() {
-    metricHotels.textContent = await countRows("solicitacoes_hotel", "PENDENTE");
+    metricHotels.textContent = await countRowsDifferentFrom("solicitacoes_hotel", "CONCLUIDO");
     metricFinance.textContent = await countRows("lancamentos", "PENDENTE");
     metricRefunds.textContent = await countRows("reembolsos", "PENDENTE");
 }
@@ -272,7 +289,7 @@ async function loadHistoryActivities() {
         .from("solicitacoes_historico")
         .select("id, modulo, solicitacao_id, codigo_tres, acao, alterado_por_nome, alteracoes, antes, depois, created_at")
         .order("created_at", { ascending: false })
-        .limit(4);
+        .limit(3);
 
     if (error) {
         console.warn("Não foi possível carregar o histórico recente.", error);
@@ -331,9 +348,13 @@ async function loadVolumeData() {
     const modules = chartModules();
 
     return Promise.all(modules.map(async function (module) {
+        const pendingPromise = module.table === "solicitacoes_hotel"
+            ? countRowsDifferentFrom(module.table, "CONCLUIDO")
+            : countRows(module.table, "PENDENTE");
+
         const [total, pending, done] = await Promise.all([
             countRows(module.table),
-            countRows(module.table, "PENDENTE"),
+            pendingPromise,
             countRows(module.table, "CONCLUIDO")
         ]);
 

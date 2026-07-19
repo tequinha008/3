@@ -23,6 +23,8 @@ const clearHotelForm = document.getElementById("clearHotelForm");
 const saveHotelButton = document.getElementById("saveHotelButton");
 
 const hotelSearch = document.getElementById("hotelSearch");
+const hotelStartDate = document.getElementById("hotelStartDate");
+const hotelEndDate = document.getElementById("hotelEndDate");
 const statusFilter = document.getElementById("statusFilter");
 const tipoFilter = document.getElementById("tipoFilter");
 const hotelTableBody = document.getElementById("hotelTableBody");
@@ -53,6 +55,11 @@ let hotelEmitterSelect = null;
 
 function todayISO() {
     return new Date().toISOString().split("T")[0];
+}
+
+function firstDayOfMonthISO() {
+    const date = new Date();
+    return new Date(date.getFullYear(), date.getMonth(), 1).toISOString().split("T")[0];
 }
 
 function onlyNumbers(value) {
@@ -212,12 +219,12 @@ async function validateCNPJBeforeSave() {
     const cnpjNumbers = onlyNumbers(cnpj.value);
 
     if (!cnpjNumbers) {
-        showError("CNPJ é obrigatório para hotéis nacionais.");
+        showError("CNPJ \u00e9 obrigat\u00f3rio para hot\u00e9is nacionais.");
         return false;
     }
 
     if (cnpjNumbers.length !== 14) {
-        showError("Informe um CNPJ válido com 14 números.");
+        showError("Informe um CNPJ v\u00e1lido com 14 n\u00fameros.");
         return false;
     }
 
@@ -229,7 +236,7 @@ async function validateCNPJBeforeSave() {
         }
 
         showError(
-            `Este CNPJ já existe no sistema: ${duplicate.codigo_tres || "sem código"} - ${duplicate.nome_hotel}.`
+            `Este CNPJ j\u00e1 existe no sistema: ${duplicate.codigo_tres || "sem c\u00f3digo"} - ${duplicate.nome_hotel}.`
         );
 
         return false;
@@ -244,7 +251,7 @@ function handleTipoChange() {
     if (tipoHotel.value === "INTERNACIONAL") {
         cnpj.value = "";
         cnpj.disabled = true;
-        cnpj.placeholder = "Não obrigatório para internacional";
+        cnpj.placeholder = "N\u00e3o obrigat\u00f3rio para internacional";
         pais.value = pais.value === "Brasil" ? "" : pais.value;
     } else {
         cnpj.disabled = false;
@@ -266,7 +273,7 @@ async function saveHotel(event) {
 
     if (!validCNPJ) {
         saveHotelButton.disabled = false;
-        saveHotelButton.textContent = "Salvar solicitação";
+        saveHotelButton.textContent = "Salvar solicita\u00e7\u00e3o";
         return;
     }
 
@@ -295,9 +302,9 @@ async function saveHotel(event) {
 
     if (error) {
         console.error(error);
-        showToast("Erro ao salvar solicitação.");
+        showToast("Erro ao salvar solicita\u00e7\u00e3o.");
     } else {
-        showToast("Solicitação cadastrada com sucesso.");
+        showToast("Solicita\u00e7\u00e3o cadastrada com sucesso.");
 
         hotelForm.reset();
 
@@ -311,7 +318,7 @@ async function saveHotel(event) {
     }
 
     saveHotelButton.disabled = false;
-    saveHotelButton.textContent = "Salvar solicitação";
+    saveHotelButton.textContent = "Salvar solicita\u00e7\u00e3o";
 }
 
 async function loadUsersList() {
@@ -345,7 +352,7 @@ function fillHotelEmitterSelect(selectedId) {
     if (!hotelEmitterSelect) return;
 
     hotelEmitterSelect.innerHTML = allUsers.map(function (user) {
-        return `<option value="${user.id}">${escapeHtml(user.nome || user.email || "Usuário")}</option>`;
+        return `<option value="${user.id}">${escapeHtml(user.nome || user.email || "Usu\u00e1rio")}</option>`;
     }).join("");
 
     hotelEmitterSelect.value = selectedId || currentUser.id;
@@ -445,7 +452,7 @@ async function saveHotel(event) {
 
     if (!validCNPJ) {
         saveHotelButton.disabled = false;
-        saveHotelButton.textContent = editingHotelId ? "Salvar alterações" : "Salvar solicitação";
+        saveHotelButton.textContent = editingHotelId ? "Salvar altera\u00e7\u00f5es" : "Salvar solicita\u00e7\u00e3o";
         return;
     }
 
@@ -469,7 +476,7 @@ async function saveHotel(event) {
                 "HOTEIS",
                 editingHotelOriginal,
                 { ...editingHotelOriginal, ...payload },
-                "EDIÇÃO"
+                "EDI\u00c7\u00c3O"
             );
         }
     } else {
@@ -485,16 +492,16 @@ async function saveHotel(event) {
 
     if (error) {
         console.error(error);
-        showToast("Erro ao salvar solicitação.");
+        showToast("Erro ao salvar solicita\u00e7\u00e3o.");
     } else {
-        showToast(editingHotelId ? "Solicitação atualizada e voltou para pendente." : "Solicitação cadastrada com sucesso.");
+        showToast(editingHotelId ? "Solicita\u00e7\u00e3o atualizada e voltou para pendente." : "Solicita\u00e7\u00e3o cadastrada com sucesso.");
         hotelForm.reset();
         resetHotelForm();
         await loadHotels();
     }
 
     saveHotelButton.disabled = false;
-    saveHotelButton.textContent = "Salvar solicitação";
+    saveHotelButton.textContent = "Salvar solicita\u00e7\u00e3o";
 }
 
 async function loadHotels() {
@@ -528,7 +535,7 @@ async function loadHotels() {
         hotelTableBody.innerHTML = `
             <tr>
                 <td colspan="10" class="empty-table-message">
-                    Erro ao carregar solicitações.
+                    Erro ao carregar solicita\u00e7\u00f5es.
                 </td>
             </tr>
         `;
@@ -579,10 +586,13 @@ function getFilteredHotels() {
 
     const search = normalizeSearchText(hotelSearch.value);
     const searchNumbers = onlyNumbers(hotelSearch.value);
+    const start = hotelStartDate?.value || "";
+    const end = hotelEndDate?.value || "";
     const status = statusFilter.value;
     const tipo = tipoFilter.value;
 
     return hotels.filter(function (hotel) {
+        const date = hotel.data_solicitacao || "";
 
         const searchableText = [
             hotel.codigo_tres,
@@ -621,7 +631,10 @@ function getFilteredHotels() {
         const matchTipo =
             !tipo || hotel.tipo === tipo;
 
-        return matchSearch && matchStatus && matchTipo;
+        const matchStart = !start || date >= start;
+        const matchEnd = !end || date <= end;
+
+        return matchSearch && matchStatus && matchTipo && matchStart && matchEnd;
 
     });
 
@@ -631,7 +644,7 @@ const HOTEL_STATUS_OPTIONS = [
     { value: "PENDENTE", label: "Pendente", icon: "clock-3" },
     { value: "AGUARDANDO_BENNER", label: "Aguardando Benner", icon: "hourglass" },
     { value: "CADASTRADO_BENNER", label: "Cadastrado Benner", icon: "badge-check" },
-    { value: "CONCLUIDO", label: "Concluído", icon: "check-circle-2" }
+    { value: "CONCLUIDO", label: "Conclu\u00eddo", icon: "check-circle-2" }
 ];
 
 function hotelStatusLabel(status) {
@@ -655,10 +668,10 @@ function statusBadge(status) {
             return `<span class="badge hotel-badge-benner-waiting">AGUARDANDO BENNER</span>`;
 
         case "CONCLUIDO":
-            return `<span class="badge badge-concluido">CONCLUÍDO</span>`;
+            return `<span class="badge badge-concluido">CONCLU\u00cdDO</span>`;
 
         case "JA_CADASTRADO":
-            return `<span class="badge badge-ja-cadastrado">JÁ CADASTRADO</span>`;
+            return `<span class="badge badge-ja-cadastrado">J\u00c1 CADASTRADO</span>`;
 
         default:
             return `<span class="badge badge-pendente">PENDENTE</span>`;
@@ -741,7 +754,7 @@ function updateHotelPagination(totalItems) {
     }
 
     if (hotelPageIndicator) {
-        hotelPageIndicator.textContent = `Página ${hotelCurrentPage} de ${totalPages}`;
+        hotelPageIndicator.textContent = `P\u00e1gina ${hotelCurrentPage} de ${totalPages}`;
     }
 
     if (hotelPrevPage) {
@@ -764,12 +777,12 @@ function escapeHtml(value) {
 
 function detailValue(value) {
     return value === null || value === undefined || value === ""
-        ? "—"
+        ? "-"
         : escapeHtml(value);
 }
 
 function detailDate(value, includeTime = false) {
-    if (!value) return "—";
+    if (!value) return "-";
 
     if (includeTime) {
         return new Date(value).toLocaleString("pt-BR");
@@ -786,6 +799,43 @@ function hotelDetailItem(label, value, className = "") {
             <strong>${value}</strong>
         </div>
     `;
+}
+
+function hotelSummaryItem(label, value, className = "") {
+    return `
+        <div class="hotel-summary-item ${className}">
+            <span>${escapeHtml(label)}</span>
+            <strong>${value}</strong>
+        </div>
+    `;
+}
+
+function hotelInfoRow(label, value, className = "") {
+    return `
+        <div class="hotel-info-row ${className}">
+            <span>${escapeHtml(label)}</span>
+            <strong>${value}</strong>
+        </div>
+    `;
+}
+
+function requestDateTimeLabel(hotel) {
+    const date = detailDate(hotel.data_solicitacao);
+
+    if (!hotel.created_at) {
+        return date;
+    }
+
+    const createdAt = new Date(hotel.created_at);
+
+    if (Number.isNaN(createdAt.getTime())) {
+        return date;
+    }
+
+    return `${date} \u00e0s ${createdAt.toLocaleTimeString("pt-BR", {
+        hour: "2-digit",
+        minute: "2-digit"
+    })}`;
 }
 
 function closeHotelDetails() {
@@ -805,32 +855,46 @@ function openHotelDetails(id) {
     }
 
     const emissor = hotel.emissor_nome;
-    const details = [
-        hotelDetailItem("Código TRES", detailValue(hotel.codigo_tres), "highlight"),
-        hotelDetailItem("Data da solicitação", detailDate(hotel.data_solicitacao)),
-        hotelDetailItem("Status", detailValue(hotel.status)),
-        hotelDetailItem("Emissor", detailValue(emissor), "wide"),
-        hotelDetailItem("Tipo", detailValue(hotel.tipo)),
-        hotelDetailItem("Nome do hotel", detailValue(hotel.nome_hotel), "full"),
-        hotelDetailItem("Rua e número", detailValue(hotel.rua_numero), "wide"),
-        hotelDetailItem("Bairro", detailValue(hotel.bairro)),
-        hotelDetailItem("Cidade / Estado", detailValue(hotel.cidade_estado), "wide"),
-        hotelDetailItem("País", detailValue(hotel.pais)),
-        hotelDetailItem(
-            "CNPJ",
-            hotel.cnpj ? escapeHtml(formatCNPJ(hotel.cnpj)) : "Não se aplica",
-            "wide"
-        ),
-        hotelDetailItem("Código de integração", detailValue(hotel.codigo_integracao), "highlight"),
-        hotelDetailItem("Criado em", detailDate(hotel.created_at, true)),
-        hotelDetailItem("Concluído por", detailValue(hotel.concluido_por_nome)),
-        hotelDetailItem("Concluído em", detailDate(hotel.concluido_em, true))
+    const summary = [
+        hotelSummaryItem("Código", detailValue(hotel.codigo_tres)),
+        hotelSummaryItem("Tipo", detailValue(hotel.tipo)),
+        hotelSummaryItem("Status", detailValue(hotel.status)),
+        hotelSummaryItem("Data / hora", requestDateTimeLabel(hotel)),
+        hotelSummaryItem("Emissor", detailValue(emissor)),
+        hotelSummaryItem("Código integração", detailValue(hotel.codigo_integracao), "accent")
+    ];
+    const hotelRows = [
+        hotelInfoRow("Nome do hotel", detailValue(hotel.nome_hotel), "wide"),
+        hotelInfoRow("Rua e número", detailValue(hotel.rua_numero)),
+        hotelInfoRow("Bairro", detailValue(hotel.bairro)),
+        hotelInfoRow("Cidade / Estado", detailValue(hotel.cidade_estado)),
+        hotelInfoRow("País", detailValue(hotel.pais)),
+        hotelInfoRow("CNPJ", hotel.cnpj ? escapeHtml(formatCNPJ(hotel.cnpj)) : "Não se aplica"),
+        hotelInfoRow("Criado em", detailDate(hotel.created_at, true)),
+        hotelInfoRow("Concluído por", detailValue(hotel.concluido_por_nome)),
+        hotelInfoRow("Concluído em", detailDate(hotel.concluido_em, true))
     ];
 
     hotelDetailTitle.textContent = hotel.codigo_tres
         ? `${hotel.codigo_tres} · ${hotel.nome_hotel}`
         : hotel.nome_hotel;
-    hotelDetailContent.innerHTML = details.join("");
+    hotelDetailContent.innerHTML = `
+        <section class="hotel-detail-summary">
+            ${summary.join("")}
+        </section>
+
+        <section class="hotel-detail-card">
+            <header class="hotel-detail-card-header">
+                <div>
+                    <span>Dados do hotel</span>
+                </div>
+            </header>
+
+            <div class="hotel-info-grid">
+                ${hotelRows.join("")}
+            </div>
+        </section>
+    `;
     hotelDetailModal.classList.remove("hidden");
     hotelDetailModal.setAttribute("aria-hidden", "false");
     document.body.classList.add("hotel-detail-open");
@@ -843,7 +907,7 @@ function editHotel(id) {
     });
 
     if (!hotel) {
-        showToast("Não foi possível abrir a edição.");
+        showToast("N\u00e3o foi poss\u00edvel abrir a edi\u00e7\u00e3o.");
         return;
     }
 
@@ -867,8 +931,8 @@ function editHotel(id) {
         }
     });
 
-    saveHotelButton.textContent = "Salvar alterações";
-    showToast("Editando hotel. Ao salvar, ele voltará para PENDENTE.");
+    saveHotelButton.textContent = "Salvar altera\u00e7\u00f5es";
+    showToast("Editando hotel. Ao salvar, ele voltar\u00e1 para PENDENTE.");
 }
 
 function ensureHistoryModal() {
@@ -885,8 +949,8 @@ function ensureHistoryModal() {
         <div class="history-modal">
             <header class="history-header">
                 <div>
-                    <p class="eyebrow">Histórico</p>
-                    <h2 id="historyTitle">Histórico da solicitação</h2>
+                    <p class="eyebrow">Hist\u00f3rico</p>
+                    <h2 id="historyTitle">Hist\u00f3rico da solicita\u00e7\u00e3o</h2>
                 </div>
                 <button type="button" class="icon-button" id="historyClose" aria-label="Fechar">
                     <i data-lucide="x"></i>
@@ -912,13 +976,13 @@ function friendlyHistoryField(field) {
         emissor_nome: "Nome do emissor",
         data_solicitacao: "Data",
         nome_hotel: "Nome do hotel",
-        rua_numero: "Rua e número",
+        rua_numero: "Rua e n\u00famero",
         bairro: "Bairro",
         cidade_estado: "Cidade / Estado",
-        pais: "País",
+        pais: "Pa\u00eds",
         tipo: "Tipo",
         cnpj: "CNPJ",
-        codigo_integracao: "Cód. integração",
+        codigo_integracao: "C\u00f3d. integra\u00e7\u00e3o",
         status: "Status"
     };
 
@@ -930,11 +994,11 @@ function userNameById(id) {
         return String(item.id) === String(id);
     });
 
-    return user?.nome || id || "—";
+    return user?.nome || id || "-";
 }
 
 function formatHistoryValue(field, value) {
-    if (value === null || value === undefined || value === "") return "—";
+    if (value === null || value === undefined || value === "") return "-";
 
     if (field === "emissor_id" || field === "updated_by" || field === "created_by" || field === "concluido_por") {
         return userNameById(value);
@@ -1003,7 +1067,7 @@ function cleanHistoryChanges(changes) {
 }
 
 function formatTimelineDate(value) {
-    if (!value) return "Data não informada";
+    if (!value) return "Data n\u00e3o informada";
     return new Date(value).toLocaleString("pt-BR");
 }
 
@@ -1014,10 +1078,10 @@ function getCreationDate(currentItem) {
 function buildCreationEvent(currentItem) {
     if (!currentItem) return null;
 
-    const creator = currentItem.emissor_nome || userNameById(currentItem.created_by || currentItem.emissor_id) || "Usuário";
+    const creator = currentItem.emissor_nome || userNameById(currentItem.created_by || currentItem.emissor_id) || "Usu\u00e1rio";
 
     return {
-        title: `Solicitação criada por ${creator}`,
+        title: `Solicita\u00e7\u00e3o criada por ${creator}`,
         meta: formatTimelineDate(getCreationDate(currentItem)),
         changes: ""
     };
@@ -1025,13 +1089,13 @@ function buildCreationEvent(currentItem) {
 
 function describeHistoryEvent(item) {
     const changes = cleanHistoryChanges(item.alteracoes || {});
-    const actor = item.alterado_por_nome || "Usuário";
-    let title = `Solicitação editada por ${actor}`;
+    const actor = item.alterado_por_nome || "Usu\u00e1rio";
+    let title = `Solicita\u00e7\u00e3o editada por ${actor}`;
 
     if (changes.status) {
         title = `Status atualizado para ${formatHistoryValue("status", changes.status.depois)} por ${actor}`;
     } else if (changes.codigo_integracao) {
-        title = `Código de integração salvo por ${actor}`;
+        title = `C\u00f3digo de integra\u00e7\u00e3o salvo por ${actor}`;
     } else if (changes.emissor_id || changes.emissor_nome) {
         const emitterName = changes.emissor_nome?.depois || formatHistoryValue("emissor_id", changes.emissor_id?.depois);
         title = `Emissor alterado para ${emitterName} por ${actor}`;
@@ -1064,8 +1128,8 @@ async function openHistory(moduleName, id, title, currentItem = null) {
     const content = document.getElementById("historyContent");
     const heading = document.getElementById("historyTitle");
 
-    heading.textContent = title || "Histórico da solicitação";
-    content.innerHTML = `<div class="history-item">Carregando histórico...</div>`;
+    heading.textContent = title || "Hist\u00f3rico da solicita\u00e7\u00e3o";
+    content.innerHTML = `<div class="history-item">Carregando hist\u00f3rico...</div>`;
     modal.classList.remove("hidden");
 
     const { data, error } = await supabaseClient
@@ -1077,7 +1141,7 @@ async function openHistory(moduleName, id, title, currentItem = null) {
 
     if (error) {
         console.error(error);
-        content.innerHTML = `<div class="history-item">Erro ao carregar histórico.</div>`;
+        content.innerHTML = `<div class="history-item">Erro ao carregar hist\u00f3rico.</div>`;
         return;
     }
 
@@ -1093,7 +1157,7 @@ async function openHistory(moduleName, id, title, currentItem = null) {
     });
 
     if (events.length === 0) {
-        content.innerHTML = `<div class="history-item">Nenhuma edição registrada ainda.</div>`;
+        content.innerHTML = `<div class="history-item">Nenhuma edi\u00e7\u00e3o registrada ainda.</div>`;
         return;
     }
 
@@ -1114,7 +1178,7 @@ function renderHotels() {
         hotelTableBody.innerHTML = `
             <tr>
                 <td colspan="10" class="empty-table-message">
-                    Nenhuma solicitação encontrada.
+                    Nenhuma solicita\u00e7\u00e3o encontrada.
                 </td>
             </tr>
         `;
@@ -1171,7 +1235,7 @@ function renderHotels() {
                                 class="table-input"
                                 data-id="${hotel.id}"
                                 value="${hotel.codigo_integracao || ""}"
-                                placeholder="Código">`
+                                placeholder="C\u00f3digo">`
 
                         : (hotel.codigo_integracao || "-")
 
@@ -1197,7 +1261,7 @@ function renderHotels() {
                         class="icon-button"
                         data-action="edit"
                         data-id="${hotel.id}"
-                        title="Editar solicitação">
+                        title="Editar solicita\u00e7\u00e3o">
 
                         <i data-lucide="pencil"></i>
 
@@ -1207,7 +1271,7 @@ function renderHotels() {
                         class="icon-button"
                         data-action="history"
                         data-id="${hotel.id}"
-                        title="Histórico">
+                        title="Hist\u00f3rico">
 
                         <i data-lucide="history"></i>
 
@@ -1234,7 +1298,7 @@ function renderHotels() {
                                 class="icon-button"
                                 data-action="already"
                                 data-id="${hotel.id}"
-                                title="Já cadastrado">
+                                title="J\u00e1 cadastrado">
 
                                 <i data-lucide="badge-check"></i>
 
@@ -1374,7 +1438,7 @@ async function updateHotelIntegrationCode(id, value) {
 
     if (error) {
         console.error(error);
-        showToast("Erro ao salvar código de integração.");
+        showToast("Erro ao salvar c\u00f3digo de integra\u00e7\u00e3o.");
         return;
     }
 
@@ -1385,7 +1449,7 @@ async function updateHotelIntegrationCode(id, value) {
         "CODIGO_INTEGRACAO"
     );
 
-    showToast("Código de integração salvo.");
+    showToast("C\u00f3digo de integra\u00e7\u00e3o salvo.");
     await loadHotels();
 }
 
@@ -1397,7 +1461,7 @@ function resetHotelForm() {
     emissorNome.value = currentProfile.nome;
     pais.value = "Brasil";
     tipoHotel.value = "NACIONAL";
-    saveHotelButton.textContent = "Salvar solicitação";
+    saveHotelButton.textContent = "Salvar solicita\u00e7\u00e3o";
     fillHotelEmitterSelect(currentUser.id);
     handleTipoChange();
 }
@@ -1418,6 +1482,8 @@ cnpj.addEventListener("input", function () {
 });
 
 hotelSearch.addEventListener("input", resetHotelPagination);
+hotelStartDate?.addEventListener("change", resetHotelPagination);
+hotelEndDate?.addEventListener("change", resetHotelPagination);
 statusFilter.addEventListener("change", resetHotelPagination);
 tipoFilter.addEventListener("change", resetHotelPagination);
 
@@ -1447,7 +1513,7 @@ if (refreshHotelsButton) {
 
         try {
             await loadHotels();
-            showToast("Hotéis atualizados.");
+            showToast("Hot\u00e9is atualizados.");
         } finally {
             refreshHotelsButton.disabled = false;
             lucide.createIcons();
@@ -1513,7 +1579,7 @@ hotelTableBody.addEventListener("click", async function (event) {
                 return String(item.id) === String(id);
             });
 
-            await openHistory("HOTEIS", id, `Histórico ${hotel?.codigo_tres || ""}`, hotel);
+            await openHistory("HOTEIS", id, `Hist\u00f3rico ${hotel?.codigo_tres || ""}`, hotel);
 
             break;
         }
@@ -1609,6 +1675,9 @@ async function start() {
     );
 
     dataSolicitacao.value = todayISO();
+    if (hotelStartDate) hotelStartDate.value = firstDayOfMonthISO();
+    if (hotelEndDate) hotelEndDate.value = todayISO();
+    window.TRESDatePickers?.refresh();
 
     setupHotelEmitterSelect();
     await loadUsersList();
@@ -1623,3 +1692,5 @@ async function start() {
 }
 
 start();
+
+

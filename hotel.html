@@ -37,7 +37,7 @@
         <nav class="sidebar-nav">
             <a href="dashboard.html" class="nav-link">
                 <i data-lucide="layout-dashboard"></i>
-                <span>Dashboard</span>
+                <span>Início</span>
             </a>
 
             <a href="hotel.html" class="nav-link active">
@@ -201,8 +201,11 @@
                     </div>
                 </div>
 
-                <div class="filters-grid">
-                    <input type="search" id="hotelSearch" placeholder="Pesquisar hotel, cidade ou CNPJ">
+                <div class="filters-grid hotel-filters">
+                    <input type="search" id="hotelSearch" placeholder="Pesquisar hotel, cidade, CNPJ ou emissor">
+
+                    <input type="date" id="hotelStartDate">
+                    <input type="date" id="hotelEndDate">
 
                     <select id="statusFilter">
                         <option value="">Todos os status</option>
@@ -294,6 +297,8 @@
     <div id="toast" class="toast hidden"></div>
 
     <script src="js/config.js"></script>
+    <script src="js/ui-selects.js"></script>
+    <script src="js/ui-dates.js"></script>
     <script src="js/hotel.js"></script>
 
 </body>

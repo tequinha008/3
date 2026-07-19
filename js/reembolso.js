@@ -718,6 +718,7 @@ function getFilteredRefunds() {
         const matchSearch =
             !search ||
             normalizeText(refund.os).includes(search) ||
+            normalizeText(refund.emissor_nome).includes(search) ||
             normalizeText(refund.fornecedor).includes(search) ||
             normalizeText(refund.clientes?.nome).includes(search) ||
             normalizeText(refund.codigo_tres).includes(search);
@@ -1371,6 +1372,133 @@ function exportRefundsToCSV() {
     showToast("Exportação gerada.");
 }
 
+function exportRefundsToExcel() {
+    const filtered = getFilteredRefunds();
+
+    if (filtered.length === 0) {
+        showToast("Não há dados para exportar.");
+        return;
+    }
+
+    const totalCobrado = filtered.reduce(function (sum, item) {
+        return sum + Number(item.valor_total_cobrado || 0);
+    }, 0);
+    const totalReembolsado = filtered.reduce(function (sum, item) {
+        return sum + Number(item.valor_total_reembolsado || 0);
+    }, 0);
+    const totalTaxa = filtered.reduce(function (sum, item) {
+        return sum + Number(item.taxa_adm || 0);
+    }, 0);
+    const totalFinal = filtered.reduce(function (sum, item) {
+        return sum + Number(item.valor_final_reembolso || 0);
+    }, 0);
+
+    function formatReportDate(value) {
+        if (!value) return "";
+        const date = new Date(`${value}T00:00:00`);
+        return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString("pt-BR");
+    }
+
+    const periodLabel = `${formatReportDate(startDate.value) || "Início"} a ${formatReportDate(endDate.value) || "Hoje"}`;
+    const generatedAt = new Date().toLocaleString("pt-BR");
+
+    const rows = filtered.map(function (item) {
+        return `
+            <tr>
+                <td>${escapeHtml(item.codigo_tres || "")}</td>
+                <td>${escapeHtml(formatReportDate(item.data_solicitacao))}</td>
+                <td>${escapeHtml(item.emissor_nome || "")}</td>
+                <td>${escapeHtml(item.clientes?.nome || "")}</td>
+                <td>${escapeHtml(item.os || "")}</td>
+                <td>${escapeHtml(item.fornecedor || "")}</td>
+                <td class="money">${escapeHtml(money(item.valor_total_cobrado))}</td>
+                <td class="money">${escapeHtml(money(item.valor_total_reembolsado))}</td>
+                <td class="money">${escapeHtml(money(item.taxa_adm))}</td>
+                <td class="money">${escapeHtml(money(item.valor_final_reembolso))}</td>
+                <td>${escapeHtml(item.status || "")}</td>
+            </tr>
+        `;
+    });
+
+    const html = `
+        <html>
+            <head>
+                <meta charset="UTF-8">
+                <style>
+                    body { font-family: Arial, sans-serif; color: #0f172a; }
+                    h1 { margin: 0 0 6px; color: #143d59; font-size: 22px; }
+                    .meta { margin: 0 0 18px; color: #64748b; font-size: 12px; }
+                    table { width: 100%; border-collapse: collapse; }
+                    th {
+                        background: #143d59;
+                        color: #ffffff;
+                        border: 1px solid #143d59;
+                        padding: 9px;
+                        font-size: 12px;
+                        text-align: left;
+                    }
+                    td {
+                        border: 1px solid #dbe3ef;
+                        padding: 8px;
+                        font-size: 12px;
+                    }
+                    .money { text-align: right; white-space: nowrap; }
+                    .summary td {
+                        background: #f8fafc;
+                        font-weight: bold;
+                    }
+                    .summary-label { text-align: right; color: #143d59; }
+                </style>
+            </head>
+            <body>
+                <h1>Relatório de Reembolsos</h1>
+                <p class="meta">Período: ${escapeHtml(periodLabel)} | Gerado em: ${escapeHtml(generatedAt)}</p>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Código</th>
+                            <th>Data</th>
+                            <th>Emissor</th>
+                            <th>Cliente</th>
+                            <th>OS</th>
+                            <th>Fornecedor</th>
+                            <th>Valor cobrado</th>
+                            <th>Valor reembolsado</th>
+                            <th>Taxa ADM</th>
+                            <th>Valor final</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${rows.join("")}
+                        <tr class="summary">
+                            <td colspan="6" class="summary-label">Totais</td>
+                            <td class="money">${escapeHtml(money(totalCobrado))}</td>
+                            <td class="money">${escapeHtml(money(totalReembolsado))}</td>
+                            <td class="money">${escapeHtml(money(totalTaxa))}</td>
+                            <td class="money">${escapeHtml(money(totalFinal))}</td>
+                            <td>${filtered.length} registro(s)</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </body>
+        </html>
+    `;
+
+    const blob = new Blob(["\ufeff" + html], {
+        type: "application/vnd.ms-excel;charset=utf-8;"
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+
+    link.href = url;
+    link.download = `reembolsos_${todayISO()}.xls`;
+    link.click();
+
+    URL.revokeObjectURL(url);
+    showToast("Planilha de reembolsos gerada.");
+}
+
 function setupEvents() {
     refundForm.addEventListener("submit", saveRefund);
 
@@ -1508,7 +1636,7 @@ function setupEvents() {
     });
 
     completeSelectedButton.addEventListener("click", completeSelectedRefunds);
-    exportRefundsButton.addEventListener("click", exportRefundsToCSV);
+    exportRefundsButton.addEventListener("click", exportRefundsToExcel);
 
     logoutButton.addEventListener("click", async function () {
         await supabaseClient.auth.signOut();
@@ -1559,6 +1687,7 @@ async function startRefundModule() {
     dataSolicitacao.value = todayISO();
     startDate.value = firstDayOfMonthISO();
     endDate.value = todayISO();
+    window.TRESDatePickers?.refresh();
 
     resetRefundForm();
 
