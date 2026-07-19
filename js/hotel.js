@@ -16,7 +16,6 @@ const ruaNumero = document.getElementById("ruaNumero");
 const bairro = document.getElementById("bairro");
 const cidadeEstado = document.getElementById("cidadeEstado");
 const pais = document.getElementById("pais");
-const telefone = document.getElementById("telefone");
 const tipoHotel = document.getElementById("tipoHotel");
 const cnpj = document.getElementById("cnpj");
 const cnpjMessage = document.getElementById("cnpjMessage");
@@ -283,7 +282,6 @@ async function saveHotel(event) {
         bairro: normalizeText(bairro.value),
         cidade_estado: normalizeText(cidadeEstado.value),
         pais: normalizeText(pais.value),
-        telefone: normalizeText(telefone.value),
         tipo: tipoHotel.value,
         cnpj: tipoHotel.value === "NACIONAL" ? onlyNumbers(cnpj.value) : null,
         status: "PENDENTE",
@@ -381,7 +379,6 @@ function buildHotelPayload() {
         bairro: normalizeText(bairro.value),
         cidade_estado: normalizeText(cidadeEstado.value),
         pais: normalizeText(pais.value),
-        telefone: normalizeText(telefone.value),
         tipo: tipoHotel.value,
         cnpj: tipoHotel.value === "NACIONAL" ? onlyNumbers(cnpj.value) : null,
         status: "PENDENTE",
@@ -513,7 +510,6 @@ async function loadHotels() {
             bairro,
             cidade_estado,
             pais,
-            telefone,
             tipo,
             cnpj,
             codigo_integracao,
@@ -596,7 +592,6 @@ function getFilteredHotels() {
             hotel.bairro,
             hotel.cidade_estado,
             hotel.pais,
-            hotel.telefone,
             hotel.tipo,
             hotel.codigo_integracao
         ].map(normalizeSearchText).join(" ");
@@ -619,7 +614,9 @@ function getFilteredHotels() {
             matchCnpj;
 
         const matchStatus =
-            !status || hotel.status === status;
+            !status ||
+            hotel.status === status ||
+            (status === "CADASTRADO_BENNER" && hotel.status === "JA_CADASTRADO");
 
         const matchTipo =
             !tipo || hotel.tipo === tipo;
@@ -630,9 +627,32 @@ function getFilteredHotels() {
 
 }
 
+const HOTEL_STATUS_OPTIONS = [
+    { value: "PENDENTE", label: "Pendente", icon: "clock-3" },
+    { value: "AGUARDANDO_BENNER", label: "Aguardando Benner", icon: "hourglass" },
+    { value: "CADASTRADO_BENNER", label: "Cadastrado Benner", icon: "badge-check" },
+    { value: "CONCLUIDO", label: "Concluído", icon: "check-circle-2" }
+];
+
+function hotelStatusLabel(status) {
+    const option = HOTEL_STATUS_OPTIONS.find(function (item) {
+        return item.value === status;
+    });
+
+    if (option) return option.label;
+    if (status === "JA_CADASTRADO") return "Cadastrado Benner";
+    return "Pendente";
+}
+
 function statusBadge(status) {
 
     switch (status) {
+
+        case "CADASTRADO_BENNER":
+            return `<span class="badge badge-ja-cadastrado">CADASTRADO BENNER</span>`;
+
+        case "AGUARDANDO_BENNER":
+            return `<span class="badge hotel-badge-benner-waiting">AGUARDANDO BENNER</span>`;
 
         case "CONCLUIDO":
             return `<span class="badge badge-concluido">CONCLUÍDO</span>`;
@@ -650,6 +670,55 @@ function statusBadge(status) {
 function resetHotelPagination() {
     hotelCurrentPage = 1;
     renderHotels();
+}
+
+function renderHotelStatusMenu(hotel) {
+    if (!isAdminOrMaster()) {
+        return "";
+    }
+
+    return `
+        <div class="hotel-status-menu">
+            <button
+                type="button"
+                class="icon-button hotel-status-trigger"
+                data-action="toggle-status-menu"
+                data-id="${hotel.id}"
+                title="Alterar status">
+                <i data-lucide="list-checks"></i>
+            </button>
+
+            <div class="hotel-status-dropdown hidden" data-status-menu="${hotel.id}">
+                ${HOTEL_STATUS_OPTIONS.map(function (option) {
+                    const active =
+                        option.value === hotel.status ||
+                        (hotel.status === "JA_CADASTRADO" && option.value === "CADASTRADO_BENNER");
+
+                    return `
+                        <button
+                            type="button"
+                            class="hotel-status-option ${active ? "active" : ""}"
+                            data-action="set-status"
+                            data-id="${hotel.id}"
+                            data-status="${option.value}">
+                            <i data-lucide="${option.icon}"></i>
+                            <span>${option.label}</span>
+                        </button>
+                    `;
+                }).join("")}
+            </div>
+        </div>
+    `;
+}
+
+function closeHotelStatusMenus() {
+    document.querySelectorAll(".hotel-status-dropdown").forEach(function (menu) {
+        menu.classList.add("hidden");
+    });
+
+    document.querySelectorAll(".hotel-status-trigger").forEach(function (button) {
+        button.setAttribute("aria-expanded", "false");
+    });
 }
 
 function getHotelPageSize() {
@@ -747,7 +816,6 @@ function openHotelDetails(id) {
         hotelDetailItem("Bairro", detailValue(hotel.bairro)),
         hotelDetailItem("Cidade / Estado", detailValue(hotel.cidade_estado), "wide"),
         hotelDetailItem("País", detailValue(hotel.pais)),
-        hotelDetailItem("Telefone", detailValue(hotel.telefone), "wide"),
         hotelDetailItem(
             "CNPJ",
             hotel.cnpj ? escapeHtml(formatCNPJ(hotel.cnpj)) : "Não se aplica",
@@ -788,7 +856,6 @@ function editHotel(id) {
     bairro.value = hotel.bairro || "";
     cidadeEstado.value = hotel.cidade_estado || "";
     pais.value = hotel.pais || "";
-    telefone.value = hotel.telefone || "";
     tipoHotel.value = hotel.tipo || "NACIONAL";
     cnpj.value = hotel.cnpj ? formatCNPJ(hotel.cnpj) : "";
     fillHotelEmitterSelect(hotel.emissor_id);
@@ -849,7 +916,6 @@ function friendlyHistoryField(field) {
         bairro: "Bairro",
         cidade_estado: "Cidade / Estado",
         pais: "País",
-        telefone: "Telefone",
         tipo: "Tipo",
         cnpj: "CNPJ",
         codigo_integracao: "Cód. integração",
@@ -876,6 +942,10 @@ function formatHistoryValue(field, value) {
 
     if (field === "cnpj") {
         return formatCNPJ(value);
+    }
+
+    if (field === "status") {
+        return hotelStatusLabel(value);
     }
 
     return String(value);
@@ -960,6 +1030,8 @@ function describeHistoryEvent(item) {
 
     if (changes.status) {
         title = `Status atualizado para ${formatHistoryValue("status", changes.status.depois)} por ${actor}`;
+    } else if (changes.codigo_integracao) {
+        title = `Código de integração salvo por ${actor}`;
     } else if (changes.emissor_id || changes.emissor_nome) {
         const emitterName = changes.emissor_nome?.depois || formatHistoryValue("emissor_id", changes.emissor_id?.depois);
         title = `Emissor alterado para ${emitterName} por ${actor}`;
@@ -1096,7 +1168,7 @@ function renderHotels() {
                     isAdminOrMaster()
 
                         ? `<input
-                                class="table-input integration-input"
+                                class="table-input"
                                 data-id="${hotel.id}"
                                 value="${hotel.codigo_integracao || ""}"
                                 placeholder="Código">`
@@ -1140,6 +1212,8 @@ function renderHotels() {
                         <i data-lucide="history"></i>
 
                     </button>
+
+                    ${renderHotelStatusMenu(hotel)}
 
                     ${
                         isAdminOrMaster()
@@ -1206,17 +1280,24 @@ async function updateHotelStatus(id, status) {
         return String(item.id) === String(id);
     });
 
+    const payload = {
+        status,
+        updated_by: currentUser.id
+    };
+
+    if (status === "CONCLUIDO") {
+        payload.concluido_por = currentUser.id;
+        payload.concluido_por_nome = currentProfile.nome;
+        payload.concluido_em = new Date().toISOString();
+    } else {
+        payload.concluido_por = null;
+        payload.concluido_por_nome = null;
+        payload.concluido_em = null;
+    }
+
     const { error } = await supabaseClient
         .from("solicitacoes_hotel")
-        .update({
-
-            status,
-            concluido_por: currentUser.id,
-            concluido_por_nome: currentProfile.nome,
-            concluido_em: new Date().toISOString(),
-            updated_by: currentUser.id
-
-        })
+        .update(payload)
         .eq("id", id);
 
     if (error) {
@@ -1232,7 +1313,7 @@ async function updateHotelStatus(id, status) {
         await registerHistory(
             "HOTEIS",
             before,
-            { ...before, status },
+            { ...before, ...payload },
             "STATUS"
         );
     }
@@ -1241,34 +1322,6 @@ async function updateHotelStatus(id, status) {
 
     await loadHotels();
 
-}
-
-async function updateIntegrationCode(id, value) {
-    const normalizedValue = normalizeText(value);
-
-    const { error } = await supabaseClient
-        .from("solicitacoes_hotel")
-        .update({
-            codigo_integracao: normalizedValue || null,
-            updated_by: currentUser.id
-        })
-        .eq("id", id);
-
-    if (error) {
-        console.error(error);
-        showToast("Erro ao salvar código de integração.");
-        return;
-    }
-
-    const hotel = hotels.find(function (item) {
-        return String(item.id) === String(id);
-    });
-
-    if (hotel) {
-        hotel.codigo_integracao = normalizedValue || null;
-    }
-
-    showToast("Código de integração salvo.");
 }
 
 async function duplicateHotel(id) {
@@ -1283,7 +1336,6 @@ async function duplicateHotel(id) {
     bairro.value = hotel.bairro;
     cidadeEstado.value = hotel.cidade_estado;
     pais.value = hotel.pais;
-    telefone.value = hotel.telefone;
     tipoHotel.value = hotel.tipo;
 
     cnpj.value = "";
@@ -1294,6 +1346,47 @@ async function duplicateHotel(id) {
 
     showToast("Dados copiados. Informe um novo CNPJ.");
 
+}
+
+async function updateHotelIntegrationCode(id, value) {
+    const before = hotels.find(function (item) {
+        return String(item.id) === String(id);
+    });
+
+    if (!before) {
+        return;
+    }
+
+    const codigoIntegracao = normalizeText(value) || null;
+    const oldCode = before.codigo_integracao || null;
+
+    if (String(oldCode || "") === String(codigoIntegracao || "")) {
+        return;
+    }
+
+    const { error } = await supabaseClient
+        .from("solicitacoes_hotel")
+        .update({
+            codigo_integracao: codigoIntegracao,
+            updated_by: currentUser.id
+        })
+        .eq("id", id);
+
+    if (error) {
+        console.error(error);
+        showToast("Erro ao salvar código de integração.");
+        return;
+    }
+
+    await registerHistory(
+        "HOTEIS",
+        before,
+        { ...before, codigo_integracao: codigoIntegracao, updated_by: currentUser.id },
+        "CODIGO_INTEGRACAO"
+    );
+
+    showToast("Código de integração salvo.");
+    await loadHotels();
 }
 
 function resetHotelForm() {
@@ -1370,25 +1463,6 @@ logoutButton.addEventListener("click", async function () {
 
 });
 
-hotelTableBody.addEventListener("change", async function (event) {
-    const target = event.target;
-
-    if (!target.classList.contains("integration-input")) {
-        return;
-    }
-
-    target.disabled = true;
-
-    try {
-        await updateIntegrationCode(
-            target.dataset.id,
-            target.value
-        );
-    } finally {
-        target.disabled = false;
-    }
-});
-
 hotelTableBody.addEventListener("click", async function (event) {
 
     const button =
@@ -1399,6 +1473,27 @@ hotelTableBody.addEventListener("click", async function (event) {
     const id = button.dataset.id;
 
     switch (button.dataset.action) {
+
+        case "toggle-status-menu": {
+            const menu = document.querySelector(`[data-status-menu="${id}"]`);
+            const isOpen = menu && !menu.classList.contains("hidden");
+
+            closeHotelStatusMenus();
+
+            if (menu && !isOpen) {
+                menu.classList.remove("hidden");
+                button.setAttribute("aria-expanded", "true");
+            }
+
+            break;
+        }
+
+        case "set-status":
+
+            closeHotelStatusMenus();
+            await updateHotelStatus(id, button.dataset.status);
+
+            break;
 
         case "details":
 
@@ -1449,6 +1544,20 @@ hotelTableBody.addEventListener("click", async function (event) {
 
     }
 
+});
+
+hotelTableBody.addEventListener("change", async function (event) {
+    const input = event.target;
+
+    if (input.classList.contains("table-input")) {
+        await updateHotelIntegrationCode(input.dataset.id, input.value);
+    }
+});
+
+document.addEventListener("click", function (event) {
+    if (!event.target.closest(".hotel-status-menu")) {
+        closeHotelStatusMenus();
+    }
 });
 
 hotelDetailClose.addEventListener("click", closeHotelDetails);

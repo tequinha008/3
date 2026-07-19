@@ -37,7 +37,7 @@
         <nav class="sidebar-nav">
             <a href="dashboard.html" class="nav-link">
                 <i data-lucide="layout-dashboard"></i>
-                <span>Início</span>
+                <span>Dashboard</span>
             </a>
 
             <a href="hotel.html" class="nav-link active">
@@ -47,7 +47,7 @@
 
             <a href="pagar.html" class="nav-link">
                 <i data-lucide="wallet-cards"></i>
-                <span>Contas a pagar</span>
+                <span>Valores a pagar</span>
             </a>
 
             <a href="reembolso.html" class="nav-link">
@@ -153,11 +153,6 @@
                         <label>País</label>
                         <input type="text" id="pais" value="Brasil">
                     </div>
-                    
-                     <div class="form-field">
-                        <label>Telefone</label>
-                        <input type="text" id="telefone" required>
-                    </div>
 
                     <div class="form-field">
                         <label>Tipo</label>
@@ -212,8 +207,9 @@
                     <select id="statusFilter">
                         <option value="">Todos os status</option>
                         <option value="PENDENTE">Pendente</option>
+                        <option value="AGUARDANDO_BENNER">Aguardando Benner</option>
+                        <option value="CADASTRADO_BENNER">Cadastrado Benner</option>
                         <option value="CONCLUIDO">Concluído</option>
-                        <option value="JA_CADASTRADO">Já cadastrado</option>
                     </select>
 
                     <select id="tipoFilter">

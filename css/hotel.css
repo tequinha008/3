@@ -1,6 +1,4 @@
-/* =========================================================
-   TRES — Hotéis
-   ========================================================= */
+/* TRES — Hotéis */
 
 .hotel-module {
     border-left: 5px solid var(--hotel);
@@ -38,179 +36,106 @@
     accent-color: var(--hotel);
 }
 
-/* =========================================================
-   MODAL DE DETALHES DO HOTEL
-   ========================================================= */
-
-.hotel-detail-backdrop {
-    position: fixed;
-    inset: 0;
-    z-index: 1200;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    padding: 24px;
-
-    background: rgba(15, 23, 42, 0.62);
-    backdrop-filter: blur(4px);
+.hotel-badge-benner-waiting {
+    color: #92400e;
+    background: #fff7d6;
 }
 
-.hotel-detail-backdrop.hidden {
+.hotel-status-menu {
+    position: relative;
+    display: inline-flex;
+}
+
+.hotel-status-dropdown {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 8px);
+    z-index: 30;
+    width: 220px;
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 8px;
+    background: #ffffff;
+    box-shadow: 0 18px 42px rgba(15, 23, 42, 0.14);
+}
+
+.hotel-status-option {
+    width: 100%;
+    border: 0;
+    border-radius: 13px;
+    padding: 10px 11px;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    color: var(--text);
+    background: transparent;
+    font-size: 13px;
+    font-weight: 800;
+    text-align: left;
+    transition: 0.16s ease;
+}
+
+.hotel-status-option svg {
+    width: 16px;
+    height: 16px;
+    color: var(--hotel);
+}
+
+.hotel-status-option:hover,
+.hotel-status-option.active {
+    color: var(--hotel-dark);
+    background: #ecfdf8;
+}
+
+button[data-action="complete"],
+button[data-action="already"],
+button[data-action="duplicate"] {
     display: none;
 }
 
+body.hotel-detail-open { overflow: hidden; }
+
+.hotel-detail-backdrop {
+    position: fixed; inset: 0; z-index: 140; display: grid; place-items: center;
+    padding: 22px; background: rgba(15, 23, 42, .64); backdrop-filter: blur(4px);
+}
+.hotel-detail-backdrop.hidden { display: none; }
 .hotel-detail-modal {
-    width: min(760px, 95vw);
-    max-height: 90vh;
-
-    overflow-y: auto;
-
-    border: 1px solid var(--line);
-    border-radius: 24px;
-
-    padding: 24px;
-
-    background: #ffffff;
-
-    box-shadow: 0 34px 90px rgba(15, 23, 42, 0.38);
+    width: min(760px, 100%); max-height: calc(100vh - 44px); overflow-y: auto;
+    border: 1px solid var(--line); border-radius: 26px; padding: 26px;
+    background: #fff; box-shadow: 0 28px 80px rgba(15, 23, 42, .32);
 }
-
 .hotel-detail-header {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 18px;
-
-    margin-bottom: 22px;
-    padding-bottom: 18px;
-
-    border-bottom: 1px solid var(--line);
+    display: flex; align-items: flex-start; justify-content: space-between; gap: 20px;
+    padding-bottom: 20px; border-bottom: 1px solid var(--line);
 }
-
-.hotel-detail-header .eyebrow {
-    margin: 0 0 8px;
-
-    color: var(--hotel);
-
-    font-size: 12px;
-    font-weight: 900;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-}
-
-.hotel-detail-header h2 {
-    margin: 0;
-
-    color: var(--text-strong);
-
-    font-size: 24px;
-    line-height: 1.25;
-}
-
-.hotel-detail-header .icon-button {
-    width: 40px;
-    height: 40px;
-
-    flex-shrink: 0;
-}
-
+.hotel-detail-header h2 { margin: 3px 0 0; color: var(--text); font-size: 23px; }
 .hotel-detail-grid {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 12px;
+    display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px; padding: 22px 0;
 }
-
 .hotel-detail-item {
-    min-width: 0;
-    min-height: 76px;
-
-    border: 1px solid #dbe4ee;
-    border-radius: 16px;
-
-    padding: 14px;
-
-    background: #f8fafc;
+    min-width: 0; border: 1px solid var(--line); border-radius: 16px;
+    padding: 14px; background: var(--card-soft);
 }
-
-.hotel-detail-item.wide {
-    grid-column: span 2;
-}
-
-.hotel-detail-item.full {
-    grid-column: 1 / -1;
-}
-
-.hotel-detail-item.highlight {
-    border-color: #99f6e4;
-    background: #f0fdfa;
-}
-
+.hotel-detail-item.wide { grid-column: span 2; }
+.hotel-detail-item.full { grid-column: 1 / -1; }
 .hotel-detail-item span {
-    display: block;
-
-    margin-bottom: 7px;
-
-    color: #64748b;
-
-    font-size: 11px;
-    font-weight: 800;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
+    display: block; margin-bottom: 6px; color: var(--muted); font-size: 12px;
+    font-weight: 800; letter-spacing: .04em; text-transform: uppercase;
 }
+.hotel-detail-item strong { display: block; overflow-wrap: anywhere; color: var(--text); font-size: 15px; }
+.hotel-detail-item.highlight { border-color: #99f6e4; background: #f0fdfa; }
+.hotel-detail-item.highlight strong { color: var(--hotel-dark); font-size: 17px; }
+.hotel-detail-footer { display: flex; justify-content: flex-end; padding-top: 18px; border-top: 1px solid var(--line); }
 
-.hotel-detail-item strong {
-    display: block;
-
-    color: #1e293b;
-
-    font-size: 15px;
-    font-weight: 800;
-    line-height: 1.35;
-
-    overflow-wrap: anywhere;
+@media (max-width: 700px) {
+    .hotel-detail-grid { grid-template-columns: 1fr 1fr; }
+    .hotel-detail-item.full { grid-column: 1 / -1; }
 }
-
-.hotel-detail-footer {
-    display: flex;
-    justify-content: flex-end;
-
-    margin-top: 22px;
-    padding-top: 18px;
-
-    border-top: 1px solid var(--line);
-}
-
-.hotel-detail-open {
-    overflow: hidden;
-}
-
-/* =========================================================
-   RESPONSIVO
-   ========================================================= */
-
-@media (max-width: 760px) {
-    .hotel-detail-backdrop {
-        padding: 14px;
-    }
-
-    .hotel-detail-modal {
-        width: 100%;
-        padding: 18px;
-        border-radius: 20px;
-    }
-
-    .hotel-detail-header h2 {
-        font-size: 20px;
-    }
-
-    .hotel-detail-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .hotel-detail-item.wide,
-    .hotel-detail-item.full {
-        grid-column: auto;
-    }
+@media (max-width: 500px) {
+    .hotel-detail-backdrop { padding: 12px; }
+    .hotel-detail-modal { padding: 20px; }
+    .hotel-detail-grid { grid-template-columns: 1fr; }
+    .hotel-detail-item.wide, .hotel-detail-item.full { grid-column: span 1; }
 }
