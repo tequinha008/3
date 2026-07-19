@@ -64,6 +64,12 @@ const taxasTipo = document.getElementById("taxasTipo");
 const taxasValorField = document.getElementById("taxasValorField");
 const taxasValor = document.getElementById("taxasValor");
 
+const comissaoField = document.getElementById("comissaoField");
+const comissaoPercent = document.getElementById("comissaoPercent");
+
+const tarifaNetField = document.getElementById("tarifaNetField");
+const tarifaNet = document.getElementById("tarifaNet");
+
 const checkinField = document.getElementById("checkinField");
 const checkin = document.getElementById("checkin");
 
@@ -94,6 +100,9 @@ const financeDetailTitle = document.getElementById("financeDetailTitle");
 const financeDetailContent = document.getElementById("financeDetailContent");
 const financeDetailClose = document.getElementById("financeDetailClose");
 const financeDetailDone = document.getElementById("financeDetailDone");
+const financeItemContext = document.getElementById("financeItemContext");
+const financeItemContextTitle = document.getElementById("financeItemContextTitle");
+const cancelLinkedItemButton = document.getElementById("cancelLinkedItemButton");
 
 const toast = document.getElementById("toast");
 
@@ -105,6 +114,7 @@ let selectedLancamentos = new Set();
 let financeCurrentPage = 1;
 let editingFinanceId = null;
 let editingFinanceOriginal = null;
+let linkedFinanceGroup = null;
 let allUsers = [];
 
 function todayISO() {
@@ -117,6 +127,94 @@ function money(value, currency = "BRL") {
     return number.toLocaleString("pt-BR", {
         style: "currency",
         currency: currency === "USD" ? "USD" : "BRL"
+    });
+}
+
+function getFinanceGroupKey(item) {
+    return String(item?.solicitacao_id || item?.id || "");
+}
+
+function getFinanceGroupCode(item) {
+    return item?.solicitacao_codigo || item?.codigo_tres || "-";
+}
+
+function getFinanceGroups() {
+    const groups = new Map();
+
+    lancamentos.forEach(function (item) {
+        const key = getFinanceGroupKey(item);
+
+        if (!groups.has(key)) {
+            groups.set(key, {
+                id: key,
+                codigo_tres: getFinanceGroupCode(item),
+                data_lancamento: item.data_lancamento,
+                emissor_id: item.emissor_id,
+                emissor_nome: item.emissor_nome,
+                tipo: item.tipo,
+                os: item.os,
+                cliente_id: item.cliente_id,
+                clientes: item.clientes,
+                status: item.status,
+                created_by: item.created_by,
+                created_at: item.created_at,
+                itens: [],
+                item_count: 0
+            });
+        }
+
+        groups.get(key).itens.push(item);
+    });
+
+    return Array.from(groups.values()).map(function (group) {
+        group.itens.sort(function (a, b) {
+            return Number(a.item_ordem || 1) - Number(b.item_ordem || 1);
+        });
+
+        group.item_count = group.itens.length;
+        group.status = group.itens.some(function (item) {
+            return item.status !== "CONCLUIDO";
+        }) ? "PENDENTE" : "CONCLUIDO";
+
+        return group;
+    }).sort(function (a, b) {
+        return new Date(b.created_at || b.data_lancamento || 0) - new Date(a.created_at || a.data_lancamento || 0);
+    });
+}
+
+function formatGroupTotal(group) {
+    const totalsByCurrency = new Map();
+
+    group.itens.forEach(function (item) {
+        const currency = item.moeda || "BRL";
+        totalsByCurrency.set(
+            currency,
+            Number(totalsByCurrency.get(currency) || 0) + Number(item.total_final || item.total || 0)
+        );
+    });
+
+    return Array.from(totalsByCurrency.entries())
+        .map(function ([currency, total]) {
+            return money(total, currency);
+        })
+        .join(" + ");
+}
+
+function summarizeGroupServices(group) {
+    return Array.from(new Set(group.itens.map(function (item) {
+        return item.servico;
+    }).filter(Boolean))).join(", ") || "-";
+}
+
+function summarizeGroupSuppliers(group) {
+    return Array.from(new Set(group.itens.map(function (item) {
+        return item.fornecedor;
+    }).filter(Boolean))).join(", ") || "-";
+}
+
+function findFinanceGroup(id) {
+    return getFinanceGroups().find(function (group) {
+        return String(group.id) === String(id);
     });
 }
 
@@ -145,7 +243,7 @@ function applyMoneyMask(input) {
 }
 
 function setupMoneyMasks() {
-    [tarifa, taxaEmbarque, rc, overPercent, diaria, valorPeriodo, taxasValor].forEach(function (field) {
+    [tarifa, taxaEmbarque, rc, overPercent, diaria, valorPeriodo, taxasValor, comissaoPercent].forEach(function (field) {
         field.addEventListener("input", function () {
             applyMoneyMask(field);
             updateTotalPreview();
@@ -282,6 +380,8 @@ function hideAllDynamicFields() {
         checkoutField,
         localizadorField,
         bilheteField,
+        comissaoField,
+        tarifaNetField,
     ].forEach(function (field) {
         field.classList.add("hidden");
     });
@@ -295,10 +395,18 @@ function handleServiceChange() {
     hideAllDynamicFields();
 
     const selectedService = servico.value;
+    const isAirService = selectedService === "AEREO";
 
     [diaria, checkin, checkout, valorPeriodo, outroServico].forEach(function (field) {
         field.required = false;
     });
+
+    if (comissaoPercent) {
+        comissaoPercent.disabled = Boolean(tarifaNet?.checked) || isAirService || !selectedService;
+        if (comissaoPercent.disabled) {
+            comissaoPercent.value = "";
+        }
+    }
 
     if (!selectedService) {
         updateTotalPreview();
@@ -320,6 +428,8 @@ function handleServiceChange() {
         showField(diariaField);
         showField(taxasTipoField);
         showField(taxasValorField);
+        showField(comissaoField);
+        showField(tarifaNetField);
         showField(checkinField);
         showField(checkoutField);
     }
@@ -335,6 +445,8 @@ function handleServiceChange() {
         showField(valorPeriodoField);
         showField(taxasTipoField);
         showField(taxasValorField);
+        showField(comissaoField);
+        showField(tarifaNetField);
     }
 
     if (selectedService === "OUTROS") {
@@ -343,6 +455,14 @@ function handleServiceChange() {
     }
 
     updateTotalPreview();
+}
+
+function calculateCommission(baseValue) {
+    if (tarifaNet?.checked) {
+        return 0;
+    }
+
+    return Number(baseValue || 0) * (numberValue(comissaoPercent) / 100);
 }
 
 function handleAereoFields() {
@@ -415,19 +535,23 @@ function calculateTotal() {
 
         if (taxasTipo.value === "%") {
             const taxaCalculada = valorDiaria * (valorTaxa / 100);
-            return (valorDiaria + taxaCalculada) * qtdDiarias;
+            const subtotal = (valorDiaria + taxaCalculada) * qtdDiarias;
+            return subtotal + calculateCommission(subtotal);
         }
 
-        return (valorDiaria + valorTaxa) * qtdDiarias;
+        const subtotal = (valorDiaria + valorTaxa) * qtdDiarias;
+        return subtotal + calculateCommission(subtotal);
     }
 
     const totalPeriodo = numberValue(valorPeriodo);
 
     if (taxasTipo.value === "%") {
-        return totalPeriodo + (totalPeriodo * (valorTaxa / 100));
+        const subtotal = totalPeriodo + (totalPeriodo * (valorTaxa / 100));
+        return subtotal + calculateCommission(subtotal);
     }
 
-    return totalPeriodo + valorTaxa;
+    const subtotal = totalPeriodo + valorTaxa;
+    return subtotal + calculateCommission(subtotal);
 }
 
 function updateTotalPreview() {
@@ -555,6 +679,13 @@ function fillFinanceEmitterSelect(selectedId) {
 }
 
 function getSelectedFinanceEmitter() {
+    if (!editingFinanceId && linkedFinanceGroup?.emissor_id) {
+        return {
+            id: linkedFinanceGroup.emissor_id,
+            nome: linkedFinanceGroup.emissor_nome || currentProfile.nome
+        };
+    }
+
     if (currentProfile?.perfil === "master" && editingFinanceId && financeEmitterSelect?.value) {
         return {
             id: financeEmitterSelect.value,
@@ -577,10 +708,13 @@ function buildFinancePayload() {
 
     return {
         data_lancamento: dataLancamento.value,
-        emissor_id: editingFinanceId ? emitter.id : currentUser.id,
+        emissor_id: emitter.id,
         tipo: tipoLancamento.value,
         os: normalizeText(os.value),
         cliente_id: cliente.value,
+        solicitacao_id: linkedFinanceGroup?.id || editingFinanceOriginal?.solicitacao_id || null,
+        solicitacao_codigo: linkedFinanceGroup?.codigo_tres || editingFinanceOriginal?.solicitacao_codigo || editingFinanceOriginal?.codigo_tres || null,
+        item_ordem: linkedFinanceGroup ? linkedFinanceGroup.item_count + 1 : editingFinanceOriginal?.item_ordem || 1,
         servico: finalService,
         subtipo: isAirService ? selectedSubtype : null,
         outro_servico: selectedService === "OUTROS" ? normalizeText(outroServico.value) : null,
@@ -598,6 +732,8 @@ function buildFinancePayload() {
         valor_periodo: !isAirService && !isHotelService ? numberValue(valorPeriodo) || null : null,
         taxas_tipo: !isAirService ? taxasTipo.value || null : null,
         taxas_valor: !isAirService ? numberValue(taxasValor) || null : null,
+        comissao_percent: !isAirService && !tarifaNet.checked ? numberValue(comissaoPercent) || null : null,
+        tarifa_net: !isAirService ? Boolean(tarifaNet.checked) : false,
         checkin: isHotelService ? checkin.value || null : null,
         checkout: isHotelService ? checkout.value || null : null,
         quantidade_diarias: isHotelService ? getQuantidadeDiarias() || null : null,
@@ -622,6 +758,7 @@ function isNumericHistoryField(key) {
         "diaria",
         "valor_periodo",
         "taxas_valor",
+        "comissao_percent",
         "quantidade_diarias",
         "total",
         "total_final"
@@ -667,8 +804,8 @@ async function registerHistory(moduleName, before, after, action) {
         .from("solicitacoes_historico")
         .insert({
             modulo: moduleName,
-            solicitacao_id: String(before?.id || after?.id || ""),
-            codigo_tres: before?.codigo_tres || after?.codigo_tres || null,
+            solicitacao_id: String(before?.solicitacao_id || after?.solicitacao_id || before?.id || after?.id || ""),
+            codigo_tres: before?.solicitacao_codigo || after?.solicitacao_codigo || before?.codigo_tres || after?.codigo_tres || null,
             acao: action,
             alterado_por: currentUser.id,
             alterado_por_nome: currentProfile.nome,
@@ -676,6 +813,44 @@ async function registerHistory(moduleName, before, after, action) {
             antes: before || {},
             depois: after || {}
         });
+}
+
+function confirmFinanceAction({ title, message, confirmText = "Excluir" }) {
+    return new Promise(function (resolve) {
+        const backdrop = document.createElement("div");
+        backdrop.className = "finance-confirm-backdrop";
+        backdrop.innerHTML = `
+            <div class="finance-confirm-modal">
+                <div class="finance-confirm-icon">
+                    <i data-lucide="triangle-alert"></i>
+                </div>
+                <h3>${escapeHtml(title)}</h3>
+                <p>${escapeHtml(message)}</p>
+                <div class="finance-confirm-actions">
+                    <button type="button" class="btn btn-soft" data-confirm="cancel">Cancelar</button>
+                    <button type="button" class="btn btn-finance danger-button" data-confirm="ok">${escapeHtml(confirmText)}</button>
+                </div>
+            </div>
+        `;
+
+        function close(result) {
+            backdrop.remove();
+            resolve(result);
+        }
+
+        backdrop.addEventListener("click", function (event) {
+            if (event.target === backdrop || event.target.closest("[data-confirm='cancel']")) {
+                close(false);
+            }
+
+            if (event.target.closest("[data-confirm='ok']")) {
+                close(true);
+            }
+        });
+
+        document.body.appendChild(backdrop);
+        lucide.createIcons();
+    });
 }
 
 async function saveFinance(event) {
@@ -712,10 +887,44 @@ async function saveFinance(event) {
         const result = await supabaseClient
             .from("lancamentos")
             .insert(payload)
-            .select("id")
+            .select("id, codigo_tres")
             .single();
 
         error = result.error;
+
+        if (!error && result.data && !linkedFinanceGroup) {
+            const groupUpdate = await supabaseClient
+                .from("lancamentos")
+                .update({
+                    solicitacao_id: result.data.id,
+                    solicitacao_codigo: result.data.codigo_tres,
+                    item_ordem: 1
+                })
+                .eq("id", result.data.id);
+
+            error = groupUpdate.error;
+        }
+
+        if (!error && result.data && linkedFinanceGroup) {
+            await registerHistory(
+                "VALORES_A_PAGAR",
+                {
+                    id: linkedFinanceGroup.id,
+                    codigo_tres: linkedFinanceGroup.codigo_tres,
+                    item_count: linkedFinanceGroup.item_count
+                },
+                {
+                    id: linkedFinanceGroup.id,
+                    codigo_tres: linkedFinanceGroup.codigo_tres,
+                    item_count: linkedFinanceGroup.item_count + 1,
+                    servico: payload.servico,
+                    fornecedor: payload.fornecedor,
+                    total: payload.total,
+                    moeda: payload.moeda
+                },
+                "ITEM_ADICIONADO"
+            );
+        }
     }
 
     if (error) {
@@ -735,6 +944,7 @@ async function saveFinance(event) {
 function resetFinanceForm() {
     editingFinanceId = null;
     editingFinanceOriginal = null;
+    linkedFinanceGroup = null;
     dataLancamento.value = todayISO();
     emissorNome.value = currentProfile.nome;
     tipoLancamento.value = "NACIONAL";
@@ -753,6 +963,51 @@ function resetFinanceForm() {
     moedaPreview.value = "BRL";
     saveFinanceButton.textContent = "Salvar lançamento";
     fillFinanceEmitterSelect(currentUser.id);
+    updateLinkedFinanceContext();
+}
+
+function updateLinkedFinanceContext() {
+    if (!financeItemContext) return;
+
+    const active = Boolean(linkedFinanceGroup);
+    financeItemContext.classList.toggle("hidden", !active);
+
+    if (active) {
+        financeItemContextTitle.textContent = `${linkedFinanceGroup.codigo_tres || "-"} · OS ${linkedFinanceGroup.os || "-"}`;
+    }
+}
+
+function addItemToFinanceGroup(id) {
+    const group = findFinanceGroup(id);
+
+    if (!group) {
+        showToast("Não foi possível localizar a solicitação.");
+        return;
+    }
+
+    financeForm.reset();
+    editingFinanceId = null;
+    editingFinanceOriginal = null;
+    linkedFinanceGroup = group;
+
+    dataLancamento.value = todayISO();
+    tipoLancamento.value = group.tipo || "NACIONAL";
+    os.value = group.os || "";
+    cliente.value = group.cliente_id || "";
+    emissorNome.value = group.emissor_nome || currentProfile.nome;
+
+    updateLinkedFinanceContext();
+    hideAllDynamicFields();
+    updateTotalPreview();
+    saveFinanceButton.textContent = "Adicionar item";
+
+    tabButtons.forEach(function (button) {
+        if (button.dataset.tab === "newFinance") {
+            button.click();
+        }
+    });
+
+    showToast("Preencha o novo item desta OS.");
 }
 
 async function loadLancamentos() {
@@ -761,6 +1016,9 @@ async function loadLancamentos() {
         .select(`
             id,
             codigo_tres,
+            solicitacao_id,
+            solicitacao_codigo,
+            item_ordem,
             data_lancamento,
             emissor_id,
             tipo,
@@ -782,6 +1040,8 @@ async function loadLancamentos() {
             valor_periodo,
             taxas_tipo,
             taxas_valor,
+            comissao_percent,
+            tarifa_net,
             checkin,
             checkout,
             quantidade_diarias,
@@ -854,16 +1114,23 @@ function getFilteredLancamentos() {
     const client = financeClientFilter?.value || "";
     const service = financeServiceFilter.value;
 
-    return lancamentos.filter(function (item) {
+    return getFinanceGroups().filter(function (item) {
         const matchSearch =
             !search ||
+            normalizeText(item.codigo_tres).includes(search) ||
             normalizeText(item.os).includes(search) ||
-            normalizeText(item.fornecedor).includes(search) ||
-            normalizeText(item.servico).includes(search);
+            normalizeText(item.clientes?.nome).includes(search) ||
+            item.itens.some(function (subitem) {
+                return normalizeText(subitem.fornecedor).includes(search) ||
+                    normalizeText(subitem.servico).includes(search) ||
+                    normalizeText(subitem.localizador).includes(search);
+            });
 
         const matchStatus = !status || item.status === status;
         const matchClient = !client || String(item.cliente_id) === String(client);
-        const matchService = !service || item.servico === service;
+        const matchService = !service || item.itens.some(function (subitem) {
+            return subitem.servico === service;
+        });
 
         return matchSearch && matchStatus && matchClient && matchService;
     });
@@ -960,6 +1227,7 @@ function detailItem(label, value, className = "") {
 function closeFinanceDetails() {
     financeDetailModal.classList.add("hidden");
     financeDetailModal.setAttribute("aria-hidden", "true");
+    financeDetailContent.classList.remove("finance-detail-content-group");
     document.body.classList.remove("finance-detail-open");
 }
 
@@ -1058,6 +1326,237 @@ function openFinanceDetails(id) {
     financeDetailClose.focus();
 }
 
+function renderFinanceItemDetails(item, index) {
+    const isAir = ["AEREO", "ASSENTO", "BAGAGEM EXTRA"].includes(item.servico);
+    const currency = item.moeda || "BRL";
+    const details = [
+        detailItem("Fornecedor", detailValue(item.fornecedor), "wide")
+    ];
+
+    if (isAir) {
+        details.push(
+            detailItem("Classificação", detailValue(item.subtipo)),
+            detailItem("Consolidador", detailValue(item.consolidador)),
+            detailItem("Moeda", detailValue(currency)),
+            detailItem("Localizador", detailValue(item.localizador)),
+            detailItem("Bilhete", detailValue(item.bilhete), "wide"),
+            detailItem("Tarifa", detailMoney(item.tarifa, currency)),
+            detailItem("Taxa de embarque", detailMoney(item.taxa_embarque, currency)),
+            detailItem("RC", detailMoney(item.rc, currency)),
+            detailItem(
+                "Over",
+                item.over_percent === null || item.over_percent === undefined
+                    ? "—"
+                    : `${Number(item.over_percent).toLocaleString("pt-BR")} %`
+            )
+        );
+    } else if (item.servico === "HOTEL") {
+        details.push(
+            detailItem("Diária", detailMoney(item.diaria, "BRL")),
+            detailItem("Tipo da taxa", detailValue(item.taxas_tipo)),
+            detailItem(
+                "Taxas / impostos",
+                item.taxas_tipo === "%"
+                    ? `${Number(item.taxas_valor || 0).toLocaleString("pt-BR")} %`
+                    : detailMoney(item.taxas_valor, "BRL")
+            ),
+            detailItem("Comissão", item.tarifa_net ? "Tarifa NET" : `${Number(item.comissao_percent || 0).toLocaleString("pt-BR")} %`),
+            detailItem("Check-in", detailDate(item.checkin)),
+            detailItem("Check-out", detailDate(item.checkout)),
+            detailItem("Quantidade de diárias", detailValue(item.quantidade_diarias))
+        );
+    } else {
+        if (item.servico === "OUTROS") {
+            details.push(detailItem("Descrição do serviço", detailValue(item.outro_servico), "wide"));
+        }
+
+        details.push(
+            detailItem("Valor total do período", detailMoney(item.valor_periodo, "BRL")),
+            detailItem("Tipo da taxa", detailValue(item.taxas_tipo)),
+            detailItem(
+                "Taxas / impostos",
+                item.taxas_tipo === "%"
+                    ? `${Number(item.taxas_valor || 0).toLocaleString("pt-BR")} %`
+                    : detailMoney(item.taxas_valor, "BRL")
+            ),
+            detailItem("Comissão", item.tarifa_net ? "Tarifa NET" : `${Number(item.comissao_percent || 0).toLocaleString("pt-BR")} %`)
+        );
+    }
+
+    details.push(
+        detailItem("Total", detailMoney(item.total, currency), "total"),
+        detailItem("Total final", detailMoney(item.total_final, currency), "total")
+    );
+
+    return `
+        <section class="finance-item-detail-card">
+            <header>
+                <div>
+                    <span>Item ${index + 1}</span>
+                    <strong>${escapeHtml(item.servico || "Serviço")}</strong>
+                </div>
+                <button type="button" class="icon-button" data-action="edit-detail-item" data-id="${item.id}" title="Editar item">
+                    <i data-lucide="pencil"></i>
+                </button>
+            </header>
+            <div class="finance-detail-grid">${details.join("")}</div>
+        </section>
+    `;
+}
+
+function openFinanceDetails(id) {
+    const group = findFinanceGroup(id);
+
+    if (!group) {
+        showToast("Não foi possível carregar os detalhes.");
+        return;
+    }
+
+    const summary = [
+        detailItem("Código", detailValue(group.codigo_tres)),
+        detailItem("Data", detailDate(group.data_lancamento)),
+        detailItem("Status", detailValue(group.status)),
+        detailItem("Cliente", detailValue(group.clientes?.nome), "wide"),
+        detailItem("OS", detailValue(group.os)),
+        detailItem("Emissor", detailValue(group.emissor_nome)),
+        detailItem("Total geral", escapeHtml(formatGroupTotal(group)), "total")
+    ];
+
+    financeDetailTitle.textContent = `${group.codigo_tres || "Solicitação"} · OS ${group.os || "-"}`;
+    financeDetailContent.classList.add("finance-detail-content-group");
+    financeDetailContent.innerHTML = `
+        <div class="finance-detail-grid finance-group-summary">${summary.join("")}</div>
+        <div class="finance-detail-items">
+            ${group.itens.map(renderFinanceItemDetails).join("")}
+        </div>
+    `;
+    financeDetailModal.classList.remove("hidden");
+    financeDetailModal.setAttribute("aria-hidden", "false");
+    document.body.classList.add("finance-detail-open");
+    financeDetailClose.focus();
+    lucide.createIcons();
+}
+
+function financeCompactDetail(label, value) {
+    return `
+        <div class="finance-compact-detail">
+            <span>${escapeHtml(label)}</span>
+            <strong>${value}</strong>
+        </div>
+    `;
+}
+
+function financeItemTotalRow(item, currency) {
+    return `
+        <footer class="finance-clean-item-footer">
+            <span>Total do item</span>
+            <strong>${detailMoney(item.total_final || item.total, currency)}</strong>
+        </footer>
+    `;
+}
+
+function renderFinanceItemDetails(item, index) {
+    const isAir = ["AEREO", "ASSENTO", "BAGAGEM EXTRA"].includes(item.servico);
+    const currency = item.moeda || "BRL";
+    const details = [
+        financeCompactDetail("Fornecedor", detailValue(item.fornecedor))
+    ];
+
+    if (isAir) {
+        details.push(
+            financeCompactDetail("Classificação", detailValue(item.subtipo)),
+            financeCompactDetail("Consolidador", detailValue(item.consolidador)),
+            financeCompactDetail("Moeda", detailValue(currency)),
+            financeCompactDetail("Localizador", detailValue(item.localizador)),
+            financeCompactDetail("Bilhete", detailValue(item.bilhete)),
+            financeCompactDetail("Tarifa", detailMoney(item.tarifa, currency)),
+            financeCompactDetail("Taxa de embarque", detailMoney(item.taxa_embarque, currency)),
+            financeCompactDetail("RC", detailMoney(item.rc, currency)),
+            financeCompactDetail(
+                "Over",
+                item.over_percent === null || item.over_percent === undefined
+                    ? "—"
+                    : `${Number(item.over_percent).toLocaleString("pt-BR")} %`
+            )
+        );
+    } else if (item.servico === "HOTEL") {
+        details.push(
+            financeCompactDetail("Diária", detailMoney(item.diaria, "BRL")),
+            financeCompactDetail("Taxas / impostos", item.taxas_tipo === "%" ? `${Number(item.taxas_valor || 0).toLocaleString("pt-BR")} %` : detailMoney(item.taxas_valor, "BRL")),
+            financeCompactDetail("Comissão", item.tarifa_net ? "Tarifa NET" : `${Number(item.comissao_percent || 0).toLocaleString("pt-BR")} %`),
+            financeCompactDetail("Check-in", detailDate(item.checkin)),
+            financeCompactDetail("Check-out", detailDate(item.checkout)),
+            financeCompactDetail("Diárias", detailValue(item.quantidade_diarias))
+        );
+    } else {
+        if (item.servico === "OUTROS") {
+            details.push(financeCompactDetail("Descrição", detailValue(item.outro_servico)));
+        }
+
+        details.push(
+            financeCompactDetail("Valor do período", detailMoney(item.valor_periodo, "BRL")),
+            financeCompactDetail("Taxas / impostos", item.taxas_tipo === "%" ? `${Number(item.taxas_valor || 0).toLocaleString("pt-BR")} %` : detailMoney(item.taxas_valor, "BRL")),
+            financeCompactDetail("Comissão", item.tarifa_net ? "Tarifa NET" : `${Number(item.comissao_percent || 0).toLocaleString("pt-BR")} %`)
+        );
+    }
+
+    return `
+        <section class="finance-clean-item">
+            <header class="finance-clean-item-header">
+                <div>
+                    <span>Item ${index + 1}</span>
+                    <strong>${escapeHtml(item.servico || "Serviço")}</strong>
+                </div>
+                <div class="finance-clean-item-actions">
+                    <button type="button" class="icon-button" data-action="edit-detail-item" data-id="${item.id}" title="Editar item">
+                        <i data-lucide="pencil"></i>
+                    </button>
+                    <button type="button" class="icon-button danger-icon" data-action="delete-detail-item" data-id="${item.id}" title="Excluir item">
+                        <i data-lucide="trash-2"></i>
+                    </button>
+                </div>
+            </header>
+            <div class="finance-compact-grid">${details.join("")}</div>
+            ${financeItemTotalRow(item, currency)}
+        </section>
+    `;
+}
+
+function openFinanceDetails(id) {
+    const group = findFinanceGroup(id);
+
+    if (!group) {
+        showToast("Não foi possível carregar os detalhes.");
+        return;
+    }
+
+    const summary = [
+        financeCompactDetail("Código", detailValue(group.codigo_tres)),
+        financeCompactDetail("OS", detailValue(group.os)),
+        financeCompactDetail("Cliente", detailValue(group.clientes?.nome)),
+        financeCompactDetail("Emissor", detailValue(group.emissor_nome)),
+        financeCompactDetail("Data", detailDate(group.data_lancamento)),
+        financeCompactDetail("Status", detailValue(group.status)),
+        financeCompactDetail("Total geral", escapeHtml(formatGroupTotal(group)))
+    ];
+
+    financeDetailTitle.textContent = `${group.codigo_tres || "Solicitação"} · OS ${group.os || "-"}`;
+    financeDetailContent.classList.add("finance-detail-content-group");
+    financeDetailContent.innerHTML = `
+        <section class="finance-clean-summary">
+            ${summary.join("")}
+        </section>
+        <div class="finance-clean-items">
+            ${group.itens.map(renderFinanceItemDetails).join("")}
+        </div>
+    `;
+    financeDetailModal.classList.remove("hidden");
+    financeDetailModal.setAttribute("aria-hidden", "false");
+    document.body.classList.add("finance-detail-open");
+    financeDetailClose.focus();
+    lucide.createIcons();
+}
+
 function setMoneyField(input, value) {
     input.value = value === null || value === undefined ? "" : formatMoneyInput(value);
 }
@@ -1107,6 +1606,8 @@ function editFinance(id) {
     setMoneyField(valorPeriodo, item.valor_periodo);
     taxasTipo.value = item.taxas_tipo || "R$";
     setMoneyField(taxasValor, item.taxas_valor);
+    setMoneyField(comissaoPercent, item.comissao_percent);
+    tarifaNet.checked = Boolean(item.tarifa_net);
     checkin.value = item.checkin || "";
     checkout.value = item.checkout || "";
 
@@ -1178,6 +1679,8 @@ function friendlyHistoryField(field) {
         valor_periodo: "Valor do período",
         taxas_tipo: "Tipo da taxa",
         taxas_valor: "Taxa",
+        comissao_percent: "Comissão",
+        tarifa_net: "Tarifa NET",
         checkin: "Check-in",
         checkout: "Check-out",
         quantidade_diarias: "Diárias",
@@ -1223,6 +1726,7 @@ function formatHistoryValue(field, value) {
         "diaria",
         "valor_periodo",
         "taxas_valor",
+        "comissao_percent",
         "total",
         "total_final"
     ].includes(field)) {
@@ -1231,6 +1735,10 @@ function formatHistoryValue(field, value) {
 
     if (field === "over_percent") {
         return `${Number(value || 0).toLocaleString("pt-BR", { maximumFractionDigits: 2 })}%`;
+    }
+
+    if (field === "tarifa_net") {
+        return value ? "Sim" : "Não";
     }
 
     return String(value);
@@ -1310,6 +1818,20 @@ function buildCreationEvent(currentItem) {
 }
 
 function describeHistoryEvent(item) {
+    if (item.acao === "ITEM_ADICIONADO" || item.acao === "ITEM_EXCLUIDO") {
+        const actorName = item.alterado_por_nome || "Usuário";
+        const after = item.depois || {};
+        const service = after.servico || "item";
+        const total = after.total ? money(after.total, after.moeda || "BRL") : "";
+        const verb = item.acao === "ITEM_ADICIONADO" ? "adicionou" : "excluiu";
+
+        return {
+            title: `${actorName} ${verb} item ${service}${total ? ` no valor ${total}` : ""}`,
+            meta: formatTimelineDate(item.created_at),
+            changes: ""
+        };
+    }
+
     const changes = cleanHistoryChanges(item.alteracoes || {});
     const actor = item.alterado_por_nome || "Usuário";
     let title = `Solicitação editada por ${actor}`;
@@ -1318,6 +1840,8 @@ function describeHistoryEvent(item) {
         title = `Status atualizado para ${formatHistoryValue("status", changes.status.depois)} por ${actor}`;
     } else if (changes.emissor_id) {
         title = `Emissor alterado para ${formatHistoryValue("emissor_id", changes.emissor_id.depois)} por ${actor}`;
+    } else if (item.acao === "ITEM_ADICIONADO") {
+        title = `Item adicionado por ${actor}`;
     }
 
     return {
@@ -1410,6 +1934,8 @@ function renderLancamentos() {
 
     financeTableBody.innerHTML = visible.map(function (item) {
         const checked = selectedLancamentos.has(item.id) ? "checked" : "";
+        const services = summarizeGroupServices(item);
+        const suppliers = summarizeGroupSuppliers(item);
 
         return `
             <tr>
@@ -1426,9 +1952,18 @@ function renderLancamentos() {
                 <td>${item.emissor_nome || "-"}</td>
                 <td>${item.os || "-"}</td>
                 <td>${item.clientes?.nome || "-"}</td>
-                <td>${item.servico || "-"}</td>
-                <td>${item.fornecedor || "-"}</td>
-                <td>${money(item.total, item.moeda)}</td>
+                <td>
+                    <span class="finance-items-count">
+                        ${item.item_count} ${item.item_count === 1 ? "item" : "itens"}
+                    </span>
+                </td>
+                <td>
+                    <div class="finance-service-summary">
+                        <strong>${escapeHtml(services)}</strong>
+                        <span>${escapeHtml(suppliers)}</span>
+                    </div>
+                </td>
+                <td>${formatGroupTotal(item)}</td>
                 <td>${statusBadge(item.status)}</td>
 
                 <td>
@@ -1443,8 +1978,16 @@ function renderLancamentos() {
 
                         <button
                             class="icon-button"
-                            data-action="edit"
+                            data-action="add-item"
                             data-id="${item.id}"
+                            title="Adicionar item nesta OS">
+                            <i data-lucide="plus"></i>
+                        </button>
+
+                        <button
+                            class="icon-button"
+                            data-action="edit"
+                            data-id="${item.itens[0]?.id || item.id}"
                             title="Editar lançamento">
                             <i data-lucide="pencil"></i>
                         </button>
@@ -1464,6 +2007,14 @@ function renderLancamentos() {
                             title="Concluir">
                             <i data-lucide="check"></i>
                         </button>
+
+                        <button
+                            class="icon-button danger-icon"
+                            data-action="delete-group"
+                            data-id="${item.id}"
+                            title="Excluir solicitação inteira">
+                            <i data-lucide="trash-2"></i>
+                        </button>
                     </div>
                 </td>
             </tr>
@@ -1479,7 +2030,11 @@ function renderLancamentos() {
 }
 
 async function completeLancamento(id) {
-    const before = lancamentos.find(function (item) {
+    const group = findFinanceGroup(id);
+    const itemIds = group?.itens.map(function (item) {
+        return item.id;
+    }) || [id];
+    const before = group || lancamentos.find(function (item) {
         return String(item.id) === String(id);
     });
 
@@ -1491,7 +2046,7 @@ async function completeLancamento(id) {
             concluido_em: new Date().toISOString(),
             updated_by: currentUser.id
         })
-        .eq("id", id);
+        .in("id", itemIds);
 
     if (error) {
         console.error(error);
@@ -1512,6 +2067,104 @@ async function completeLancamento(id) {
     await loadLancamentos();
 }
 
+async function deleteFinanceGroup(id, skipConfirm = false) {
+    const group = findFinanceGroup(id);
+
+    if (!group) {
+        showToast("Não foi possível localizar a solicitação.");
+        return;
+    }
+
+    const ok = skipConfirm || await confirmFinanceAction({
+        title: "Excluir solicitação",
+        message: `Deseja excluir ${group.codigo_tres || "esta solicitação"} e todos os ${group.item_count} item(ns)? Esta ação não poderá ser desfeita.`
+    });
+
+    if (!ok) return;
+
+    const itemIds = group.itens.map(function (item) {
+        return item.id;
+    });
+
+    const { error } = await supabaseClient
+        .from("lancamentos")
+        .delete()
+        .in("id", itemIds);
+
+    if (error) {
+        console.error(error);
+        showToast("Erro ao excluir solicitação.");
+        return;
+    }
+
+    selectedLancamentos.delete(group.id);
+    showToast("Solicitação excluída.");
+    await loadLancamentos();
+}
+
+async function deleteFinanceItem(id) {
+    const item = lancamentos.find(function (lancamento) {
+        return String(lancamento.id) === String(id);
+    });
+
+    if (!item) {
+        showToast("Não foi possível localizar o item.");
+        return;
+    }
+
+    const group = findFinanceGroup(getFinanceGroupKey(item));
+
+    if (group && group.item_count <= 1) {
+        const okGroup = await confirmFinanceAction({
+            title: "Excluir solicitação",
+            message: "Esta solicitação possui apenas 1 item. Ao excluir o item, a solicitação inteira será excluída. Deseja continuar?"
+        });
+
+        if (!okGroup) return;
+
+        await deleteFinanceGroup(group.id, true);
+        return;
+    }
+
+    const ok = await confirmFinanceAction({
+        title: "Excluir item",
+        message: `Deseja excluir o item ${item.servico || ""} desta OS? Esta ação não poderá ser desfeita.`
+    });
+
+    if (!ok) return;
+
+    const { error } = await supabaseClient
+        .from("lancamentos")
+        .delete()
+        .eq("id", id);
+
+    if (error) {
+        console.error(error);
+        showToast("Erro ao excluir item.");
+        return;
+    }
+
+    if (group) {
+        await registerHistory(
+            "VALORES_A_PAGAR",
+            group,
+            {
+                ...group,
+                item_count: Math.max(0, group.item_count - 1),
+                servico: item.servico,
+                fornecedor: item.fornecedor,
+                total: item.total,
+                moeda: item.moeda
+            },
+            "ITEM_EXCLUIDO"
+        );
+    }
+
+    showToast("Item excluído.");
+    closeFinanceDetails();
+    await loadLancamentos();
+}
+
 async function completeSelectedLancamentos() {
     if (selectedLancamentos.size === 0) {
         return;
@@ -1525,10 +2178,15 @@ async function completeSelectedLancamentos() {
         return;
     }
 
-    const ids = Array.from(selectedLancamentos);
-    const beforeItems = lancamentos.filter(function (item) {
-        return ids.map(String).includes(String(item.id));
+    const selectedGroups = Array.from(selectedLancamentos)
+        .map(findFinanceGroup)
+        .filter(Boolean);
+    const ids = selectedGroups.flatMap(function (group) {
+        return group.itens.map(function (item) {
+            return item.id;
+        });
     });
+    const beforeItems = selectedGroups;
 
     const { error } = await supabaseClient
         .from("lancamentos")
@@ -1606,6 +2264,8 @@ choiceButtons.forEach(function (button) {
     valorPeriodo,
     taxasTipo,
     taxasValor,
+    comissaoPercent,
+    tarifaNet,
     checkin,
     checkout
 ].forEach(function (field) {
@@ -1626,6 +2286,14 @@ clearFinanceForm.addEventListener("click", function () {
     financeForm.reset();
     resetFinanceForm();
 });
+
+if (cancelLinkedItemButton) {
+    cancelLinkedItemButton.addEventListener("click", function () {
+        financeForm.reset();
+        resetFinanceForm();
+        showToast("Vínculo cancelado.");
+    });
+}
 
 financeSearch.addEventListener("input", resetFinancePagination);
 financeStatusFilter.addEventListener("change", resetFinancePagination);
@@ -1707,11 +2375,21 @@ financeTableBody.addEventListener("click", async function (event) {
         openFinanceDetails(button.dataset.id);
     }
 
+    if (button.dataset.action === "add-item") {
+        addItemToFinanceGroup(button.dataset.id);
+    }
+
     if (button.dataset.action === "edit") {
         editFinance(button.dataset.id);
     }
 
     if (button.dataset.action === "history") {
+        const group = findFinanceGroup(button.dataset.id);
+        if (group) {
+            await openHistory("VALORES_A_PAGAR", button.dataset.id, `Histórico ${group.codigo_tres || ""}`, group);
+            return;
+        }
+
         const item = lancamentos.find(function (lancamento) {
             return String(lancamento.id) === String(button.dataset.id);
         });
@@ -1721,10 +2399,31 @@ financeTableBody.addEventListener("click", async function (event) {
     if (button.dataset.action === "complete") {
         await completeLancamento(button.dataset.id);
     }
+
+    if (button.dataset.action === "delete-group") {
+        await deleteFinanceGroup(button.dataset.id);
+    }
 });
 
 financeDetailClose.addEventListener("click", closeFinanceDetails);
 financeDetailDone.addEventListener("click", closeFinanceDetails);
+
+financeDetailContent.addEventListener("click", async function (event) {
+    const button = event.target.closest("button");
+
+    if (!button) {
+        return;
+    }
+
+    if (button.dataset.action === "edit-detail-item") {
+        closeFinanceDetails();
+        editFinance(button.dataset.id);
+    }
+
+    if (button.dataset.action === "delete-detail-item") {
+        await deleteFinanceItem(button.dataset.id);
+    }
+});
 
 financeDetailModal.addEventListener("click", function (event) {
     if (event.target === financeDetailModal) {

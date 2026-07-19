@@ -37,7 +37,7 @@
         <nav class="sidebar-nav">
             <a href="dashboard.html" class="nav-link">
                 <i data-lucide="layout-dashboard"></i>
-                <span>Início</span>
+                <span>Dashboard</span>
             </a>
 
             <a href="hotel.html" class="nav-link">
@@ -116,6 +116,17 @@
             </div>
 
             <div class="tab-content active" id="newFinance">
+
+                <div class="finance-item-context hidden" id="financeItemContext">
+                    <div>
+                        <span>Adicionando item em</span>
+                        <strong id="financeItemContextTitle">PAG000000</strong>
+                    </div>
+
+                    <button type="button" class="btn btn-soft" id="cancelLinkedItemButton">
+                        Cancelar vínculo
+                    </button>
+                </div>
 
                 <form id="financeForm" class="form-grid">
 
@@ -263,6 +274,18 @@
                         <input type="text" inputmode="decimal" id="taxasValor" placeholder="0,00">
                     </div>
 
+                    <div class="form-field hidden" id="comissaoField">
+                        <label>Comissão (%)</label>
+                        <input type="text" inputmode="decimal" id="comissaoPercent" placeholder="0,00">
+                    </div>
+
+                    <div class="form-field hidden" id="tarifaNetField">
+                        <label class="checkbox-field">
+                            <input type="checkbox" id="tarifaNet">
+                            <span>Tarifa NET</span>
+                        </label>
+                    </div>
+
                     <div class="form-field hidden" id="checkinField">
                         <label>Check-in</label>
                         <input type="date" id="checkin">
@@ -354,8 +377,8 @@
                                 <th>Emissor</th>
                                 <th>OS</th>
                                 <th>Cliente</th>
-                                <th>Serviço</th>
-                                <th>Fornecedor</th>
+                                <th>Itens</th>
+                                <th>Serviços / fornecedores</th>
                                 <th>Total</th>
                                 <th>Status</th>
                                 <th>Ações</th>
