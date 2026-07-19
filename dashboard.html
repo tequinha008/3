@@ -4,7 +4,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TRES | Dashboard</title>
+        <script>
+        (function () {
+            try {
+                if (localStorage.getItem("tresSidebarCollapsed") === "true") {
+                    document.documentElement.classList.add("sidebar-collapsed-initial");
+                }
+            } catch (error) {}
+        })();
+    </script><title>TRES | In&iacute;cio</title>
 
     <link rel="icon" type="image/png" href="TRES_logo_transparente.png">
     <link rel="stylesheet" href="css/style.css">
@@ -40,12 +48,12 @@
 
             <a href="dashboard.html" class="nav-link active">
                 <i data-lucide="layout-dashboard"></i>
-                <span>Início</span>
+                <span>In&iacute;cio</span>
             </a>
 
             <a href="hotel.html" class="nav-link">
                 <i data-lucide="building-2"></i>
-                <span>Hotéis</span>
+                <span>Hot&eacute;is</span>
             </a>
 
             <a href="pagar.html" class="nav-link">
@@ -60,7 +68,7 @@
 
             <a href="usuarios.html" class="nav-link admin-link hidden">
                 <i data-lucide="users-round"></i>
-                <span>Usuários</span>
+                <span>Usu&aacute;rios</span>
             </a>
 
         </nav>
@@ -105,7 +113,7 @@
                     <div class="avatar" id="avatar">T</div>
 
                     <div>
-                        <strong id="userName">Usuário</strong>
+                        <strong id="userName">Usu&aacute;rio</strong>
                         <small id="userRole">perfil</small>
                     </div>
                 </div>
@@ -118,15 +126,15 @@
 
             <div>
                 <p class="eyebrow">
-                    Sistema interno para solicitações financeiras e cadastrais
+                    Sistema interno para solicita&ccedil;&otilde;es financeiras e cadastrais
                 </p>
 
                 <h2>
-                    Centralize, organize e acompanhe suas solicitações.
+                    Centralize, organize e acompanhe suas solicita&ccedil;&otilde;es.
                 </h2>
 
                 <p>
-                    Use os atalhos abaixo para criar solicitações, acompanhar pendências
+                    Use os atalhos abaixo para criar solicita&ccedil;&otilde;es, acompanhar pend&ecirc;ncias
                     e consultar registros.
                 </p>
             </div>
@@ -157,9 +165,9 @@
                 </div>
 
                 <div>
-                    <span>Hotéis pendentes</span>
+                    <span>Hot&eacute;is pendentes</span>
                     <strong id="metricHotels">0</strong>
-                    <small>Solicitações aguardando tratativa</small>
+                    <small>Solicita&ccedil;&otilde;es aguardando tratativa</small>
                 </div>
             </article>
 
@@ -171,7 +179,7 @@
                 <div>
                     <span>Valores pendentes</span>
                     <strong id="metricFinance">0</strong>
-                    <small>Lançamentos ainda não concluídos</small>
+                    <small>Lan&ccedil;amentos ainda n&atilde;o conclu&iacute;dos</small>
                 </div>
             </article>
 
@@ -183,7 +191,7 @@
                 <div>
                     <span>Reembolsos pendentes</span>
                     <strong id="metricRefunds">0</strong>
-                    <small>Solicitações em aberto</small>
+                    <small>Solicita&ccedil;&otilde;es em aberto</small>
                 </div>
             </article>
 
@@ -194,15 +202,15 @@
             <article class="panel">
 
                 <div class="panel-header">
-                    <p class="eyebrow">Ações rápidas</p>
-                    <h3>Criar nova solicitação</h3>
+                    <p class="eyebrow">A&ccedil;&otilde;es r&aacute;pidas</p>
+                    <h3>Criar nova solicita&ccedil;&atilde;o</h3>
                 </div>
 
                 <div class="activity-list" id="recentActivities">
                     <div class="empty-state">
                         <i data-lucide="sparkles"></i>
                         <p>
-                            As últimas atualizações aparecerão aqui quando os módulos forem utilizados.
+                            As &uacute;ltimas atualiza&ccedil;&otilde;es aparecer&atilde;o aqui quando os m&oacute;dulos forem utilizados.
                         </p>
                     </div>
                 </div>
@@ -217,8 +225,8 @@
 
                     <a href="pagar.html" class="quick-card">
                         <i data-lucide="wallet-cards"></i>
-                        <strong>Contas a pagar</strong>
-                        <span>Documentar valores e serviços.</span>
+                        <strong>Valor a pagar</strong>
+                        <span>Documentar valores e servi&ccedil;os.</span>
                     </a>
 
                     <a href="reembolso.html" class="quick-card">
@@ -234,15 +242,15 @@
             <article class="panel">
 
                 <div class="panel-header">
-                    <p class="eyebrow">Últimas atividades</p>
-                    <h3>Volume de solicitações</h3>
+                    <p class="eyebrow">&Uacute;ltimas atividades</p>
+                    <h3>Volume de solicita&ccedil;&otilde;es</h3>
                 </div>
 
                 <div class="volume-chart" id="volumeChart">
                     <div class="empty-state">
                     <i data-lucide="bar-chart-3"></i>
                     <p>
-                        As últimas atividades aparecerão aqui quando os módulos forem utilizados.
+                        As &uacute;ltimas atividades aparecer&atilde;o aqui quando os m&oacute;dulos forem utilizados.
                     </p>
                     </div>
                 </div>
@@ -261,3 +269,6 @@
 </body>
 
 </html>
+
+
+

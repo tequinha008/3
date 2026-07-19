@@ -86,7 +86,7 @@ async function countRows(tableName, status = null) {
     const { count, error } = await query;
 
     if (error) {
-        console.warn(`Não foi possível contar ${tableName}.`, error);
+        console.warn(`N\u00e3o foi poss\u00edvel contar ${tableName}.`, error);
         return 0;
     }
 
@@ -103,7 +103,7 @@ async function countRowsDifferentFrom(tableName, status) {
         .neq("status", status);
 
     if (error) {
-        console.warn(`NÃ£o foi possÃ­vel contar ${tableName}.`, error);
+        console.warn(`N\u00e3o foi poss\u00edvel contar ${tableName}.`, error);
         return 0;
     }
 
@@ -119,7 +119,7 @@ async function loadMetrics() {
 function chartModules() {
     return [
         {
-            label: "Hotéis",
+            label: "Hot\u00e9is",
             table: "solicitacoes_hotel",
             className: "hotel",
             icon: "building-2"
@@ -157,13 +157,13 @@ function normalizeText(value) {
 
 function formatDateTime(value) {
     if (!value) {
-        return "Data não informada";
+        return "Data n\u00e3o informada";
     }
 
     const date = new Date(value);
 
     if (Number.isNaN(date.getTime())) {
-        return "Data não informada";
+        return "Data n\u00e3o informada";
     }
 
     return date.toLocaleString("pt-BR", {
@@ -180,7 +180,7 @@ function moduleInfo(moduleName) {
 
     if (module.includes("HOT")) {
         return {
-            label: "Hotéis",
+            label: "Hot\u00e9is",
             singular: "hotel",
             icon: "building-2",
             className: "hotel"
@@ -198,7 +198,7 @@ function moduleInfo(moduleName) {
 
     return {
         label: "Valores a pagar",
-        singular: "lançamento",
+        singular: "lan\u00e7amento",
         icon: "wallet-cards",
         className: "finance"
     };
@@ -206,8 +206,8 @@ function moduleInfo(moduleName) {
 
 function describeHistoryActivity(item) {
     const info = moduleInfo(item.modulo);
-    const actor = item.alterado_por_nome || "Usuário";
-    const code = item.codigo_tres || item.depois?.codigo_tres || item.antes?.codigo_tres || "sem código";
+    const actor = item.alterado_por_nome || "Usu\u00e1rio";
+    const code = item.codigo_tres || item.depois?.codigo_tres || item.antes?.codigo_tres || "sem c\u00f3digo";
     const action = normalizeText(item.acao);
     const status = item?.alteracoes?.status?.depois || item?.depois?.status || "";
     let title = `${actor} atualizou ${info.singular} ${code}`;
@@ -225,21 +225,21 @@ function describeHistoryActivity(item) {
     return {
         module: info,
         title,
-        meta: `${info.label} • ${formatDateTime(item.created_at)}`,
+        meta: `${info.label} \u2022 ${formatDateTime(item.created_at)}`,
         date: item.created_at
     };
 }
 
 function describeCreationActivity(item, moduleName) {
     const info = moduleInfo(moduleName);
-    const actor = item.emissor_nome || "Usuário";
-    const code = item.codigo_tres || "sem código";
+    const actor = item.emissor_nome || "Usu\u00e1rio";
+    const code = item.codigo_tres || "sem c\u00f3digo";
     const subject = item.nome_hotel || item.servico || item.fornecedor || item.cliente || info.singular;
 
     return {
         module: info,
         title: `${actor} criou ${info.singular} ${code}`,
-        meta: `${info.label} • ${subject} • ${formatDateTime(item.created_at || item.data_solicitacao)}`,
+        meta: `${info.label} \u2022 ${subject} \u2022 ${formatDateTime(item.created_at || item.data_solicitacao)}`,
         date: item.created_at || item.data_solicitacao
     };
 }
@@ -253,14 +253,14 @@ function renderActivities(items) {
     const eyebrow = panel?.querySelector(".eyebrow");
     const title = panel?.querySelector("h3");
 
-    if (eyebrow) eyebrow.textContent = "Últimas atualizações";
+    if (eyebrow) eyebrow.textContent = "\u00daltimas atualiza\u00e7\u00f5es";
     if (title) title.textContent = "Resumo recente";
 
     if (!items.length) {
         recentActivities.innerHTML = `
             <div class="empty-state">
                 <i data-lucide="sparkles"></i>
-                <p>As últimas atualizações aparecerão aqui quando os módulos forem utilizados.</p>
+                <p>As \u00faltimas atualiza\u00e7\u00f5es aparecer\u00e3o aqui quando os m\u00f3dulos forem utilizados.</p>
             </div>
         `;
         lucide.createIcons();
@@ -292,7 +292,7 @@ async function loadHistoryActivities() {
         .limit(3);
 
     if (error) {
-        console.warn("Não foi possível carregar o histórico recente.", error);
+        console.warn("N\u00e3o foi poss\u00edvel carregar o hist\u00f3rico recente.", error);
         return [];
     }
 
@@ -404,7 +404,7 @@ function renderVolumeChart(items) {
         volumeChart.innerHTML = `
             <div class="empty-state">
                 <i data-lucide="bar-chart-3"></i>
-                <p>Os volumes aparecerão aqui quando os módulos forem utilizados.</p>
+                <p>Os volumes aparecer\u00e3o aqui quando os m\u00f3dulos forem utilizados.</p>
             </div>
         `;
         lucide.createIcons();
@@ -430,7 +430,7 @@ function renderVolumeChart(items) {
 
                 <div class="volume-meta">
                     <span>${item.pending} pendente(s)</span>
-                    <span>${item.done} concluído(s)</span>
+                    <span>${item.done} conclu\u00eddo(s)</span>
                 </div>
             </article>
         `;
@@ -492,16 +492,58 @@ async function startDashboard() {
 
 const sidebar = document.querySelector(".sidebar");
 const sidebarToggle = document.getElementById("sidebarToggle");
+const SIDEBAR_STORAGE_KEY = "tresSidebarCollapsed";
+const SIDEBAR_INITIAL_CLASS = "sidebar-collapsed-initial";
 
-sidebarToggle.addEventListener("click", function () {
-    sidebar.classList.toggle("collapsed");
+function syncSidebarInitialClass(collapsed) {
+    document.documentElement.classList.toggle(SIDEBAR_INITIAL_CLASS, collapsed);
+}
+
+function updateSidebarToggleIcon() {
+    if (!sidebar || !sidebarToggle) return;
 
     const icon = sidebar.classList.contains("collapsed")
         ? "panel-left-open"
         : "panel-left-close";
 
     sidebarToggle.innerHTML = `<i data-lucide="${icon}"></i>`;
-    lucide.createIcons();
-});
+
+    if (window.lucide) {
+        lucide.createIcons();
+    }
+}
+
+function applyStoredSidebarState() {
+    if (!sidebar) return;
+
+    const collapsed = localStorage.getItem(SIDEBAR_STORAGE_KEY) === "true";
+    sidebar.classList.toggle("collapsed", collapsed);
+    syncSidebarInitialClass(collapsed);
+    updateSidebarToggleIcon();
+}
+
+function toggleSidebarState() {
+    if (!sidebar) return;
+
+    sidebar.classList.toggle("collapsed");
+    const collapsed = sidebar.classList.contains("collapsed");
+    localStorage.setItem(SIDEBAR_STORAGE_KEY, String(collapsed));
+    syncSidebarInitialClass(collapsed);
+    updateSidebarToggleIcon();
+}
+
+function initSidebarPersistence() {
+    applyStoredSidebarState();
+
+    if (sidebarToggle) {
+        sidebarToggle.addEventListener("click", toggleSidebarState);
+    }
+}
+
+initSidebarPersistence();
 
 startDashboard();
+
+
+
+ 

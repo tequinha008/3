@@ -2,6 +2,53 @@ lucide.createIcons();
 
 const sidebar = document.querySelector(".sidebar");
 const sidebarToggle = document.getElementById("sidebarToggle");
+const SIDEBAR_STORAGE_KEY = "tresSidebarCollapsed";
+const SIDEBAR_INITIAL_CLASS = "sidebar-collapsed-initial";
+
+function syncSidebarInitialClass(collapsed) {
+    document.documentElement.classList.toggle(SIDEBAR_INITIAL_CLASS, collapsed);
+}
+
+function updateSidebarToggleIcon() {
+    if (!sidebar || !sidebarToggle) return;
+
+    const icon = sidebar.classList.contains("collapsed")
+        ? "panel-left-open"
+        : "panel-left-close";
+
+    sidebarToggle.innerHTML = `<i data-lucide="${icon}"></i>`;
+
+    if (window.lucide) {
+        lucide.createIcons();
+    }
+}
+
+function applyStoredSidebarState() {
+    if (!sidebar) return;
+
+    const collapsed = localStorage.getItem(SIDEBAR_STORAGE_KEY) === "true";
+    sidebar.classList.toggle("collapsed", collapsed);
+    syncSidebarInitialClass(collapsed);
+    updateSidebarToggleIcon();
+}
+
+function toggleSidebarState() {
+    if (!sidebar) return;
+
+    sidebar.classList.toggle("collapsed");
+    const collapsed = sidebar.classList.contains("collapsed");
+    localStorage.setItem(SIDEBAR_STORAGE_KEY, String(collapsed));
+    syncSidebarInitialClass(collapsed);
+    updateSidebarToggleIcon();
+}
+
+function initSidebarPersistence() {
+    applyStoredSidebarState();
+
+    if (sidebarToggle) {
+        sidebarToggle.addEventListener("click", toggleSidebarState);
+    }
+}
 const avatar = document.getElementById("avatar");
 const userName = document.getElementById("userName");
 const userRole = document.getElementById("userRole");
@@ -108,7 +155,7 @@ function applyUserProfile(profile, user) {
 function roleLabel(role) {
     if (role === "master") return "MASTER";
     if (role === "admin") return "ADMINISTRADOR";
-    return "USUÁRIO";
+    return "USU\u00c1RIO";
 }
 
 function roleBadge(role) {
@@ -163,7 +210,7 @@ function updateUsersPagination(totalItems) {
     }
 
     if (usersPageIndicator) {
-        usersPageIndicator.textContent = `Página ${usersCurrentPage} de ${totalPages}`;
+        usersPageIndicator.textContent = `P\u00e1gina ${usersCurrentPage} de ${totalPages}`;
     }
 
     if (usersPrevPage) {
@@ -192,7 +239,7 @@ function renderUsers() {
 
     if (filtered.length === 0) {
         usersTableBody.innerHTML = `
-            <tr><td colspan="6" class="empty-table-message">Nenhum usuário encontrado.</td></tr>
+            <tr><td colspan="6" class="empty-table-message">Nenhum usu\u00e1rio encontrado.</td></tr>
         `;
         return;
     }
@@ -210,11 +257,11 @@ function renderUsers() {
                 <td>${roleBadge(user.perfil)}</td>
                 <td>${statusBadge(user.ativo)}</td>
                 <td class="${user.primeiro_acesso ? "users-first-access" : ""}">
-                    ${user.primeiro_acesso ? "PENDENTE" : "CONCLUÍDO"}
+                    ${user.primeiro_acesso ? "PENDENTE" : "CONCLU\u00cdDO"}
                 </td>
                 <td>
                     <div class="action-buttons">
-                        <button class="icon-button" data-action="edit" data-id="${user.id}" title="Editar usuário">
+                        <button class="icon-button" data-action="edit" data-id="${user.id}" title="Editar usu\u00e1rio">
                             <i data-lucide="pencil"></i>
                         </button>
                         <button class="icon-button" data-action="password" data-id="${user.id}" title="Redefinir senha">
@@ -230,7 +277,7 @@ function renderUsers() {
 }
 
 async function loadUsers() {
-    usersTableBody.innerHTML = `<tr><td colspan="6" class="empty-table-message">Carregando usuários...</td></tr>`;
+    usersTableBody.innerHTML = `<tr><td colspan="6" class="empty-table-message">Carregando usu\u00e1rios...</td></tr>`;
 
     const { data, error } = await supabaseClient
         .from("usuarios")
@@ -239,7 +286,7 @@ async function loadUsers() {
 
     if (error) {
         console.error(error);
-        showToast("Erro ao carregar usuários.");
+        showToast("Erro ao carregar usu\u00e1rios.");
         return;
     }
 
@@ -251,18 +298,18 @@ async function invokeAdminUsers(body) {
     const { data, error } = await supabaseClient.functions.invoke("rapid-api", { body: body });
 
     if (error) {
-        let message = error.message || "Erro ao acessar o serviço de usuários.";
+        let message = error.message || "Erro ao acessar o servi\u00e7o de usu\u00e1rios.";
         try {
             const responseData = await error.context.json();
             message = responseData.error || message;
         } catch (_error) {
-            // Mantém a mensagem original quando a resposta não contém JSON.
+            // Mant\u00e9m a mensagem original quando a resposta n\u00e3o cont\u00e9m JSON.
         }
         throw new Error(message);
     }
 
     if (!data?.success) {
-        throw new Error(data?.error || "Operação não concluída.");
+        throw new Error(data?.error || "Opera\u00e7\u00e3o n\u00e3o conclu\u00edda.");
     }
 
     return data;
@@ -282,7 +329,7 @@ async function createUser(event) {
             password: newUserPassword.value
         });
 
-        showToast("Usuário criado com sucesso.");
+        showToast("Usu\u00e1rio criado com sucesso.");
         createUserForm.reset();
         newUserRole.value = "usuario";
         await loadUsers();
@@ -331,14 +378,14 @@ async function updateUser(event) {
             ativo: editUserActive.checked
         });
         setModalOpen(editUserModal, false);
-        showToast("Usuário atualizado.");
+        showToast("Usu\u00e1rio atualizado.");
         await loadUsers();
     } catch (error) {
         console.error(error);
         showToast(error.message);
     } finally {
         saveEditUser.disabled = false;
-        saveEditUser.textContent = "Salvar alterações";
+        saveEditUser.textContent = "Salvar altera\u00e7\u00f5es";
     }
 }
 
@@ -347,7 +394,7 @@ function openPasswordReset(id) {
     if (!user) return;
 
     passwordUserId.value = user.id;
-    passwordUserDescription.textContent = `Defina uma senha temporária para ${user.nome}. A troca será exigida no próximo acesso.`;
+    passwordUserDescription.textContent = `Defina uma senha tempor\u00e1ria para ${user.nome}. A troca ser\u00e1 exigida no pr\u00f3ximo acesso.`;
     temporaryPassword.value = "";
     setModalOpen(passwordModal, true);
     temporaryPassword.focus();
@@ -365,7 +412,7 @@ async function resetPassword(event) {
             password: temporaryPassword.value
         });
         setModalOpen(passwordModal, false);
-        showToast("Senha temporária definida.");
+        showToast("Senha tempor\u00e1ria definida.");
         await loadUsers();
     } catch (error) {
         console.error(error);
@@ -437,12 +484,7 @@ logoutButton.addEventListener("click", async function () {
     window.location.href = "index.html";
 });
 
-sidebarToggle.addEventListener("click", function () {
-    sidebar.classList.toggle("collapsed");
-    const icon = sidebar.classList.contains("collapsed") ? "panel-left-open" : "panel-left-close";
-    sidebarToggle.innerHTML = `<i data-lucide="${icon}"></i>`;
-    lucide.createIcons();
-});
+initSidebarPersistence();
 
 async function startUsersModule() {
     currentUser = await checkAuth();
@@ -465,3 +507,6 @@ async function startUsersModule() {
 }
 
 startUsersModule();
+
+
+

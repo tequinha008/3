@@ -4,7 +4,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TRES | Usuários</title>
+        <script>
+        (function () {
+            try {
+                if (localStorage.getItem("tresSidebarCollapsed") === "true") {
+                    document.documentElement.classList.add("sidebar-collapsed-initial");
+                }
+            } catch (error) {}
+        })();
+    </script><title>TRES | Usu&aacute;rios</title>
 
     <link rel="icon" type="image/png" href="TRES_logo_transparente.png">
     <link rel="stylesheet" href="css/style.css">
@@ -27,10 +35,10 @@
 
         <nav class="sidebar-nav">
             <a href="dashboard.html" class="nav-link">
-                <i data-lucide="layout-dashboard"></i><span>Início</span>
+                <i data-lucide="layout-dashboard"></i><span>In&iacute;cio</span>
             </a>
             <a href="hotel.html" class="nav-link">
-                <i data-lucide="building-2"></i><span>Hotéis</span>
+                <i data-lucide="building-2"></i><span>Hot&eacute;is</span>
             </a>
             <a href="pagar.html" class="nav-link">
                 <i data-lucide="wallet-cards"></i><span>Valores a pagar</span>
@@ -39,7 +47,7 @@
                 <i data-lucide="receipt-text"></i><span>Reembolsos</span>
             </a>
             <a href="usuarios.html" class="nav-link active">
-                <i data-lucide="users-round"></i><span>Usuários</span>
+                <i data-lucide="users-round"></i><span>Usu&aacute;rios</span>
             </a>
         </nav>
 
@@ -56,30 +64,30 @@
     <main class="app-main">
         <header class="topbar">
             <div>
-                <p class="eyebrow">Administração</p>
-                <h1>Usuários</h1>
+                <p class="eyebrow">Administra&ccedil;&atilde;o</p>
+                <h1>Usu&aacute;rios</h1>
             </div>
 
             <div class="user-pill">
                 <div class="avatar" id="avatar">T</div>
-                <div><strong id="userName">Usuário</strong><small id="userRole">perfil</small></div>
+                <div><strong id="userName">Usu&aacute;rio</strong><small id="userRole">perfil</small></div>
             </div>
         </header>
 
         <section class="module-header users-module">
             <div>
-                <p class="eyebrow">Acesso e permissões</p>
-                <h2>Gerenciamento de usuários</h2>
+                <p class="eyebrow">Acesso e permiss&otilde;es</p>
+                <h2>Gerenciamento de usu&aacute;rios</h2>
                 <p>Crie acessos, defina perfis e controle quem pode entrar no TRES.</p>
             </div>
         </section>
 
         <section class="users-summary-grid">
             <article class="users-summary-card">
-                <span>Total de usuários</span><strong id="summaryUsers">0</strong>
+                <span>Total de usu&aacute;rios</span><strong id="summaryUsers">0</strong>
             </article>
             <article class="users-summary-card">
-                <span>Usuários ativos</span><strong id="summaryActive">0</strong>
+                <span>Usu&aacute;rios ativos</span><strong id="summaryActive">0</strong>
             </article>
             <article class="users-summary-card">
                 <span>Administradores e masters</span><strong id="summaryManagers">0</strong>
@@ -89,7 +97,7 @@
         <div class="users-layout">
             <section class="panel users-create-card">
                 <div class="panel-header">
-                    <div><p class="eyebrow">Novo acesso</p><h3>Cadastrar usuário</h3></div>
+                    <div><p class="eyebrow">Novo acesso</p><h3>Cadastrar usu&aacute;rio</h3></div>
                 </div>
 
                 <form id="createUserForm" class="form-grid users-form">
@@ -104,17 +112,17 @@
                     <div class="form-field">
                         <label for="newUserRole">Perfil</label>
                         <select id="newUserRole" required>
-                            <option value="usuario">Usuário</option>
+                            <option value="usuario">Usu&aacute;rio</option>
                             <option value="admin">Administrador</option>
                             <option value="master">Master</option>
                         </select>
                     </div>
                     <div class="form-field">
-                        <label for="newUserPassword">Senha temporária</label>
+                        <label for="newUserPassword">Senha tempor&aacute;ria</label>
                         <input type="password" id="newUserPassword" minlength="8" required autocomplete="new-password">
                     </div>
                     <p class="users-form-help span-2">
-                        No primeiro acesso, o usuário será direcionado para trocar a senha.
+                        No primeiro acesso, o usu&aacute;rio ser&aacute; direcionado para trocar a senha.
                     </p>
                     <div class="form-actions span-2">
                         <button type="button" class="btn btn-soft" id="clearUserForm">Limpar</button>
@@ -125,7 +133,7 @@
 
             <section class="panel users-table-card">
                 <div class="panel-header users-table-header">
-                    <div><p class="eyebrow">Equipe</p><h3>Usuários cadastrados</h3></div>
+                    <div><p class="eyebrow">Equipe</p><h3>Usu&aacute;rios cadastrados</h3></div>
                     <button type="button" class="btn btn-soft" id="refreshUsersButton">
                         <i data-lucide="refresh-cw"></i> Atualizar
                     </button>
@@ -135,7 +143,7 @@
                     <input type="search" id="userSearch" placeholder="Pesquisar nome ou e-mail">
                     <select id="userRoleFilter">
                         <option value="">Todos os perfis</option>
-                        <option value="usuario">Usuário</option>
+                        <option value="usuario">Usu&aacute;rio</option>
                         <option value="admin">Administrador</option>
                         <option value="master">Master</option>
                     </select>
@@ -151,7 +159,7 @@
                         <thead>
                             <tr>
                                 <th>Nome</th><th>E-mail</th><th>Perfil</th><th>Status</th>
-                                <th>Primeiro acesso</th><th>Ações</th>
+                                <th>Primeiro acesso</th><th>A&ccedil;&otilde;es</th>
                             </tr>
                         </thead>
                         <tbody id="usersTableBody"></tbody>
@@ -162,7 +170,7 @@
                     <span id="usersPaginationInfo">Mostrando 0 de 0</span>
                     <div class="table-pagination-actions">
                         <label>
-                            Por página
+                            Por p&aacute;gina
                             <select id="usersPageSize">
                                 <option value="10">10</option>
                                 <option value="25">25</option>
@@ -170,8 +178,8 @@
                             </select>
                         </label>
                         <button type="button" class="btn btn-soft" id="usersPrevPage">Anterior</button>
-                        <span id="usersPageIndicator">Página 1 de 1</span>
-                        <button type="button" class="btn btn-soft" id="usersNextPage">Próxima</button>
+                        <span id="usersPageIndicator">P&aacute;gina 1 de 1</span>
+                        <button type="button" class="btn btn-soft" id="usersNextPage">Pr&oacute;xima</button>
                     </div>
                 </div>
             </section>
@@ -181,7 +189,7 @@
     <div class="users-modal-backdrop hidden" id="editUserModal" role="dialog" aria-modal="true" aria-hidden="true">
         <div class="users-modal-card">
             <header class="users-modal-header">
-                <div><p class="eyebrow">Usuário</p><h2>Editar acesso</h2></div>
+                <div><p class="eyebrow">Usu&aacute;rio</p><h2>Editar acesso</h2></div>
                 <button type="button" class="icon-button" id="closeEditUser" aria-label="Fechar"><i data-lucide="x"></i></button>
             </header>
             <form id="editUserForm" class="users-modal-form">
@@ -190,16 +198,16 @@
                 <div class="form-field"><label>E-mail</label><input type="email" id="editUserEmail" disabled></div>
                 <div class="form-field"><label>Perfil</label>
                     <select id="editUserRole" required>
-                        <option value="usuario">Usuário</option><option value="admin">Administrador</option><option value="master">Master</option>
+                        <option value="usuario">Usu&aacute;rio</option><option value="admin">Administrador</option><option value="master">Master</option>
                     </select>
                 </div>
                 <label class="users-switch-row">
-                    <span><strong>Acesso ativo</strong><small>Permitir que este usuário entre no sistema.</small></span>
+                    <span><strong>Acesso ativo</strong><small>Permitir que este usu&aacute;rio entre no sistema.</small></span>
                     <input type="checkbox" id="editUserActive">
                 </label>
                 <div class="users-modal-actions">
                     <button type="button" class="btn btn-soft" id="cancelEditUser">Cancelar</button>
-                    <button type="submit" class="btn btn-primary" id="saveEditUser">Salvar alterações</button>
+                    <button type="submit" class="btn btn-primary" id="saveEditUser">Salvar altera&ccedil;&otilde;es</button>
                 </div>
             </form>
         </div>
@@ -208,14 +216,14 @@
     <div class="users-modal-backdrop hidden" id="passwordModal" role="dialog" aria-modal="true" aria-hidden="true">
         <div class="users-modal-card users-modal-small">
             <header class="users-modal-header">
-                <div><p class="eyebrow">Segurança</p><h2>Redefinir senha</h2></div>
+                <div><p class="eyebrow">Seguran&ccedil;a</p><h2>Redefinir senha</h2></div>
                 <button type="button" class="icon-button" id="closePasswordModal" aria-label="Fechar"><i data-lucide="x"></i></button>
             </header>
             <form id="passwordForm" class="users-modal-form">
                 <input type="hidden" id="passwordUserId">
                 <p class="users-modal-description" id="passwordUserDescription"></p>
                 <div class="form-field">
-                    <label>Nova senha temporária</label>
+                    <label>Nova senha tempor&aacute;ria</label>
                     <input type="password" id="temporaryPassword" minlength="8" required autocomplete="new-password">
                 </div>
                 <div class="users-modal-actions">
@@ -232,3 +240,6 @@
     <script src="js/usuarios.js"></script>
 </body>
 </html>
+
+
+

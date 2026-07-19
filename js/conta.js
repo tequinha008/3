@@ -2,6 +2,53 @@ lucide.createIcons();
 
 const sidebar = document.querySelector(".sidebar");
 const sidebarToggle = document.getElementById("sidebarToggle");
+const SIDEBAR_STORAGE_KEY = "tresSidebarCollapsed";
+const SIDEBAR_INITIAL_CLASS = "sidebar-collapsed-initial";
+
+function syncSidebarInitialClass(collapsed) {
+    document.documentElement.classList.toggle(SIDEBAR_INITIAL_CLASS, collapsed);
+}
+
+function updateSidebarToggleIcon() {
+    if (!sidebar || !sidebarToggle) return;
+
+    const icon = sidebar.classList.contains("collapsed")
+        ? "panel-left-open"
+        : "panel-left-close";
+
+    sidebarToggle.innerHTML = `<i data-lucide="${icon}"></i>`;
+
+    if (window.lucide) {
+        lucide.createIcons();
+    }
+}
+
+function applyStoredSidebarState() {
+    if (!sidebar) return;
+
+    const collapsed = localStorage.getItem(SIDEBAR_STORAGE_KEY) === "true";
+    sidebar.classList.toggle("collapsed", collapsed);
+    syncSidebarInitialClass(collapsed);
+    updateSidebarToggleIcon();
+}
+
+function toggleSidebarState() {
+    if (!sidebar) return;
+
+    sidebar.classList.toggle("collapsed");
+    const collapsed = sidebar.classList.contains("collapsed");
+    localStorage.setItem(SIDEBAR_STORAGE_KEY, String(collapsed));
+    syncSidebarInitialClass(collapsed);
+    updateSidebarToggleIcon();
+}
+
+function initSidebarPersistence() {
+    applyStoredSidebarState();
+
+    if (sidebarToggle) {
+        sidebarToggle.addEventListener("click", toggleSidebarState);
+    }
+}
 const logoutButton = document.getElementById("logoutButton");
 const toast = document.getElementById("toast");
 
@@ -48,7 +95,7 @@ function showToast(message) {
 function roleLabel(role) {
     if (role === "master") return "MASTER";
     if (role === "admin") return "ADMINISTRADOR";
-    return "USUÁRIO";
+    return "USU\u00c1RIO";
 }
 
 function passwordChecks(password) {
@@ -135,12 +182,12 @@ async function changePassword(event) {
     event.preventDefault();
 
     if (!updatePasswordRules()) {
-        showToast("A nova senha ainda não atende a todos os requisitos.");
+        showToast("A nova senha ainda n\u00e3o atende a todos os requisitos.");
         return;
     }
 
     if (newPassword.value !== confirmPassword.value) {
-        showToast("A confirmação não corresponde à nova senha.");
+        showToast("A confirma\u00e7\u00e3o n\u00e3o corresponde \u00e0 nova senha.");
         return;
     }
 
@@ -159,7 +206,7 @@ async function changePassword(event) {
         });
 
         if (validationError) {
-            showToast("A senha atual está incorreta.");
+            showToast("A senha atual est\u00e1 incorreta.");
             return;
         }
 
@@ -173,7 +220,7 @@ async function changePassword(event) {
 
         const { error: profileError } = await supabaseClient.rpc("concluir_primeiro_acesso");
         if (profileError) {
-            throw new Error("A senha foi alterada, mas não foi possível concluir o primeiro acesso.");
+            throw new Error("A senha foi alterada, mas n\u00e3o foi poss\u00edvel concluir o primeiro acesso.");
         }
 
         const wasFirstAccess = currentProfile.primeiro_acesso;
@@ -191,7 +238,7 @@ async function changePassword(event) {
         }
     } catch (error) {
         console.error(error);
-        showToast(error.message || "Não foi possível alterar a senha.");
+        showToast(error.message || "N\u00e3o foi poss\u00edvel alterar a senha.");
     } finally {
         changePasswordButton.disabled = false;
         changePasswordButton.textContent = currentProfile?.primeiro_acesso
@@ -223,12 +270,7 @@ logoutButton.addEventListener("click", async function () {
     window.location.href = "index.html";
 });
 
-sidebarToggle.addEventListener("click", function () {
-    sidebar.classList.toggle("collapsed");
-    const icon = sidebar.classList.contains("collapsed") ? "panel-left-open" : "panel-left-close";
-    sidebarToggle.innerHTML = `<i data-lucide="${icon}"></i>`;
-    lucide.createIcons();
-});
+initSidebarPersistence();
 
 async function startAccountModule() {
     currentUser = await checkAuth();
@@ -236,7 +278,7 @@ async function startAccountModule() {
 
     currentProfile = await getUserProfile(currentUser.id);
     if (!currentProfile) {
-        showToast("Perfil não encontrado.");
+        showToast("Perfil n\u00e3o encontrado.");
         return;
     }
 
@@ -246,3 +288,6 @@ async function startAccountModule() {
 }
 
 startAccountModule();
+
+
+

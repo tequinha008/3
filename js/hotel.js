@@ -1643,17 +1643,55 @@ document.addEventListener("keydown", function (event) {
 
 const sidebar = document.querySelector(".sidebar");
 const sidebarToggle = document.getElementById("sidebarToggle");
+const SIDEBAR_STORAGE_KEY = "tresSidebarCollapsed";
+const SIDEBAR_INITIAL_CLASS = "sidebar-collapsed-initial";
 
-sidebarToggle.addEventListener("click", function () {
-    sidebar.classList.toggle("collapsed");
+function syncSidebarInitialClass(collapsed) {
+    document.documentElement.classList.toggle(SIDEBAR_INITIAL_CLASS, collapsed);
+}
+
+function updateSidebarToggleIcon() {
+    if (!sidebar || !sidebarToggle) return;
 
     const icon = sidebar.classList.contains("collapsed")
         ? "panel-left-open"
         : "panel-left-close";
 
     sidebarToggle.innerHTML = `<i data-lucide="${icon}"></i>`;
-    lucide.createIcons();
-});
+
+    if (window.lucide) {
+        lucide.createIcons();
+    }
+}
+
+function applyStoredSidebarState() {
+    if (!sidebar) return;
+
+    const collapsed = localStorage.getItem(SIDEBAR_STORAGE_KEY) === "true";
+    sidebar.classList.toggle("collapsed", collapsed);
+    syncSidebarInitialClass(collapsed);
+    updateSidebarToggleIcon();
+}
+
+function toggleSidebarState() {
+    if (!sidebar) return;
+
+    sidebar.classList.toggle("collapsed");
+    const collapsed = sidebar.classList.contains("collapsed");
+    localStorage.setItem(SIDEBAR_STORAGE_KEY, String(collapsed));
+    syncSidebarInitialClass(collapsed);
+    updateSidebarToggleIcon();
+}
+
+function initSidebarPersistence() {
+    applyStoredSidebarState();
+
+    if (sidebarToggle) {
+        sidebarToggle.addEventListener("click", toggleSidebarState);
+    }
+}
+
+initSidebarPersistence();
 
 async function start() {
 
@@ -1692,5 +1730,8 @@ async function start() {
 }
 
 start();
+
+
+
 
 

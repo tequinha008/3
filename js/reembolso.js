@@ -2,6 +2,53 @@ lucide.createIcons();
 
 const sidebar = document.querySelector(".sidebar");
 const sidebarToggle = document.getElementById("sidebarToggle");
+const SIDEBAR_STORAGE_KEY = "tresSidebarCollapsed";
+const SIDEBAR_INITIAL_CLASS = "sidebar-collapsed-initial";
+
+function syncSidebarInitialClass(collapsed) {
+    document.documentElement.classList.toggle(SIDEBAR_INITIAL_CLASS, collapsed);
+}
+
+function updateSidebarToggleIcon() {
+    if (!sidebar || !sidebarToggle) return;
+
+    const icon = sidebar.classList.contains("collapsed")
+        ? "panel-left-open"
+        : "panel-left-close";
+
+    sidebarToggle.innerHTML = `<i data-lucide="${icon}"></i>`;
+
+    if (window.lucide) {
+        lucide.createIcons();
+    }
+}
+
+function applyStoredSidebarState() {
+    if (!sidebar) return;
+
+    const collapsed = localStorage.getItem(SIDEBAR_STORAGE_KEY) === "true";
+    sidebar.classList.toggle("collapsed", collapsed);
+    syncSidebarInitialClass(collapsed);
+    updateSidebarToggleIcon();
+}
+
+function toggleSidebarState() {
+    if (!sidebar) return;
+
+    sidebar.classList.toggle("collapsed");
+    const collapsed = sidebar.classList.contains("collapsed");
+    localStorage.setItem(SIDEBAR_STORAGE_KEY, String(collapsed));
+    syncSidebarInitialClass(collapsed);
+    updateSidebarToggleIcon();
+}
+
+function initSidebarPersistence() {
+    applyStoredSidebarState();
+
+    if (sidebarToggle) {
+        sidebarToggle.addEventListener("click", toggleSidebarState);
+    }
+}
 
 const avatar = document.getElementById("avatar");
 const userName = document.getElementById("userName");
@@ -126,7 +173,7 @@ function ensureConfirmationModal() {
                     <i data-lucide="triangle-alert"></i>
                 </div>
                 <div class="tres-modal-content">
-                    <h2 id="confirmModalTitle">Confirmar ação</h2>
+                    <h2 id="confirmModalTitle">Confirmar a\u00e7\u00e3o</h2>
                     <p id="confirmModalMessage"></p>
                 </div>
                 <div class="tres-modal-actions">
@@ -264,7 +311,7 @@ function requestConfirmation(options) {
         !confirmModalCancel ||
         !confirmModalAction
     ) {
-        showToast("Não foi possível abrir a confirmação.");
+        showToast("N\u00e3o foi poss\u00edvel abrir a confirma\u00e7\u00e3o.");
         return Promise.resolve(false);
     }
 
@@ -378,7 +425,7 @@ function validateRefundValues(showMessage = true) {
 
     if (refundValueMessage) {
         refundValueMessage.textContent = invalid
-            ? "O valor a ser reembolsado não pode ser maior que o valor cobrado."
+            ? "O valor a ser reembolsado n\u00e3o pode ser maior que o valor cobrado."
             : "";
     }
 
@@ -550,7 +597,7 @@ async function saveRefund(event) {
                 "REEMBOLSOS",
                 editingRefundOriginal,
                 { ...editingRefundOriginal, ...payload },
-                "EDIÇÃO"
+                "EDI\u00c7\u00c3O"
             );
         }
     } else {
@@ -698,7 +745,7 @@ function fillRefundEmitterSelect(selectedId) {
     if (!refundEmitterSelect) return;
 
     refundEmitterSelect.innerHTML = allUsers.map(function (user) {
-        return `<option value="${user.id}">${user.nome || user.email || "Usuário"}</option>`;
+        return `<option value="${user.id}">${user.nome || user.email || "Usu\u00e1rio"}</option>`;
     }).join("");
 
     refundEmitterSelect.value = selectedId || currentUser.id;
@@ -756,7 +803,7 @@ function updateRefundPagination(totalItems) {
     }
 
     if (refundPageIndicator) {
-        refundPageIndicator.textContent = `Página ${refundCurrentPage} de ${totalPages}`;
+        refundPageIndicator.textContent = `P\u00e1gina ${refundCurrentPage} de ${totalPages}`;
     }
 
     if (refundPrevPage) {
@@ -770,7 +817,7 @@ function updateRefundPagination(totalItems) {
 
 function statusBadge(status) {
     if (status === "CONCLUIDO") {
-        return `<span class="badge badge-concluido">CONCLUÍDO</span>`;
+        return `<span class="badge badge-concluido">CONCLU\u00cdDO</span>`;
     }
 
     return `<span class="badge badge-pendente">PENDENTE</span>`;
@@ -865,7 +912,7 @@ function renderRefunds() {
                         class="icon-button"
                         data-action="history"
                         data-id="${item.id}"
-                        title="Histórico">
+                        title="Hist\u00f3rico">
                         <i data-lucide="history"></i>
                     </button>
 
@@ -911,8 +958,44 @@ function renderRefunds() {
     lucide.createIcons();
 }
 
-function escapeHtml(value) {
+function normalizeDisplayText(value) {
     return String(value ?? "")
+        .replace(/\u00c3\u00a1/g, "\u00e1")
+        .replace(/\u00c3\u00a0/g, "\u00e0")
+        .replace(/\u00c3 /g, "\u00e0")
+        .replace(/\u00c3\u00a2/g, "\u00e2")
+        .replace(/\u00c3\u00a3/g, "\u00e3")
+        .replace(/\u00c3\u00a9/g, "\u00e9")
+        .replace(/\u00c3\u00aa/g, "\u00ea")
+        .replace(/\u00c3\u00ad/g, "\u00ed")
+        .replace(/\u00c3\u00b3/g, "\u00f3")
+        .replace(/\u00c3\u00b4/g, "\u00f4")
+        .replace(/\u00c3\u00b5/g, "\u00f5")
+        .replace(/\u00c3\u00ba/g, "\u00fa")
+        .replace(/\u00c3\u00a7/g, "\u00e7")
+        .replace(/\u00c3\u0081/g, "\u00c1")
+        .replace(/\u00c3\u0080/g, "\u00c0")
+        .replace(/\u00c3\u0082/g, "\u00c2")
+        .replace(/\u00c3\u0083/g, "\u00c3")
+        .replace(/\u00c3\u0089/g, "\u00c9")
+        .replace(/\u00c3\u008a/g, "\u00ca")
+        .replace(/\u00c3\u008d/g, "\u00cd")
+        .replace(/\u00c3\u0093/g, "\u00d3")
+        .replace(/\u00c3\u0094/g, "\u00d4")
+        .replace(/\u00c3\u0095/g, "\u00d5")
+        .replace(/\u00c3\u009a/g, "\u00da")
+        .replace(/\u00c3\u0087/g, "\u00c7")
+        .replace(/\u00c2\u00ba/g, "\u00ba")
+        .replace(/\u00c2\u00aa/g, "\u00aa")
+        .replace(/\u00c2\u00b7/g, "\u00b7")
+        .replace(/\u00e2\u0080\u00a2/g, "\u2022")
+        .replace(/\u00e2\u0080\u0094/g, "-")
+        .replace(/\u00e2\u0080\u0093/g, "-")
+        .replace(/\u00e2\u0080\u00a6/g, "...");
+}
+
+function escapeHtml(value) {
+    return normalizeDisplayText(value)
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;")
@@ -926,7 +1009,7 @@ function editRefund(id) {
     });
 
     if (!item) {
-        showToast("Não foi possível abrir a edição.");
+        showToast("N\u00e3o foi poss\u00edvel abrir a edi\u00e7\u00e3o.");
         return;
     }
 
@@ -942,8 +1025,8 @@ function editRefund(id) {
     updateRefundPreview();
     fillRefundEmitterSelect(item.emissor_id);
 
-    saveRefundButton.textContent = "Salvar alterações";
-    showToast("Editando reembolso. Ao salvar, ele voltará para PENDENTE.");
+    saveRefundButton.textContent = "Salvar altera\u00e7\u00f5es";
+    showToast("Editando reembolso. Ao salvar, ele voltar\u00e1 para PENDENTE.");
 }
 
 function ensureHistoryModal() {
@@ -960,8 +1043,8 @@ function ensureHistoryModal() {
         <div class="history-modal">
             <header class="history-header">
                 <div>
-                    <p class="eyebrow">Histórico</p>
-                    <h2 id="historyTitle">Histórico da solicitação</h2>
+                    <p class="eyebrow">Hist\u00f3rico</p>
+                    <h2 id="historyTitle">Hist\u00f3rico da solicita\u00e7\u00e3o</h2>
                 </div>
                 <button type="button" class="icon-button" id="historyClose" aria-label="Fechar">
                     <i data-lucide="x"></i>
@@ -1001,7 +1084,7 @@ function userNameById(id) {
         return String(item.id) === String(id);
     });
 
-    return user?.nome || id || "—";
+    return user?.nome || id || "-";
 }
 
 function clientNameById(id) {
@@ -1009,11 +1092,11 @@ function clientNameById(id) {
         return String(item.value) === String(id);
     });
 
-    return option?.textContent?.trim() || id || "—";
+    return option?.textContent?.trim() || id || "-";
 }
 
 function formatHistoryValue(field, value) {
-    if (value === null || value === undefined || value === "") return "—";
+    if (value === null || value === undefined || value === "") return "-";
 
     if (field === "emissor_id" || field === "updated_by" || field === "created_by" || field === "concluido_por") {
         return userNameById(value);
@@ -1081,7 +1164,7 @@ function cleanHistoryChanges(changes) {
 }
 
 function formatTimelineDate(value) {
-    if (!value) return "Data não informada";
+    if (!value) return "Data n\u00e3o informada";
     return new Date(value).toLocaleString("pt-BR");
 }
 
@@ -1092,10 +1175,10 @@ function getCreationDate(currentItem) {
 function buildCreationEvent(currentItem) {
     if (!currentItem) return null;
 
-    const creator = userNameById(currentItem.created_by || currentItem.emissor_id) || currentItem.emissor_nome || "Usuário";
+    const creator = userNameById(currentItem.created_by || currentItem.emissor_id) || currentItem.emissor_nome || "Usu\u00e1rio";
 
     return {
-        title: `Solicitação criada por ${creator}`,
+        title: `Solicita\u00e7\u00e3o criada por ${creator}`,
         meta: formatTimelineDate(getCreationDate(currentItem)),
         changes: ""
     };
@@ -1103,8 +1186,8 @@ function buildCreationEvent(currentItem) {
 
 function describeHistoryEvent(item) {
     const changes = cleanHistoryChanges(item.alteracoes || {});
-    const actor = item.alterado_por_nome || "Usuário";
-    let title = `Solicitação editada por ${actor}`;
+    const actor = item.alterado_por_nome || "Usu\u00e1rio";
+    let title = `Solicita\u00e7\u00e3o editada por ${actor}`;
 
     if (changes.status) {
         title = `Status atualizado para ${formatHistoryValue("status", changes.status.depois)} por ${actor}`;
@@ -1139,8 +1222,8 @@ async function openHistory(moduleName, id, title, currentItem = null) {
     const content = document.getElementById("historyContent");
     const heading = document.getElementById("historyTitle");
 
-    heading.textContent = title || "Histórico da solicitação";
-    content.innerHTML = `<div class="history-item">Carregando histórico...</div>`;
+    heading.textContent = normalizeDisplayText(title || "Hist\u00f3rico da solicita\u00e7\u00e3o");
+    content.innerHTML = `<div class="history-item">Carregando hist\u00f3rico...</div>`;
     modal.classList.remove("hidden");
 
     const { data, error } = await supabaseClient
@@ -1152,7 +1235,7 @@ async function openHistory(moduleName, id, title, currentItem = null) {
 
     if (error) {
         console.error(error);
-        content.innerHTML = `<div class="history-item">Erro ao carregar histórico.</div>`;
+        content.innerHTML = `<div class="history-item">Erro ao carregar hist\u00f3rico.</div>`;
         return;
     }
 
@@ -1168,7 +1251,7 @@ async function openHistory(moduleName, id, title, currentItem = null) {
     });
 
     if (events.length === 0) {
-        content.innerHTML = `<div class="history-item">Nenhuma edição registrada ainda.</div>`;
+        content.innerHTML = `<div class="history-item">Nenhuma edi\u00e7\u00e3o registrada ainda.</div>`;
         return;
     }
 
@@ -1179,7 +1262,7 @@ async function openHistory(moduleName, id, title, currentItem = null) {
 
 async function completeRefund(id) {
     if (!isAdminOrMaster()) {
-        showToast("Você não tem permissão para concluir reembolsos.");
+        showToast("Voc\u00ea n\u00e3o tem permiss\u00e3o para concluir reembolsos.");
         return;
     }
 
@@ -1203,7 +1286,7 @@ async function completeRefund(id) {
         return;
     }
 
-    showToast("Reembolso concluído.");
+    showToast("Reembolso conclu\u00eddo.");
     if (before) {
         await registerHistory(
             "REEMBOLSOS",
@@ -1218,7 +1301,7 @@ async function completeRefund(id) {
 
 async function deleteRefund(id) {
     if (!isAdminOrMaster()) {
-        showToast("Você não tem permissão para excluir reembolsos.");
+        showToast("Voc\u00ea n\u00e3o tem permiss\u00e3o para excluir reembolsos.");
         return;
     }
 
@@ -1228,7 +1311,7 @@ async function deleteRefund(id) {
 
     const confirmDelete = await requestConfirmation({
         title: "Excluir reembolso",
-        message: `Deseja excluir ${refund?.codigo_tres || "este reembolso"}? Esta ação não poderá ser desfeita.`,
+        message: `Deseja excluir ${refund?.codigo_tres || "este reembolso"}? Esta a\u00e7\u00e3o n\u00e3o poder\u00e1 ser desfeita.`,
         confirmLabel: "Excluir",
         danger: true
     });
@@ -1250,13 +1333,13 @@ async function deleteRefund(id) {
     }
 
     if (!deletedRows || deletedRows.length === 0) {
-        showToast("A exclusão foi bloqueada. Verifique a política DELETE no Supabase.");
+        showToast("A exclus\u00e3o foi bloqueada. Verifique a pol\u00edtica DELETE no Supabase.");
         return;
     }
 
     selectedRefunds.delete(id);
 
-    showToast("Reembolso excluído.");
+    showToast("Reembolso exclu\u00eddo.");
     await loadRefunds();
 }
 
@@ -1307,7 +1390,7 @@ async function completeSelectedRefunds() {
 
     selectedRefunds.clear();
     selectAllRefunds.checked = false;
-    showToast("Reembolsos concluídos.");
+    showToast("Reembolsos conclu\u00eddos.");
     await loadRefunds();
 }
 
@@ -1315,7 +1398,7 @@ function exportRefundsToCSV() {
     const filtered = getFilteredRefunds();
 
     if (filtered.length === 0) {
-        showToast("Não há dados para exportar.");
+        showToast("N\u00e3o h\u00e1 dados para exportar.");
         return;
     }
 
@@ -1369,14 +1452,14 @@ function exportRefundsToCSV() {
 
     URL.revokeObjectURL(url);
 
-    showToast("Exportação gerada.");
+    showToast("Exporta\u00e7\u00e3o gerada.");
 }
 
 function exportRefundsToExcel() {
     const filtered = getFilteredRefunds();
 
     if (filtered.length === 0) {
-        showToast("Não há dados para exportar.");
+        showToast("N\u00e3o h\u00e1 dados para exportar.");
         return;
     }
 
@@ -1399,7 +1482,7 @@ function exportRefundsToExcel() {
         return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString("pt-BR");
     }
 
-    const periodLabel = `${formatReportDate(startDate.value) || "Início"} a ${formatReportDate(endDate.value) || "Hoje"}`;
+    const periodLabel = `${formatReportDate(startDate.value) || "In\u00edcio"} a ${formatReportDate(endDate.value) || "Hoje"}`;
     const generatedAt = new Date().toLocaleString("pt-BR");
 
     const rows = filtered.map(function (item) {
@@ -1451,12 +1534,12 @@ function exportRefundsToExcel() {
                 </style>
             </head>
             <body>
-                <h1>Relatório de Reembolsos</h1>
-                <p class="meta">Período: ${escapeHtml(periodLabel)} | Gerado em: ${escapeHtml(generatedAt)}</p>
+                <h1>Relat\u00f3rio de Reembolsos</h1>
+                <p class="meta">Per\u00edodo: ${escapeHtml(periodLabel)} | Gerado em: ${escapeHtml(generatedAt)}</p>
                 <table>
                     <thead>
                         <tr>
-                            <th>Código</th>
+                            <th>C\u00f3digo</th>
                             <th>Data</th>
                             <th>Emissor</th>
                             <th>Cliente</th>
@@ -1597,7 +1680,7 @@ function setupEvents() {
                 const refund = refunds.find(function (item) {
                     return String(item.id) === String(id);
                 });
-                await openHistory("REEMBOLSOS", id, `Histórico ${refund?.codigo_tres || ""}`, refund);
+                await openHistory("REEMBOLSOS", id, `Hist\u00f3rico ${refund?.codigo_tres || ""}`, refund);
                 break;
             }
             case "complete":
@@ -1643,18 +1726,7 @@ function setupEvents() {
         window.location.href = "index.html";
     });
 
-    if (sidebarToggle) {
-        sidebarToggle.addEventListener("click", function () {
-            sidebar.classList.toggle("collapsed");
-
-            const icon = sidebar.classList.contains("collapsed")
-                ? "panel-left-open"
-                : "panel-left-close";
-
-            sidebarToggle.innerHTML = `<i data-lucide="${icon}"></i>`;
-            lucide.createIcons();
-        });
-    }
+    initSidebarPersistence();
 }
 
 async function startRefundModule() {
@@ -1667,7 +1739,7 @@ async function startRefundModule() {
     currentProfile = await getUserProfile(currentUser.id);
 
     if (!currentProfile) {
-        alert("Usuário não encontrado na tabela usuarios.");
+        alert("Usu\u00e1rio n\u00e3o encontrado na tabela usuarios.");
         return;
     }
 
@@ -1699,3 +1771,7 @@ async function startRefundModule() {
 }
 
 startRefundModule();
+
+
+
+

@@ -2,6 +2,53 @@ lucide.createIcons();
 
 const sidebar = document.querySelector(".sidebar");
 const sidebarToggle = document.getElementById("sidebarToggle");
+const SIDEBAR_STORAGE_KEY = "tresSidebarCollapsed";
+const SIDEBAR_INITIAL_CLASS = "sidebar-collapsed-initial";
+
+function syncSidebarInitialClass(collapsed) {
+    document.documentElement.classList.toggle(SIDEBAR_INITIAL_CLASS, collapsed);
+}
+
+function updateSidebarToggleIcon() {
+    if (!sidebar || !sidebarToggle) return;
+
+    const icon = sidebar.classList.contains("collapsed")
+        ? "panel-left-open"
+        : "panel-left-close";
+
+    sidebarToggle.innerHTML = `<i data-lucide="${icon}"></i>`;
+
+    if (window.lucide) {
+        lucide.createIcons();
+    }
+}
+
+function applyStoredSidebarState() {
+    if (!sidebar) return;
+
+    const collapsed = localStorage.getItem(SIDEBAR_STORAGE_KEY) === "true";
+    sidebar.classList.toggle("collapsed", collapsed);
+    syncSidebarInitialClass(collapsed);
+    updateSidebarToggleIcon();
+}
+
+function toggleSidebarState() {
+    if (!sidebar) return;
+
+    sidebar.classList.toggle("collapsed");
+    const collapsed = sidebar.classList.contains("collapsed");
+    localStorage.setItem(SIDEBAR_STORAGE_KEY, String(collapsed));
+    syncSidebarInitialClass(collapsed);
+    updateSidebarToggleIcon();
+}
+
+function initSidebarPersistence() {
+    applyStoredSidebarState();
+
+    if (sidebarToggle) {
+        sidebarToggle.addEventListener("click", toggleSidebarState);
+    }
+}
 
 const avatar = document.getElementById("avatar");
 const userName = document.getElementById("userName");
@@ -1251,7 +1298,7 @@ function financeDateTimeLabel(dateValue, timeValue) {
 }
 
 function financeCreatedAtLabel(dateValue, timeValue) {
-    return `Solicitação criada em ${financeDateTimeLabel(dateValue, timeValue)} (horário de Brasília)`;
+    return `Solicitação criada em ${financeDateTimeLabel(dateValue, timeValue)}`;
 }
 
 function detailItem(label, value, className = "") {
@@ -2506,18 +2553,7 @@ logoutButton.addEventListener("click", async function () {
     window.location.href = "index.html";
 });
 
-if (sidebarToggle) {
-    sidebarToggle.addEventListener("click", function () {
-        sidebar.classList.toggle("collapsed");
-
-        const icon = sidebar.classList.contains("collapsed")
-            ? "panel-left-open"
-            : "panel-left-close";
-
-        sidebarToggle.innerHTML = `<i data-lucide="${icon}"></i>`;
-        lucide.createIcons();
-    });
-}
+initSidebarPersistence();
 
 async function startFinanceModule() {
     currentUser = await checkAuth();
@@ -2557,6 +2593,9 @@ async function startFinanceModule() {
 }
 
 startFinanceModule();
+
+
+
 
 
 

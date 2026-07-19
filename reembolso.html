@@ -4,7 +4,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TRES | Reembolsos</title>
+        <script>
+        (function () {
+            try {
+                if (localStorage.getItem("tresSidebarCollapsed") === "true") {
+                    document.documentElement.classList.add("sidebar-collapsed-initial");
+                }
+            } catch (error) {}
+        })();
+    </script><title>TRES | Reembolsos</title>
 
     <link rel="icon" type="image/png" href="TRES_logo_transparente.png">
 
@@ -39,12 +47,12 @@
         <nav class="sidebar-nav">
             <a href="dashboard.html" class="nav-link">
                 <i data-lucide="layout-dashboard"></i>
-                <span>Início</span>
+                <span>In&iacute;cio</span>
             </a>
 
             <a href="hotel.html" class="nav-link">
                 <i data-lucide="building-2"></i>
-                <span>Hotéis</span>
+                <span>Hot&eacute;is</span>
             </a>
 
             <a href="pagar.html" class="nav-link">
@@ -59,7 +67,7 @@
 
             <a href="usuarios.html" class="nav-link admin-link hidden">
                 <i data-lucide="users-round"></i>
-                <span>Usuários</span>
+                <span>Usu&aacute;rios</span>
             </a>
         </nav>
 
@@ -81,7 +89,7 @@
 
         <header class="topbar">
             <div>
-                <p class="eyebrow">Módulo financeiro</p>
+                <p class="eyebrow">M&oacute;dulo financeiro</p>
                 <h1>Reembolsos</h1>
             </div>
 
@@ -89,7 +97,7 @@
                 <div class="avatar" id="avatar">T</div>
 
                 <div>
-                    <strong id="userName">Usuário</strong>
+                    <strong id="userName">Usu&aacute;rio</strong>
                     <small id="userRole">perfil</small>
                 </div>
             </div>
@@ -98,9 +106,9 @@
         <section class="module-header refund-module">
             <div>
                 <p class="eyebrow">Reembolso</p>
-                <h2>Solicitação de reembolso</h2>
+                <h2>Solicita&ccedil;&atilde;o de reembolso</h2>
                 <p>
-                    Registre solicitações, acompanhe pendências e exporte os dados por período.
+                    Registre solicita&ccedil;&otilde;es, acompanhe pend&ecirc;ncias e exporte os dados por per&iacute;odo.
                 </p>
             </div>
         </section>
@@ -119,7 +127,7 @@
                 </div>
 
                 <div class="refund-summary-card">
-                    <span>Valor líquido</span>
+                    <span>Valor l&iacute;quido</span>
                     <strong id="summaryFinal">R$ 0,00</strong>
                 </div>
             </div>
@@ -201,7 +209,7 @@
                     <div class="panel-header table-header refund-table-header">
                         <div>
                             <p class="eyebrow">Consulta</p>
-                            <h3>Solicitações de reembolso</h3>
+                            <h3>Solicita&ccedil;&otilde;es de reembolso</h3>
                         </div>
 
                         <div class="table-header-actions">
@@ -222,7 +230,7 @@
                         <select id="refundStatusFilter">
                             <option value="">Todos os status</option>
                             <option value="PENDENTE">Pendente</option>
-                            <option value="CONCLUIDO">Concluído</option>
+                            <option value="CONCLUIDO">Conclu&iacute;do</option>
                         </select>
 
                         <input type="search" id="refundSearch" placeholder="Pesquisar OS, emissor ou fornecedor">
@@ -235,7 +243,7 @@
                                     <th>
                                         <input type="checkbox" id="selectAllRefunds">
                                     </th>
-                                    <th>Código</th>
+                                    <th>C&oacute;digo</th>
                                     <th>Data</th>
                                     <th>Emissor</th>
                                     <th>Cliente</th>
@@ -246,7 +254,7 @@
                                     <th>Taxa ADM</th>
                                     <th>Valor final</th>
                                     <th>Status</th>
-                                    <th>Ações</th>
+                                    <th>A&ccedil;&otilde;es</th>
                                 </tr>
                             </thead>
 
@@ -258,17 +266,16 @@
                         <span id="refundPaginationInfo">Mostrando 0 de 0</span>
                         <div class="table-pagination-actions">
                             <label>
-                                Por página
+                                Por p&aacute;gina
                                 <select id="refundPageSize">
-                                    <option value="5">5</option>
                                     <option value="10">10</option>
                                     <option value="25">25</option>
                                     <option value="50">50</option>
                                 </select>
                             </label>
                             <button type="button" class="btn btn-soft" id="refundPrevPage">Anterior</button>
-                            <span id="refundPageIndicator">Página 1 de 1</span>
-                            <button type="button" class="btn btn-soft" id="refundNextPage">Próxima</button>
+                            <span id="refundPageIndicator">P&aacute;gina 1 de 1</span>
+                            <button type="button" class="btn btn-soft" id="refundNextPage">Pr&oacute;xima</button>
                         </div>
                     </div>
 
@@ -299,7 +306,7 @@
             </div>
 
             <div class="modal-content">
-                <h2 id="confirmModalTitle">Confirmar ação</h2>
+                <h2 id="confirmModalTitle">Confirmar a&ccedil;&atilde;o</h2>
                 <p id="confirmModalMessage"></p>
             </div>
 
@@ -324,3 +331,7 @@
 </body>
 
 </html>
+
+
+
+
