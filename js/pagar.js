@@ -1597,6 +1597,9 @@ function renderFinanceItemDetails(item, index) {
                     <button type="button" class="icon-button" data-action="edit-detail-item" data-id="${item.id}" title="Editar item">
                         <i data-lucide="pencil"></i>
                     </button>
+                    <button type="button" class="icon-button" data-action="duplicate-detail-item" data-id="${item.id}" title="Duplicar para outra OS ou cliente">
+                        <i data-lucide="copy"></i>
+                    </button>
                     ${
                         isAdminOrMaster()
                             ? `
@@ -1715,6 +1718,76 @@ function editFinance(id) {
 
     saveFinanceButton.textContent = "Salvar altera\u00e7\u00f5es";
     showToast("Editando lan\u00e7amento. Ao salvar, ele voltar\u00e1 para PENDENTE.");
+}
+
+function duplicateFinance(id) {
+    const item = lancamentos.find(function (lancamento) {
+        return String(lancamento.id) === String(id);
+    });
+
+    if (!item) {
+        showToast("N\u00e3o foi poss\u00edvel localizar o lan\u00e7amento para duplicar.");
+        return;
+    }
+
+    financeForm.reset();
+    editingFinanceId = null;
+    editingFinanceOriginal = null;
+    linkedFinanceGroup = null;
+
+    dataLancamento.value = todayISO();
+    emissorNome.value = currentProfile.nome;
+    tipoLancamento.value = item.tipo || "NACIONAL";
+    os.value = item.os || "";
+    cliente.value = item.cliente_id || "";
+
+    if (["AEREO", "ASSENTO", "BAGAGEM EXTRA"].includes(item.servico)) {
+        servico.value = "AEREO";
+        selectedSubtype = item.servico || item.subtipo || "AEREO";
+    } else {
+        servico.value = item.servico || "";
+        selectedSubtype = "AEREO";
+    }
+
+    choiceButtons.forEach(function (button) {
+        button.classList.toggle("active", button.dataset.subtipo === selectedSubtype);
+    });
+
+    handleServiceChange();
+
+    outroServico.value = item.outro_servico || "";
+    consolidador.value = item.consolidador || "";
+    fornecedor.value = item.fornecedor || "";
+    localizador.value = item.localizador || "";
+    bilhete.value = item.bilhete || "";
+    setMoneyField(tarifa, item.tarifa);
+    setMoneyField(taxaEmbarque, item.taxa_embarque);
+    setMoneyField(rc, item.rc);
+    setMoneyField(overPercent, item.over_percent);
+    setMoneyField(diaria, item.diaria);
+    setMoneyField(valorPeriodo, item.valor_periodo);
+    taxasTipo.value = item.taxas_tipo || "R$";
+    setMoneyField(taxasValor, item.taxas_valor);
+    setMoneyField(comissaoPercent, item.comissao_percent);
+    tarifaNet.checked = Boolean(item.tarifa_net);
+    checkin.value = item.checkin || "";
+    checkout.value = item.checkout || "";
+
+    handleServiceChange();
+    updateTotalPreview();
+    updateLinkedFinanceContext();
+    fillFinanceEmitterSelect(currentUser.id);
+    cliente.dispatchEvent(new Event("change", { bubbles: true }));
+    window.TRESDatePickers?.refresh();
+
+    tabButtons.forEach(function (button) {
+        if (button.dataset.tab === "newFinance") {
+            button.click();
+        }
+    });
+
+    saveFinanceButton.textContent = "Salvar duplicado";
+    showToast("Lan\u00e7amento copiado. Altere a OS e o cliente antes de salvar.");
 }
 
 function ensureHistoryModal() {
@@ -2074,6 +2147,14 @@ function renderLancamentos() {
                             data-id="${item.id}"
                             title="Adicionar item nesta OS">
                             <i data-lucide="plus"></i>
+                        </button>
+
+                        <button
+                            class="icon-button"
+                            data-action="duplicate"
+                            data-id="${item.itens[0]?.id || item.id}"
+                            title="Duplicar para outra OS ou cliente">
+                            <i data-lucide="copy"></i>
                         </button>
 
                         <button
@@ -2488,6 +2569,10 @@ financeTableBody.addEventListener("click", async function (event) {
         addItemToFinanceGroup(button.dataset.id);
     }
 
+    if (button.dataset.action === "duplicate") {
+        duplicateFinance(button.dataset.id);
+    }
+
     if (button.dataset.action === "edit") {
         editFinance(button.dataset.id);
     }
@@ -2527,6 +2612,11 @@ financeDetailContent.addEventListener("click", async function (event) {
     if (button.dataset.action === "edit-detail-item") {
         closeFinanceDetails();
         editFinance(button.dataset.id);
+    }
+
+    if (button.dataset.action === "duplicate-detail-item") {
+        closeFinanceDetails();
+        duplicateFinance(button.dataset.id);
     }
 
     if (button.dataset.action === "delete-detail-item") {
@@ -2593,9 +2683,3 @@ async function startFinanceModule() {
 }
 
 startFinanceModule();
-
-
-
-
-
-
