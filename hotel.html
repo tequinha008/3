@@ -170,7 +170,17 @@
                         </select>
                     </div>
 
-                    <div class="form-field span-2">
+                    <div class="form-field">
+                        <label for="telefone">Telefone</label>
+                        <input
+                            type="tel"
+                            id="telefone"
+                            maxlength="15"
+                            placeholder="(00) 00000-0000"
+                            autocomplete="tel">
+                    </div>
+
+                    <div class="form-field">
                         <label>CNPJ</label>
                         <input type="text" id="cnpj" placeholder="00.000.000/0000-00">
                         <small id="cnpjMessage" class="field-message"></small>
@@ -241,6 +251,7 @@
                                 <th>Emissor</th>
                                 <th>Hotel</th>
                                 <th>Cidade</th>
+                                <th>Telefone</th>
                                 <th>Tipo</th>
                                 <th>CNPJ</th>
                                 <th>Status</th>
@@ -312,6 +323,4 @@
 </body>
 
 </html>
-
-
 
