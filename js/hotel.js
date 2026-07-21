@@ -1354,6 +1354,22 @@ function renderHotels() {
 
                     </button>
 
+                    ${
+                        isAdminOrMaster()
+                            ? `
+                            <button
+                                class="icon-button danger"
+                                data-action="delete"
+                                data-id="${hotel.id}"
+                                title="Excluir solicita\u00e7\u00e3o">
+
+                                <i data-lucide="trash-2"></i>
+
+                            </button>
+                            `
+                            : ""
+                    }
+
                 </div>
 
             </td>
@@ -1422,6 +1438,45 @@ async function updateHotelStatus(id, status) {
 
 }
 
+async function deleteHotel(id) {
+    if (!isAdminOrMaster()) {
+        showToast("Voc\u00ea n\u00e3o tem permiss\u00e3o para excluir solicita\u00e7\u00f5es.");
+        return;
+    }
+
+    const hotel = hotels.find(function (item) {
+        return String(item.id) === String(id);
+    });
+
+    if (!hotel) {
+        showToast("Solicita\u00e7\u00e3o n\u00e3o encontrada.");
+        return;
+    }
+
+    const confirmed = window.confirm(
+        `Deseja excluir ${hotel.codigo_tres || hotel.nome_hotel}? Esta a\u00e7\u00e3o n\u00e3o poder\u00e1 ser desfeita.`
+    );
+
+    if (!confirmed) {
+        return;
+    }
+
+    const { error } = await supabaseClient
+        .from("solicitacoes_hotel")
+        .delete()
+        .eq("id", id);
+
+    if (error) {
+        console.error(error);
+        showToast("Erro ao excluir solicita\u00e7\u00e3o.");
+        return;
+    }
+
+    selectedHotels.delete(hotel.id);
+    showToast("Solicita\u00e7\u00e3o exclu\u00edda.");
+    await loadHotels();
+}
+
 async function duplicateHotel(id) {
 
     const hotel =
@@ -1458,8 +1513,15 @@ async function updateHotelIntegrationCode(id, value) {
 
     const codigoIntegracao = normalizeText(value) || null;
     const oldCode = before.codigo_integracao || null;
+    const nextStatus =
+        codigoIntegracao && before.status !== "CONCLUIDO"
+            ? "CADASTRADO_BENNER"
+            : before.status;
 
-    if (String(oldCode || "") === String(codigoIntegracao || "")) {
+    if (
+        String(oldCode || "") === String(codigoIntegracao || "") &&
+        before.status === nextStatus
+    ) {
         return;
     }
 
@@ -1467,6 +1529,7 @@ async function updateHotelIntegrationCode(id, value) {
         .from("solicitacoes_hotel")
         .update({
             codigo_integracao: codigoIntegracao,
+            status: nextStatus,
             updated_by: currentUser.id
         })
         .eq("id", id);
@@ -1480,11 +1543,20 @@ async function updateHotelIntegrationCode(id, value) {
     await registerHistory(
         "HOTEIS",
         before,
-        { ...before, codigo_integracao: codigoIntegracao, updated_by: currentUser.id },
+        {
+            ...before,
+            codigo_integracao: codigoIntegracao,
+            status: nextStatus,
+            updated_by: currentUser.id
+        },
         "CODIGO_INTEGRACAO"
     );
 
-    showToast("C\u00f3digo de integra\u00e7\u00e3o salvo.");
+    showToast(
+        codigoIntegracao && nextStatus === "CADASTRADO_BENNER"
+            ? "C\u00f3digo salvo e status atualizado para Cadastrado Benner."
+            : "C\u00f3digo de integra\u00e7\u00e3o salvo."
+    );
     await loadHotels();
 }
 
@@ -1644,6 +1716,12 @@ hotelTableBody.addEventListener("click", async function (event) {
         case "duplicate":
 
             await duplicateHotel(id);
+
+            break;
+
+        case "delete":
+
+            await deleteHotel(id);
 
             break;
 
