@@ -378,6 +378,13 @@ function applyUserProfile(profile, user) {
             item.classList.remove("hidden");
         });
     }
+
+    const canExportRefunds = role === "admin" || role === "master";
+
+    if (exportRefundsButton) {
+        exportRefundsButton.classList.toggle("hidden", !canExportRefunds);
+        exportRefundsButton.disabled = !canExportRefunds;
+    }
 }
 
 async function loadClientes() {
@@ -1456,6 +1463,11 @@ function exportRefundsToCSV() {
 }
 
 function exportRefundsToExcel() {
+    if (!isAdminOrMaster()) {
+        showToast("Voc\u00ea n\u00e3o tem permiss\u00e3o para exportar reembolsos.");
+        return;
+    }
+
     const filtered = getFilteredRefunds();
 
     if (filtered.length === 0) {
@@ -1771,7 +1783,3 @@ async function startRefundModule() {
 }
 
 startRefundModule();
-
-
-
-
