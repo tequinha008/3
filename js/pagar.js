@@ -2159,14 +2159,6 @@ function renderLancamentos() {
 
                         <button
                             class="icon-button"
-                            data-action="edit"
-                            data-id="${item.itens[0]?.id || item.id}"
-                            title="Editar lan\u00e7amento">
-                            <i data-lucide="pencil"></i>
-                        </button>
-
-                        <button
-                            class="icon-button"
                             data-action="history"
                             data-id="${item.id}"
                             title="Hist\u00f3rico">
@@ -2571,10 +2563,6 @@ financeTableBody.addEventListener("click", async function (event) {
 
     if (button.dataset.action === "duplicate") {
         duplicateFinance(button.dataset.id);
-    }
-
-    if (button.dataset.action === "edit") {
-        editFinance(button.dataset.id);
     }
 
     if (button.dataset.action === "history") {
