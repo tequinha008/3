@@ -1209,7 +1209,7 @@ function renderHotels() {
 
         hotelTableBody.innerHTML = `
             <tr>
-                <td colspan="10" class="empty-table-message">
+                <td colspan="11" class="empty-table-message">
                     Nenhuma solicita\u00e7\u00e3o encontrada.
                 </td>
             </tr>
@@ -1240,6 +1240,7 @@ function renderHotels() {
                     type="checkbox"
                     class="hotel-checkbox"
                     data-id="${hotel.id}"
+                    ${hotel.status === "CONCLUIDO" || !isAdminOrMaster() ? "disabled" : ""}
                     ${checked}>
 
             </td>
@@ -1380,13 +1381,44 @@ function renderHotels() {
 
     }).join("");
 
-    completeSelectedButton.classList.toggle(
-        "hidden",
-        selectedHotels.size === 0 || !isAdminOrMaster()
-    );
+    syncHotelSelectionControls(filteredHotels);
 
     lucide.createIcons();
 
+}
+
+function syncHotelSelectionControls(filteredHotels = getFilteredHotels()) {
+    const selectableHotels = filteredHotels.filter(function (hotel) {
+        return hotel.status !== "CONCLUIDO";
+    });
+
+    const selectedInFilter = selectableHotels.filter(function (hotel) {
+        return selectedHotels.has(hotel.id);
+    });
+
+    const selectedCount = hotels.filter(function (hotel) {
+        return hotel.status !== "CONCLUIDO" && selectedHotels.has(hotel.id);
+    }).length;
+
+    selectAllHotels.disabled = !isAdminOrMaster() || selectableHotels.length === 0;
+    selectAllHotels.checked =
+        selectableHotels.length > 0 &&
+        selectedInFilter.length === selectableHotels.length;
+    selectAllHotels.indeterminate =
+        selectedInFilter.length > 0 &&
+        selectedInFilter.length < selectableHotels.length;
+
+    completeSelectedButton.classList.toggle(
+        "hidden",
+        selectedCount === 0 || !isAdminOrMaster()
+    );
+
+    completeSelectedButton.innerHTML = `
+        <i data-lucide="check-check"></i>
+        Concluir selecionados (${selectedCount})
+    `;
+
+    lucide.createIcons();
 }
 
 async function updateHotelStatus(id, status) {
@@ -1436,6 +1468,76 @@ async function updateHotelStatus(id, status) {
 
     await loadHotels();
 
+}
+
+async function completeSelectedHotels() {
+    if (!isAdminOrMaster()) {
+        showToast("Voc\u00ea n\u00e3o tem permiss\u00e3o para concluir solicita\u00e7\u00f5es.");
+        return;
+    }
+
+    const selectedItems = hotels.filter(function (hotel) {
+        return selectedHotels.has(hotel.id) && hotel.status !== "CONCLUIDO";
+    });
+
+    if (selectedItems.length === 0) {
+        showToast("Selecione pelo menos uma solicita\u00e7\u00e3o pendente.");
+        return;
+    }
+
+    const confirmed = window.confirm(
+        `Deseja concluir ${selectedItems.length} solicita\u00e7\u00e3o(\u00f5es) de hotel selecionada(s)?`
+    );
+
+    if (!confirmed) {
+        return;
+    }
+
+    const ids = selectedItems.map(function (hotel) {
+        return hotel.id;
+    });
+
+    const payload = {
+        status: "CONCLUIDO",
+        concluido_por: currentUser.id,
+        concluido_por_nome: currentProfile.nome,
+        concluido_em: new Date().toISOString(),
+        updated_by: currentUser.id
+    };
+
+    completeSelectedButton.disabled = true;
+
+    const { error } = await supabaseClient
+        .from("solicitacoes_hotel")
+        .update(payload)
+        .in("id", ids);
+
+    if (error) {
+        console.error(error);
+        showToast("Erro ao concluir as solicita\u00e7\u00f5es selecionadas.");
+        completeSelectedButton.disabled = false;
+        return;
+    }
+
+    for (const before of selectedItems) {
+        await registerHistory(
+            "HOTEIS",
+            before,
+            { ...before, ...payload },
+            "STATUS"
+        );
+        selectedHotels.delete(before.id);
+    }
+
+    selectAllHotels.checked = false;
+    selectAllHotels.indeterminate = false;
+    completeSelectedButton.disabled = false;
+    showToast(
+        selectedItems.length === 1
+            ? "Solicita\u00e7\u00e3o conclu\u00edda."
+            : "Solicita\u00e7\u00f5es conclu\u00eddas."
+    );
+    await loadHotels();
 }
 
 async function deleteHotel(id) {
@@ -1732,10 +1834,53 @@ hotelTableBody.addEventListener("click", async function (event) {
 hotelTableBody.addEventListener("change", async function (event) {
     const input = event.target;
 
+    if (input.classList.contains("hotel-checkbox")) {
+        const hotel = hotels.find(function (item) {
+            return String(item.id) === String(input.dataset.id);
+        });
+
+        if (!hotel || hotel.status === "CONCLUIDO" || !isAdminOrMaster()) {
+            input.checked = false;
+            return;
+        }
+
+        if (input.checked) {
+            selectedHotels.add(hotel.id);
+        } else {
+            selectedHotels.delete(hotel.id);
+        }
+
+        syncHotelSelectionControls();
+        return;
+    }
+
     if (input.classList.contains("table-input")) {
         await updateHotelIntegrationCode(input.dataset.id, input.value);
     }
 });
+
+selectAllHotels.addEventListener("change", function () {
+    if (!isAdminOrMaster()) {
+        selectAllHotels.checked = false;
+        return;
+    }
+
+    getFilteredHotels().forEach(function (hotel) {
+        if (hotel.status === "CONCLUIDO") {
+            return;
+        }
+
+        if (selectAllHotels.checked) {
+            selectedHotels.add(hotel.id);
+        } else {
+            selectedHotels.delete(hotel.id);
+        }
+    });
+
+    renderHotels();
+});
+
+completeSelectedButton.addEventListener("click", completeSelectedHotels);
 
 document.addEventListener("click", function (event) {
     if (!event.target.closest(".hotel-status-menu")) {
