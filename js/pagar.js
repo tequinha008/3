@@ -909,6 +909,7 @@ async function saveFinance(event) {
     let error = null;
 
     if (editingFinanceId) {
+        payload.status = "PENDENTE";
         payload.concluido_por = null;
         payload.concluido_em = null;
 
@@ -918,6 +919,31 @@ async function saveFinance(event) {
             .eq("id", editingFinanceId);
 
         error = result.error;
+
+        if (!error) {
+            const editedGroupKey = getFinanceGroupKey(editingFinanceOriginal);
+            const groupItemIds = lancamentos
+                .filter(function (item) {
+                    return getFinanceGroupKey(item) === editedGroupKey;
+                })
+                .map(function (item) {
+                    return item.id;
+                });
+
+            if (groupItemIds.length > 0) {
+                const groupStatusResult = await supabaseClient
+                    .from("lancamentos")
+                    .update({
+                        status: "PENDENTE",
+                        concluido_por: null,
+                        concluido_em: null,
+                        updated_by: currentUser.id
+                    })
+                    .in("id", groupItemIds);
+
+                error = groupStatusResult.error;
+            }
+        }
 
         if (!error) {
             await registerHistory(
