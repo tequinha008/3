@@ -511,14 +511,6 @@ function handleServiceChange() {
     updateTotalPreview();
 }
 
-function calculateCommission(baseValue) {
-    if (tarifaNet?.checked) {
-        return 0;
-    }
-
-    return Number(baseValue || 0) * (numberValue(comissaoPercent) / 100);
-}
-
 function handleAereoFields() {
     showField(fornecedorField);
     showField(localizadorField);
@@ -590,22 +582,22 @@ function calculateTotal() {
         if (taxasTipo.value === "%") {
             const taxaCalculada = valorDiaria * (valorTaxa / 100);
             const subtotal = (valorDiaria + taxaCalculada) * qtdDiarias;
-            return subtotal + calculateCommission(subtotal);
+            return subtotal;
         }
 
         const subtotal = (valorDiaria + valorTaxa) * qtdDiarias;
-        return subtotal + calculateCommission(subtotal);
+        return subtotal;
     }
 
     const totalPeriodo = numberValue(valorPeriodo);
 
     if (taxasTipo.value === "%") {
         const subtotal = totalPeriodo + (totalPeriodo * (valorTaxa / 100));
-        return subtotal + calculateCommission(subtotal);
+        return subtotal;
     }
 
     const subtotal = totalPeriodo + valorTaxa;
-    return subtotal + calculateCommission(subtotal);
+    return subtotal;
 }
 
 function updateTotalPreview() {
