@@ -233,11 +233,18 @@
                             <option value="CONCLUIDO">Conclu&iacute;do</option>
                         </select>
 
-                        <input type="search" id="refundSearch" placeholder="Pesquisar OS, emissor ou fornecedor">
+                        <input type="search" id="refundSearch" placeholder="Pesquisar OS, RLOC, emissor ou fornecedor">
+
+                        <select id="refundSort">
+                            <option value="DATE_DESC">Data: mais recente</option>
+                            <option value="DATE_ASC">Data: mais antiga</option>
+                            <option value="STATUS_ASC">Status: pendentes primeiro</option>
+                            <option value="STATUS_DESC">Status: conclu&iacute;dos primeiro</option>
+                        </select>
                     </div>
 
-                    <div class="table-wrapper">
-                        <table>
+                    <div class="table-wrapper refund-table-wrapper">
+                        <table class="refund-table">
                             <thead>
                                 <tr>
                                     <th>
@@ -248,11 +255,7 @@
                                     <th>Emissor</th>
                                     <th>Cliente</th>
                                     <th>OS</th>
-                                    <th>Fornecedor</th>
-                                    <th>Cobrado</th>
-                                    <th>Reembolsado</th>
-                                    <th>Taxa ADM</th>
-                                    <th>Valor final</th>
+                                    <th>RLOC</th>
                                     <th>Status</th>
                                     <th>A&ccedil;&otilde;es</th>
                                 </tr>
