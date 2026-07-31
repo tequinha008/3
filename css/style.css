@@ -1144,6 +1144,16 @@ tbody tr:hover {
     grid-template-columns: minmax(240px, 1fr) 150px 150px 180px 200px 200px 210px;
 }
 
+.refund-table .refund-rloc-input {
+    width: 112px;
+    text-transform: uppercase;
+}
+
+.refund-table th,
+.refund-table td {
+    vertical-align: middle;
+}
+
 .filters-grid.refund-filters {
     grid-template-columns: 160px 160px 190px minmax(220px, 1fr) 210px;
 }
