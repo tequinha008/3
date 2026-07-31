@@ -80,6 +80,7 @@ const startDate = document.getElementById("startDate");
 const endDate = document.getElementById("endDate");
 const refundStatusFilter = document.getElementById("refundStatusFilter");
 const refundSearch = document.getElementById("refundSearch");
+const refundSort = document.getElementById("refundSort");
 const refundTableBody = document.getElementById("refundTableBody");
 const selectAllRefunds = document.getElementById("selectAllRefunds");
 const refundPaginationInfo = document.getElementById("refundPaginationInfo");
@@ -655,6 +656,7 @@ async function loadRefunds() {
             data_solicitacao,
             emissor_id,
             os,
+            rloc,
             fornecedor,
             valor_total_cobrado,
             valor_total_reembolsado,
@@ -674,7 +676,7 @@ async function loadRefunds() {
         console.error(error);
         refundTableBody.innerHTML = `
             <tr>
-                <td colspan="13" class="empty-table-message">
+                <td colspan="9" class="empty-table-message">
                     Erro ao carregar reembolsos.
                 </td>
             </tr>
@@ -766,7 +768,7 @@ function getFilteredRefunds() {
     const start = startDate.value;
     const end = endDate.value;
 
-    return refunds.filter(function (refund) {
+    const filteredRefunds = refunds.filter(function (refund) {
         const date = refund.data_solicitacao;
 
         const matchSearch =
@@ -774,6 +776,7 @@ function getFilteredRefunds() {
             normalizeText(refund.os).includes(search) ||
             normalizeText(refund.emissor_nome).includes(search) ||
             normalizeText(refund.fornecedor).includes(search) ||
+            normalizeText(refund.rloc).includes(search) ||
             normalizeText(refund.clientes?.nome).includes(search) ||
             normalizeText(refund.codigo_tres).includes(search);
 
@@ -782,6 +785,29 @@ function getFilteredRefunds() {
         const matchEnd = !end || date <= end;
 
         return matchSearch && matchStatus && matchStart && matchEnd;
+    });
+
+    const sortMode = refundSort?.value || "DATE_DESC";
+    const statusOrder = {
+        PENDENTE: 0,
+        CONCLUIDO: 1
+    };
+
+    return filteredRefunds.sort(function (a, b) {
+        if (sortMode === "STATUS_ASC" || sortMode === "STATUS_DESC") {
+            const direction = sortMode === "STATUS_ASC" ? 1 : -1;
+            const statusComparison =
+                ((statusOrder[a.status] ?? 99) - (statusOrder[b.status] ?? 99)) * direction;
+
+            if (statusComparison !== 0) {
+                return statusComparison;
+            }
+        }
+
+        const dateComparison = String(a.data_solicitacao || "")
+            .localeCompare(String(b.data_solicitacao || ""));
+
+        return sortMode === "DATE_ASC" ? dateComparison : -dateComparison;
     });
 }
 
@@ -858,7 +884,7 @@ function renderRefunds() {
     if (filtered.length === 0) {
         refundTableBody.innerHTML = `
             <tr>
-                <td colspan="13" class="empty-table-message">
+                <td colspan="9" class="empty-table-message">
                     Nenhum reembolso encontrado.
                 </td>
             </tr>
@@ -897,11 +923,19 @@ function renderRefunds() {
                 <td>${item.emissor_nome || "-"}</td>
                 <td>${item.clientes?.nome || "-"}</td>
                 <td>${item.os || "-"}</td>
-                <td>${item.fornecedor || "-"}</td>
-                <td>${money(item.valor_total_cobrado)}</td>
-                <td>${money(item.valor_total_reembolsado)}</td>
-                <td>${money(item.taxa_adm)}</td>
-                <td>${money(item.valor_final_reembolso)}</td>
+                <td>
+                    ${
+                        isAdminOrMaster()
+                            ? `<input
+                                    type="text"
+                                    class="table-input refund-rloc-input"
+                                    data-id="${item.id}"
+                                    value="${escapeHtml(item.rloc || "")}"
+                                    maxlength="30"
+                                    placeholder="RLOC">`
+                            : escapeHtml(item.rloc || "-")
+                    }
+                </td>
                 <td>${statusBadge(item.status)}</td>
 
                 <td>
@@ -963,6 +997,52 @@ function renderRefunds() {
     );
 
     lucide.createIcons();
+}
+
+async function updateRefundRloc(id, value) {
+    if (!isAdminOrMaster()) {
+        showToast("Voc\u00ea n\u00e3o tem permiss\u00e3o para alterar o RLOC.");
+        return;
+    }
+
+    const before = refunds.find(function (item) {
+        return String(item.id) === String(id);
+    });
+
+    if (!before) {
+        showToast("Reembolso n\u00e3o encontrado.");
+        return;
+    }
+
+    const rloc = normalizeText(value) || null;
+
+    if (String(before.rloc || "") === String(rloc || "")) {
+        return;
+    }
+
+    const { error } = await supabaseClient
+        .from("reembolsos")
+        .update({
+            rloc,
+            updated_by: currentUser.id
+        })
+        .eq("id", id);
+
+    if (error) {
+        console.error(error);
+        showToast("Erro ao salvar o RLOC.");
+        return;
+    }
+
+    await registerHistory(
+        "REEMBOLSOS",
+        before,
+        { ...before, rloc, updated_by: currentUser.id },
+        "RLOC"
+    );
+
+    showToast("RLOC salvo.");
+    await loadRefunds();
 }
 
 function normalizeDisplayText(value) {
@@ -1077,6 +1157,7 @@ function friendlyHistoryField(field) {
         cliente_id: "Cliente",
         data_solicitacao: "Data",
         os: "OS",
+        rloc: "RLOC",
         fornecedor: "Fornecedor",
         valor_total_cobrado: "Valor cobrado",
         valor_total_reembolsado: "Valor reembolsado",
@@ -1414,6 +1495,7 @@ function exportRefundsToCSV() {
         "Data",
         "Cliente",
         "OS",
+        "RLOC",
         "Fornecedor",
         "Valor cobrado",
         "Valor reembolsado",
@@ -1428,6 +1510,7 @@ function exportRefundsToCSV() {
             item.data_solicitacao || "",
             item.clientes?.nome || "",
             item.os || "",
+            item.rloc || "",
             item.fornecedor || "",
             Number(item.valor_total_cobrado || 0).toFixed(2).replace(".", ","),
             Number(item.valor_total_reembolsado || 0).toFixed(2).replace(".", ","),
@@ -1505,6 +1588,7 @@ function exportRefundsToExcel() {
                 <td>${escapeHtml(item.emissor_nome || "")}</td>
                 <td>${escapeHtml(item.clientes?.nome || "")}</td>
                 <td>${escapeHtml(item.os || "")}</td>
+                <td>${escapeHtml(item.rloc || "")}</td>
                 <td>${escapeHtml(item.fornecedor || "")}</td>
                 <td class="money">${escapeHtml(money(item.valor_total_cobrado))}</td>
                 <td class="money">${escapeHtml(money(item.valor_total_reembolsado))}</td>
@@ -1556,6 +1640,7 @@ function exportRefundsToExcel() {
                             <th>Emissor</th>
                             <th>Cliente</th>
                             <th>OS</th>
+                            <th>RLOC</th>
                             <th>Fornecedor</th>
                             <th>Valor cobrado</th>
                             <th>Valor reembolsado</th>
@@ -1567,7 +1652,7 @@ function exportRefundsToExcel() {
                     <tbody>
                         ${rows.join("")}
                         <tr class="summary">
-                            <td colspan="6" class="summary-label">Totais</td>
+                            <td colspan="7" class="summary-label">Totais</td>
                             <td class="money">${escapeHtml(money(totalCobrado))}</td>
                             <td class="money">${escapeHtml(money(totalReembolsado))}</td>
                             <td class="money">${escapeHtml(money(totalTaxa))}</td>
@@ -1604,6 +1689,7 @@ function setupEvents() {
 
     refundSearch.addEventListener("input", resetRefundPagination);
     refundStatusFilter.addEventListener("change", resetRefundPagination);
+    refundSort?.addEventListener("change", resetRefundPagination);
     startDate.addEventListener("change", resetRefundPagination);
     endDate.addEventListener("change", resetRefundPagination);
 
@@ -1658,8 +1744,13 @@ function setupEvents() {
         renderRefunds();
     });
 
-    refundTableBody.addEventListener("change", function (event) {
+    refundTableBody.addEventListener("change", async function (event) {
         const target = event.target;
+
+        if (target.classList.contains("refund-rloc-input")) {
+            await updateRefundRloc(target.dataset.id, target.value);
+            return;
+        }
 
         if (target.classList.contains("refund-checkbox")) {
             const id = target.dataset.id;
