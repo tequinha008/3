@@ -28,6 +28,7 @@ const hotelStartDate = document.getElementById("hotelStartDate");
 const hotelEndDate = document.getElementById("hotelEndDate");
 const statusFilter = document.getElementById("statusFilter");
 const tipoFilter = document.getElementById("tipoFilter");
+const hotelSort = document.getElementById("hotelSort");
 const hotelTableBody = document.getElementById("hotelTableBody");
 const selectAllHotels = document.getElementById("selectAllHotels");
 const completeSelectedButton = document.getElementById("completeSelectedButton");
@@ -611,7 +612,7 @@ function getFilteredHotels() {
     const status = statusFilter.value;
     const tipo = tipoFilter.value;
 
-    return hotels.filter(function (hotel) {
+    const filteredHotels = hotels.filter(function (hotel) {
         const date = hotel.data_solicitacao || "";
 
         const searchableText = [
@@ -664,6 +665,31 @@ function getFilteredHotels() {
 
     });
 
+    const statusOrder = {
+        PENDENTE: 0,
+        AGUARDANDO_BENNER: 1,
+        CADASTRADO_BENNER: 2,
+        JA_CADASTRADO: 2,
+        CONCLUIDO: 3
+    };
+    const sortMode = hotelSort?.value || "DATE_DESC";
+
+    return filteredHotels.sort(function (a, b) {
+        if (sortMode === "STATUS_ASC" || sortMode === "STATUS_DESC") {
+            const direction = sortMode === "STATUS_ASC" ? 1 : -1;
+            const statusComparison =
+                ((statusOrder[a.status] ?? 99) - (statusOrder[b.status] ?? 99)) * direction;
+
+            if (statusComparison !== 0) {
+                return statusComparison;
+            }
+        }
+
+        const dateComparison = String(a.data_solicitacao || "")
+            .localeCompare(String(b.data_solicitacao || ""));
+
+        return sortMode === "DATE_ASC" ? dateComparison : -dateComparison;
+    });
 }
 
 const HOTEL_STATUS_OPTIONS = [
@@ -1699,6 +1725,7 @@ hotelStartDate?.addEventListener("change", resetHotelPagination);
 hotelEndDate?.addEventListener("change", resetHotelPagination);
 statusFilter.addEventListener("change", resetHotelPagination);
 tipoFilter.addEventListener("change", resetHotelPagination);
+hotelSort?.addEventListener("change", resetHotelPagination);
 
 if (hotelPageSize) {
     hotelPageSize.addEventListener("change", resetHotelPagination);
