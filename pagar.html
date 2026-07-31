@@ -316,7 +316,7 @@
 
                     <div class="form-actions span-2">
                         <button type="button" class="btn btn-soft" id="clearFinanceForm">
-                            Cancelar
+                            Limpar dados
                         </button>
 
                         <button type="submit" class="btn btn-finance" id="saveFinanceButton">
@@ -373,6 +373,13 @@
                         <option value="LOCACAO">Loca&ccedil;&atilde;o</option>
                         <option value="TRANSFER">Transfer</option>
                         <option value="OUTROS">Outros</option>
+                    </select>
+
+                    <select id="financeSort">
+                        <option value="DATE_DESC">Data: mais recente</option>
+                        <option value="DATE_ASC">Data: mais antiga</option>
+                        <option value="STATUS_ASC">Status: pendentes primeiro</option>
+                        <option value="STATUS_DESC">Status: conclu&iacute;dos primeiro</option>
                     </select>
                 </div>
 
