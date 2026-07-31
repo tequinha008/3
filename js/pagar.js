@@ -135,6 +135,7 @@ const financeEndDate = document.getElementById("financeEndDate");
 const financeStatusFilter = document.getElementById("financeStatusFilter");
 const financeClientFilter = document.getElementById("financeClientFilter");
 const financeServiceFilter = document.getElementById("financeServiceFilter");
+const financeSort = document.getElementById("financeSort");
 const financeTableBody = document.getElementById("financeTableBody");
 const selectAllFinance = document.getElementById("selectAllFinance");
 const completeSelectedButton = document.getElementById("completeSelectedButton");
@@ -1190,7 +1191,7 @@ function getFilteredLancamentos() {
     const client = financeClientFilter?.value || "";
     const service = financeServiceFilter.value;
 
-    return getFinanceGroups().filter(function (item) {
+    const filteredLancamentos = getFinanceGroups().filter(function (item) {
         const date = item.data_lancamento || "";
 
         const matchSearch =
@@ -1214,6 +1215,29 @@ function getFilteredLancamentos() {
         const matchEnd = !end || date <= end;
 
         return matchSearch && matchStatus && matchClient && matchService && matchStart && matchEnd;
+    });
+
+    const sortMode = financeSort?.value || "DATE_DESC";
+    const statusOrder = {
+        PENDENTE: 0,
+        CONCLUIDO: 1
+    };
+
+    return filteredLancamentos.sort(function (a, b) {
+        if (sortMode === "STATUS_ASC" || sortMode === "STATUS_DESC") {
+            const direction = sortMode === "STATUS_ASC" ? 1 : -1;
+            const statusComparison =
+                ((statusOrder[a.status] ?? 99) - (statusOrder[b.status] ?? 99)) * direction;
+
+            if (statusComparison !== 0) {
+                return statusComparison;
+            }
+        }
+
+        const dateComparison = String(a.data_lancamento || "")
+            .localeCompare(String(b.data_lancamento || ""));
+
+        return sortMode === "DATE_ASC" ? dateComparison : -dateComparison;
     });
 }
 
@@ -2501,6 +2525,7 @@ if (financeClientFilter) {
     financeClientFilter.addEventListener("change", resetFinancePagination);
 }
 financeServiceFilter.addEventListener("change", resetFinancePagination);
+financeSort?.addEventListener("change", resetFinancePagination);
 
 if (financePageSize) {
     financePageSize.addEventListener("change", resetFinancePagination);
