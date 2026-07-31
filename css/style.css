@@ -1154,6 +1154,12 @@ tbody tr:hover {
     vertical-align: middle;
 }
 
+.refund-table .refund-gross-value {
+    white-space: nowrap;
+    color: var(--text);
+    font-weight: 500;
+}
+
 .filters-grid.refund-filters {
     grid-template-columns: 160px 160px 190px minmax(220px, 1fr) 210px;
 }
