@@ -676,7 +676,7 @@
             console.error(error);
             refundTableBody.innerHTML = `
                 <tr>
-                <td colspan="10" class="empty-table-message">
+                <td colspan="11" class="empty-table-message">
                         Erro ao carregar reembolsos.
                     </td>
                 </tr>
@@ -884,7 +884,7 @@
         if (filtered.length === 0) {
             refundTableBody.innerHTML = `
                 <tr>
-                <td colspan="10" class="empty-table-message">
+                <td colspan="11" class="empty-table-message">
                         Nenhum reembolso encontrado.
                     </td>
                 </tr>
@@ -923,6 +923,7 @@
                 <td>${item.emissor_nome || "-"}</td>
                 <td>${item.clientes?.nome || "-"}</td>
                 <td>${item.os || "-"}</td>
+                <td>${item.fornecedor || "-"}</td>
                 <td class="refund-gross-value">${money(item.valor_total_reembolsado)}</td>
                 <td>
                         ${
