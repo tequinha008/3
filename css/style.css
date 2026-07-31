@@ -612,7 +612,7 @@ body.module-users {
 }
 
 .filters-grid.hotel-filters {
-    grid-template-columns: minmax(240px, 1fr) 160px 160px 200px 200px;
+    grid-template-columns: minmax(240px, 1fr) 160px 160px 190px 190px 210px;
 }
 
 input.field-invalid,
@@ -1141,7 +1141,11 @@ tbody tr:hover {
 }
 
 .filters-grid.finance-filters {
-    grid-template-columns: minmax(240px, 1fr) 160px 160px 190px 220px 220px;
+    grid-template-columns: minmax(240px, 1fr) 150px 150px 180px 200px 200px 210px;
+}
+
+.filters-grid.refund-filters {
+    grid-template-columns: 160px 160px 190px minmax(220px, 1fr) 210px;
 }
 
 .table-pagination {
