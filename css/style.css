@@ -1032,6 +1032,15 @@ select.field-invalid {
     background: #ecfdf8;
 }
 
+.module-hotel .hotel-filters .tres-date.open {
+    z-index: 100;
+}
+
+.module-hotel .hotel-filters .tres-date.open-up .tres-date-menu {
+    top: calc(100% + 8px);
+    bottom: auto;
+}
+
 .module-finance .tres-date-button svg,
 .module-finance .tres-date-nav:hover,
 .module-finance .tres-date-day:hover,
