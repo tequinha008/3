@@ -1032,8 +1032,19 @@ select.field-invalid {
     background: #ecfdf8;
 }
 
+.module-hotel .tabs-card,
+.module-hotel .tab-content.active {
+    overflow: visible;
+}
+
+.module-hotel .hotel-filters,
 .module-hotel .hotel-filters .tres-date.open {
-    z-index: 100;
+    position: relative;
+    z-index: 120;
+}
+
+.module-hotel .hotel-filters .tres-date-menu {
+    z-index: 220;
 }
 
 .module-hotel .hotel-filters .tres-date.open-up .tres-date-menu {
