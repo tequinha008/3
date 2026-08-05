@@ -1728,7 +1728,13 @@ tipoFilter.addEventListener("change", resetHotelPagination);
 hotelSort?.addEventListener("change", resetHotelPagination);
 
 if (hotelPageSize) {
-    hotelPageSize.addEventListener("change", resetHotelPagination);
+    hotelPageSize.addEventListener("change", function () {
+        hotelCurrentPage = 1;
+
+        window.setTimeout(function () {
+            renderHotels();
+        }, 0);
+    });
 }
 
 if (hotelPrevPage) {
