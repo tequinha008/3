@@ -1160,6 +1160,84 @@ tbody tr:hover {
     font-weight: 400;
 }
 
+.table-loading-state {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    min-height: 34px;
+    color: var(--muted);
+    font-size: 13px;
+}
+
+.table-loading-spinner {
+    width: 18px;
+    height: 18px;
+    border: 2px solid var(--line);
+    border-top-color: var(--action);
+    border-radius: 50%;
+    animation: tresSpin 0.7s linear infinite;
+}
+
+body.app-body .main-content {
+    animation: tresPageIn 0.28s ease-out both;
+}
+
+.tab-content.active {
+    animation: tresContentIn 0.20s ease-out both;
+}
+
+.table-wrapper tbody tr {
+    animation: tresRowIn 0.18s ease-out both;
+}
+
+.table-wrapper tbody tr:nth-child(n + 6) {
+    animation-delay: 0.03s;
+}
+
+.modal-card,
+.hotel-detail-modal,
+.finance-detail-modal,
+.history-modal,
+.finance-duplicate-modal {
+    animation: tresModalIn 0.20s ease-out both;
+}
+
+@keyframes tresSpin {
+    to { transform: rotate(360deg); }
+}
+
+@keyframes tresPageIn {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes tresContentIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes tresRowIn {
+    from { opacity: 0; transform: translateY(3px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes tresModalIn {
+    from { opacity: 0; transform: translateY(8px) scale(0.985); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        scroll-behavior: auto !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
 .filters-grid.finance-filters {
     grid-template-columns: minmax(240px, 1fr) 150px 150px 180px 200px 200px 210px;
 }
