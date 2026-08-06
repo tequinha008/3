@@ -648,6 +648,17 @@
     }
     
     async function loadRefunds() {
+        refundTableBody.innerHTML = `
+            <tr>
+                <td colspan="11" class="empty-table-message">
+                    <div class="table-loading-state">
+                        <span class="table-loading-spinner" aria-hidden="true"></span>
+                        Carregando reembolsos...
+                    </div>
+                </td>
+            </tr>
+        `;
+
         const { data, error } = await supabaseClient
             .from("reembolsos")
             .select(`
