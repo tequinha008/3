@@ -383,7 +383,11 @@ async function loadClientes() {
         financeClientFilter.innerHTML = `<option value="">Todos os clientes</option>`;
     }
 
-    data.forEach(function (item) {
+    const clientesDisponiveis = (data || []).filter(function (item) {
+        return normalizeText(item.nome) !== "HAOC";
+    });
+
+    clientesDisponiveis.forEach(function (item) {
         cliente.innerHTML += `
             <option value="${item.id}">
                 ${item.nome}
@@ -398,6 +402,14 @@ async function loadClientes() {
             `;
         }
     });
+
+    window.setTimeout(function () {
+        document.querySelectorAll(".tres-select-option").forEach(function (option) {
+            if (normalizeText(option.textContent) === "HAOC") {
+                option.remove();
+            }
+        });
+    }, 0);
 }
 
 async function loadUsersList() {
