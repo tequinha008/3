@@ -277,6 +277,31 @@ function normalizeText(value) {
     return String(value || "").trim().toUpperCase();
 }
 
+function syncFinanceCustomSelect(select) {
+    if (!select) {
+        return;
+    }
+
+    const selectedOption = select.selectedOptions?.[0];
+    const wrapper = select.closest(".tres-select") ||
+        (select.nextElementSibling?.classList.contains("tres-select") ? select.nextElementSibling : null) ||
+        select.parentElement?.querySelector(".tres-select");
+
+    if (wrapper && selectedOption) {
+        const label = wrapper.querySelector(".tres-select-label");
+
+        if (label) {
+            label.textContent = selectedOption.textContent.trim();
+        }
+
+        wrapper.querySelectorAll(".tres-select-option").forEach(function (option) {
+            option.classList.toggle("active", String(option.dataset.value || "") === String(select.value));
+        });
+    }
+
+    select.dispatchEvent(new Event("change", { bubbles: true }));
+}
+
 function numberValue(input) {
     return parseMoneyValue(input.value);
 }
@@ -1098,6 +1123,17 @@ function addItemToFinanceGroup(id) {
 }
 
 async function loadLancamentos() {
+    financeTableBody.innerHTML = `
+        <tr>
+            <td colspan="11" class="empty-table-message">
+                <div class="table-loading-state">
+                    <span class="table-loading-spinner" aria-hidden="true"></span>
+                    Carregando lan\u00e7amentos...
+                </div>
+            </td>
+        </tr>
+    `;
+
     const { data, error } = await supabaseClient
         .from("lancamentos")
         .select(`
@@ -1763,6 +1799,7 @@ function editFinance(id) {
     handleServiceChange();
     updateTotalPreview();
     fillFinanceEmitterSelect(item.emissor_id);
+    [tipoLancamento, cliente, servico, consolidador, taxasTipo].forEach(syncFinanceCustomSelect);
 
     tabButtons.forEach(function (button) {
         if (button.dataset.tab === "newFinance") {
@@ -1831,7 +1868,7 @@ function duplicateFinance(id) {
     updateTotalPreview();
     updateLinkedFinanceContext();
     fillFinanceEmitterSelect(currentUser.id);
-    cliente.dispatchEvent(new Event("change", { bubbles: true }));
+    [tipoLancamento, cliente, servico, consolidador, taxasTipo].forEach(syncFinanceCustomSelect);
     window.TRESDatePickers?.refresh();
 
     tabButtons.forEach(function (button) {
@@ -1842,6 +1879,263 @@ function duplicateFinance(id) {
 
     saveFinanceButton.textContent = "Salvar duplicado";
     showToast("Lan\u00e7amento copiado. Altere a OS e o cliente antes de salvar.");
+}
+
+function ensureFinanceGroupDuplicateModal() {
+    let modal = document.getElementById("financeGroupDuplicateModal");
+
+    if (modal) {
+        return modal;
+    }
+
+    modal = document.createElement("div");
+    modal.id = "financeGroupDuplicateModal";
+    modal.className = "finance-duplicate-backdrop hidden";
+    modal.innerHTML = `
+        <div class="finance-duplicate-modal" role="dialog" aria-modal="true" aria-labelledby="financeDuplicateTitle">
+            <header class="finance-duplicate-header">
+                <div>
+                    <p class="eyebrow">Duplicar processo</p>
+                    <h2 id="financeDuplicateTitle">Copiar todos os itens</h2>
+                    <p id="financeDuplicateDescription"></p>
+                </div>
+                <button type="button" class="icon-button" data-duplicate-close aria-label="Fechar">
+                    <i data-lucide="x"></i>
+                </button>
+            </header>
+
+            <form id="financeGroupDuplicateForm">
+                <div class="finance-duplicate-grid">
+                    <label>
+                        <span>Nova OS</span>
+                        <input type="text" id="financeDuplicateOs" required>
+                    </label>
+
+                    <label>
+                        <span>Cliente</span>
+                        <select id="financeDuplicateClient" required></select>
+                    </label>
+                </div>
+
+                <footer class="finance-duplicate-actions">
+                    <button type="button" class="btn btn-soft" data-duplicate-close>Cancelar</button>
+                    <button type="submit" class="btn btn-finance" id="financeDuplicateConfirm">
+                        <i data-lucide="copy"></i>
+                        Duplicar processo
+                    </button>
+                </footer>
+            </form>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    modal.addEventListener("click", function (event) {
+        if (event.target === modal || event.target.closest("[data-duplicate-close]")) {
+            closeFinanceGroupDuplicateModal();
+        }
+    });
+
+    modal.querySelector("#financeGroupDuplicateForm").addEventListener("submit", async function (event) {
+        event.preventDefault();
+
+        const groupId = modal.dataset.groupId;
+        const newOs = normalizeText(modal.querySelector("#financeDuplicateOs").value);
+        const newClientId = modal.querySelector("#financeDuplicateClient").value;
+        const confirmButton = modal.querySelector("#financeDuplicateConfirm");
+
+        if (!newOs || !newClientId) {
+            showToast("Informe a nova OS e o cliente.");
+            return;
+        }
+
+        confirmButton.disabled = true;
+        confirmButton.textContent = "Duplicando...";
+
+        const duplicated = await duplicateFinanceGroup(groupId, newOs, newClientId);
+
+        confirmButton.disabled = false;
+        confirmButton.innerHTML = `<i data-lucide="copy"></i> Duplicar processo`;
+
+        if (duplicated) {
+            closeFinanceGroupDuplicateModal();
+        }
+
+        lucide.createIcons();
+    });
+
+    return modal;
+}
+
+function openFinanceGroupDuplicateModal(id) {
+    const group = findFinanceGroup(id);
+
+    if (!group) {
+        showToast("N\u00e3o foi poss\u00edvel localizar o processo.");
+        return;
+    }
+
+    const modal = ensureFinanceGroupDuplicateModal();
+    const clientSelect = modal.querySelector("#financeDuplicateClient");
+
+    modal.dataset.groupId = group.id;
+    modal.querySelector("#financeDuplicateDescription").textContent =
+        `${group.codigo_tres || "Processo"} possui ${group.item_count} ${group.item_count === 1 ? "item" : "itens"}.`;
+    modal.querySelector("#financeDuplicateOs").value = group.os || "";
+    clientSelect.innerHTML = Array.from(cliente.options).map(function (option) {
+        return `<option value="${escapeHtml(option.value)}">${escapeHtml(option.textContent.trim())}</option>`;
+    }).join("");
+    clientSelect.value = group.cliente_id || "";
+
+    modal.classList.remove("hidden");
+    document.body.classList.add("modal-open");
+    modal.querySelector("#financeDuplicateOs").focus();
+    modal.querySelector("#financeDuplicateOs").select();
+    lucide.createIcons();
+}
+
+function closeFinanceGroupDuplicateModal() {
+    const modal = document.getElementById("financeGroupDuplicateModal");
+
+    if (!modal) {
+        return;
+    }
+
+    modal.classList.add("hidden");
+    modal.removeAttribute("data-group-id");
+    document.body.classList.remove("modal-open");
+}
+
+function buildDuplicatedFinanceItem(item, newOs, newClientId, itemOrder) {
+    return {
+        data_lancamento: todayISO(),
+        emissor_id: currentUser.id,
+        tipo: item.tipo,
+        os: newOs,
+        cliente_id: newClientId,
+        item_ordem: itemOrder,
+        servico: item.servico,
+        subtipo: item.subtipo,
+        outro_servico: item.outro_servico,
+        consolidador: item.consolidador,
+        fornecedor: item.fornecedor,
+        localizador: item.localizador,
+        bilhete: item.bilhete,
+        moeda: item.moeda,
+        tarifa: item.tarifa,
+        taxa_embarque: item.taxa_embarque,
+        rc: item.rc,
+        over_percent: item.over_percent,
+        cambio: item.cambio,
+        diaria: item.diaria,
+        valor_periodo: item.valor_periodo,
+        taxas_tipo: item.taxas_tipo,
+        taxas_valor: item.taxas_valor,
+        comissao_percent: item.comissao_percent,
+        tarifa_net: Boolean(item.tarifa_net),
+        checkin: item.checkin,
+        checkout: item.checkout,
+        quantidade_diarias: item.quantidade_diarias,
+        total: item.total,
+        total_final: item.total_final,
+        status: "PENDENTE",
+        concluido_por: null,
+        concluido_em: null,
+        created_by: currentUser.id,
+        updated_by: currentUser.id
+    };
+}
+
+async function duplicateFinanceGroup(id, newOs, newClientId) {
+    const group = findFinanceGroup(id);
+
+    if (!group || group.itens.length === 0) {
+        showToast("N\u00e3o foi poss\u00edvel localizar os itens do processo.");
+        return false;
+    }
+
+    const orderedItems = [...group.itens].sort(function (a, b) {
+        return Number(a.item_ordem || 1) - Number(b.item_ordem || 1);
+    });
+    const firstPayload = buildDuplicatedFinanceItem(orderedItems[0], newOs, newClientId, 1);
+    firstPayload.solicitacao_id = null;
+    firstPayload.solicitacao_codigo = null;
+
+    const firstResult = await supabaseClient
+        .from("lancamentos")
+        .insert(firstPayload)
+        .select("id, codigo_tres")
+        .single();
+
+    if (firstResult.error || !firstResult.data) {
+        console.error(firstResult.error);
+        showToast("Erro ao iniciar a duplica\u00e7\u00e3o do processo.");
+        return false;
+    }
+
+    const newGroupId = firstResult.data.id;
+    const newGroupCode = firstResult.data.codigo_tres;
+    const firstUpdate = await supabaseClient
+        .from("lancamentos")
+        .update({
+            solicitacao_id: newGroupId,
+            solicitacao_codigo: newGroupCode,
+            item_ordem: 1
+        })
+        .eq("id", newGroupId);
+
+    if (firstUpdate.error) {
+        console.error(firstUpdate.error);
+        await supabaseClient.from("lancamentos").delete().eq("id", newGroupId);
+        showToast("Erro ao criar o novo processo.");
+        return false;
+    }
+
+    if (orderedItems.length > 1) {
+        const remainingPayloads = orderedItems.slice(1).map(function (item, index) {
+            return {
+                ...buildDuplicatedFinanceItem(item, newOs, newClientId, index + 2),
+                solicitacao_id: newGroupId,
+                solicitacao_codigo: newGroupCode
+            };
+        });
+        const remainingResult = await supabaseClient
+            .from("lancamentos")
+            .insert(remainingPayloads);
+
+        if (remainingResult.error) {
+            console.error(remainingResult.error);
+            await supabaseClient.from("lancamentos").delete().eq("solicitacao_id", newGroupId);
+            showToast("Erro ao copiar todos os itens. Nenhuma c\u00f3pia foi mantida.");
+            return false;
+        }
+    }
+
+    await registerHistory(
+        "VALORES_A_PAGAR",
+        {
+            id: newGroupId,
+            codigo_tres: newGroupCode,
+            item_count: 0
+        },
+        {
+            solicitacao_id: newGroupId,
+            solicitacao_codigo: newGroupCode,
+            item_count: orderedItems.length,
+            os: newOs,
+            cliente_id: newClientId,
+            processo_origem: group.codigo_tres
+        },
+        "PROCESSO_DUPLICADO"
+    );
+
+    showToast(
+        orderedItems.length === 1
+            ? "Processo duplicado com 1 item."
+            : `Processo duplicado com ${orderedItems.length} itens.`
+    );
+    await loadLancamentos();
+    return true;
 }
 
 function ensureHistoryModal() {
@@ -2205,9 +2499,9 @@ function renderLancamentos() {
 
                         <button
                             class="icon-button"
-                            data-action="duplicate"
-                            data-id="${item.itens[0]?.id || item.id}"
-                            title="Duplicar para outra OS ou cliente">
+                            data-action="duplicate-group"
+                            data-id="${item.id}"
+                            title="Duplicar processo completo">
                             <i data-lucide="copy"></i>
                         </button>
 
@@ -2616,8 +2910,8 @@ financeTableBody.addEventListener("click", async function (event) {
         addItemToFinanceGroup(button.dataset.id);
     }
 
-    if (button.dataset.action === "duplicate") {
-        duplicateFinance(button.dataset.id);
+    if (button.dataset.action === "duplicate-group") {
+        openFinanceGroupDuplicateModal(button.dataset.id);
     }
 
     if (button.dataset.action === "history") {
