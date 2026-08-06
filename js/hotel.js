@@ -525,6 +525,17 @@ async function saveHotel(event) {
 }
 
 async function loadHotels() {
+    hotelTableBody.innerHTML = `
+        <tr>
+            <td colspan="11" class="empty-table-message">
+                <div class="table-loading-state">
+                    <span class="table-loading-spinner" aria-hidden="true"></span>
+                    Carregando hot\u00e9is...
+                </div>
+            </td>
+        </tr>
+    `;
+
     const { data, error } = await supabaseClient
         .from("solicitacoes_hotel")
         .select(`
