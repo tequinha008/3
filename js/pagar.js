@@ -391,6 +391,8 @@ function applyUserProfile(profile, user) {
 }
 
 async function loadClientes() {
+    const selectedClientId = cliente.value;
+    const selectedFilterId = financeClientFilter?.value || "";
     const { data, error } = await supabaseClient
         .from("clientes")
         .select("id, nome")
@@ -428,13 +430,81 @@ async function loadClientes() {
         }
     });
 
-    window.setTimeout(function () {
-        document.querySelectorAll(".tres-select-option").forEach(function (option) {
-            if (normalizeText(option.textContent) === "HAOC") {
-                option.remove();
+    if (selectedClientId && Array.from(cliente.options).some(function (option) {
+        return String(option.value) === String(selectedClientId);
+    })) {
+        cliente.value = selectedClientId;
+    }
+
+    if (financeClientFilter && selectedFilterId && Array.from(financeClientFilter.options).some(function (option) {
+        return String(option.value) === String(selectedFilterId);
+    })) {
+        financeClientFilter.value = selectedFilterId;
+    }
+
+    rebuildFinanceClientCustomSelect(cliente);
+    rebuildFinanceClientCustomSelect(financeClientFilter);
+}
+
+function rebuildFinanceClientCustomSelect(select) {
+    if (!select) {
+        return;
+    }
+
+    const wrapper = select.closest(".tres-select") ||
+        (select.nextElementSibling?.classList.contains("tres-select") ? select.nextElementSibling : null) ||
+        select.parentElement?.querySelector(".tres-select");
+
+    if (!wrapper) {
+        return;
+    }
+
+    const menu = wrapper.querySelector(".tres-select-menu");
+    const label = wrapper.querySelector(".tres-select-label");
+
+    if (!menu) {
+        return;
+    }
+
+    menu.innerHTML = Array.from(select.options).map(function (option) {
+        const active = String(option.value) === String(select.value) ? "active" : "";
+
+        return `
+            <button
+                type="button"
+                class="tres-select-option ${active}"
+                data-value="${escapeHtml(option.value)}">
+                <i data-lucide="circle"></i>
+                <span>${escapeHtml(option.textContent.trim())}</span>
+            </button>
+        `;
+    }).join("");
+
+    if (label) {
+        label.textContent = select.selectedOptions?.[0]?.textContent?.trim() || "Selecione";
+    }
+
+    menu.querySelectorAll(".tres-select-option").forEach(function (button) {
+        button.addEventListener("click", function (event) {
+            event.preventDefault();
+            event.stopPropagation();
+
+            select.value = button.dataset.value || "";
+
+            menu.querySelectorAll(".tres-select-option").forEach(function (item) {
+                item.classList.toggle("active", item === button);
+            });
+
+            if (label) {
+                label.textContent = select.selectedOptions?.[0]?.textContent?.trim() || "Selecione";
             }
+
+            wrapper.classList.remove("open");
+            select.dispatchEvent(new Event("change", { bubbles: true }));
         });
-    }, 0);
+    });
+
+    lucide.createIcons();
 }
 
 async function loadUsersList() {
