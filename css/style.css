@@ -1850,12 +1850,14 @@ body.app-body .btn-danger {
 }
 
 .module-hotel .hotel-status-dropdown {
-    position: fixed;
-    z-index: 320;
+    position: fixed !important;
+    right: auto !important;
+    bottom: auto !important;
+    z-index: 500;
     display: grid;
-    width: 210px;
+    width: 164px;
     gap: 3px;
-    padding: 6px;
+    padding: 5px;
     overflow: hidden;
     border: 1px solid #d7e3e8;
     border-radius: 12px;
@@ -1870,16 +1872,16 @@ body.app-body .btn-danger {
 .module-hotel .hotel-status-option {
     display: flex;
     width: 100%;
-    min-height: 34px;
+    min-height: 30px;
     align-items: center;
     gap: 8px;
     border: 0;
     border-radius: 9px;
-    padding: 7px 10px;
+    padding: 6px 8px;
     color: var(--text);
     background: transparent;
     font: inherit;
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 500;
     line-height: 1.2;
     text-align: left;
