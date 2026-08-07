@@ -1911,3 +1911,53 @@ body.app-body .btn-danger {
         min-width: 1080px;
     }
 }
+
+/* A Pagar e Hotéis — melhor aproveitamento horizontal */
+
+.module-finance .table-wrapper table,
+.module-hotel .table-wrapper table {
+    width: 100%;
+    font-size: clamp(11px, 0.84vw, 13px);
+}
+
+.module-finance .table-wrapper th,
+.module-hotel .table-wrapper th {
+    font-size: clamp(9px, 0.68vw, 10px);
+}
+
+.module-finance .table-wrapper td,
+.module-hotel .table-wrapper td {
+    padding-right: clamp(8px, 0.8vw, 12px);
+    padding-left: clamp(8px, 0.8vw, 12px);
+}
+
+.module-finance .table-wrapper th:last-child,
+.module-finance .table-wrapper td:last-child,
+.module-hotel .table-wrapper th:last-child,
+.module-hotel .table-wrapper td:last-child {
+    width: 1%;
+    white-space: nowrap;
+}
+
+.module-finance .table-wrapper th:last-child,
+.module-hotel .table-wrapper th:last-child {
+    text-align: center;
+}
+
+.module-finance .table-wrapper td:last-child .action-buttons,
+.module-hotel .table-wrapper td:last-child .action-buttons {
+    width: max-content;
+    justify-content: flex-end;
+}
+
+.module-finance .table-wrapper .finance-service-summary strong {
+    font-size: clamp(11px, 0.82vw, 12px);
+}
+
+.module-finance .table-wrapper .finance-service-summary span {
+    font-size: clamp(10px, 0.76vw, 11px);
+}
+
+.module-finance .table-wrapper .finance-items-count {
+    font-size: clamp(10px, 0.74vw, 11px);
+}
