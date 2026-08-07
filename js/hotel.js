@@ -763,28 +763,95 @@ function renderHotelStatusMenu(hotel) {
                 title="Alterar status">
                 <i data-lucide="list-checks"></i>
             </button>
+        </div>
+    `;
+}
 
-            <div class="hotel-status-dropdown hidden" data-status-menu="${hotel.id}">
+let activeHotelStatusId = null;
+
+function ensureHotelStatusDialog() {
+    let dialog = document.getElementById("hotelStatusDialog");
+
+    if (dialog) return dialog;
+
+    dialog = document.createElement("div");
+    dialog.id = "hotelStatusDialog";
+    dialog.setAttribute("role", "presentation");
+    dialog.style.cssText = [
+        "position:fixed",
+        "inset:0",
+        "z-index:9999",
+        "display:none",
+        "place-items:center",
+        "padding:20px",
+        "background:rgba(15,23,42,.48)",
+        "backdrop-filter:blur(2px)"
+    ].join(";");
+
+    dialog.innerHTML = `
+        <div role="dialog" aria-modal="true" aria-labelledby="hotelStatusDialogTitle"
+            style="width:min(360px,100%);border:1px solid #dbe4ea;border-radius:18px;padding:18px;background:#fff;box-shadow:0 24px 70px rgba(15,23,42,.28)">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:14px">
+                <div>
+                    <div style="color:#64748b;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase">Alterar status</div>
+                    <strong id="hotelStatusDialogTitle" style="display:block;margin-top:4px;color:#172033;font-size:16px;font-weight:600">Selecione o novo status</strong>
+                </div>
+                <button type="button" data-close-hotel-status title="Fechar"
+                    style="display:grid;width:30px;height:30px;flex:0 0 auto;place-items:center;border:1px solid #dbe4ea;border-radius:9px;color:#64748b;background:#fff;cursor:pointer">&times;</button>
+            </div>
+            <div style="display:grid;gap:6px">
                 ${HOTEL_STATUS_OPTIONS.map(function (option) {
-                    const active =
-                        option.value === hotel.status ||
-                        (hotel.status === "JA_CADASTRADO" && option.value === "CADASTRADO_BENNER");
-
                     return `
-                        <button
-                            type="button"
-                            class="hotel-status-option ${active ? "active" : ""}"
-                            data-action="set-status"
-                            data-id="${hotel.id}"
-                            data-status="${option.value}">
-                            <i data-lucide="${option.icon}"></i>
+                        <button type="button" data-dialog-hotel-status="${option.value}"
+                            style="display:flex;width:100%;min-height:38px;align-items:center;justify-content:space-between;border:1px solid #dbe4ea;border-radius:11px;padding:8px 11px;color:#172033;background:#fff;font:inherit;font-size:12px;font-weight:500;text-align:left;cursor:pointer">
                             <span>${option.label}</span>
+                            <span data-status-check style="color:#0f766e;font-weight:700"></span>
                         </button>
                     `;
                 }).join("")}
             </div>
         </div>
     `;
+
+    dialog.addEventListener("click", async function (event) {
+        if (event.target === dialog || event.target.closest("[data-close-hotel-status]")) {
+            closeHotelStatusMenus();
+            return;
+        }
+
+        const optionButton = event.target.closest("[data-dialog-hotel-status]");
+        if (!optionButton || !activeHotelStatusId) return;
+
+        const hotelId = activeHotelStatusId;
+        const status = optionButton.dataset.dialogHotelStatus;
+        closeHotelStatusMenus();
+        await updateHotelStatus(hotelId, status);
+    });
+
+    document.body.appendChild(dialog);
+    return dialog;
+}
+
+function openHotelStatusDialog(id) {
+    const hotel = hotels.find(function (item) {
+        return String(item.id) === String(id);
+    });
+    const dialog = ensureHotelStatusDialog();
+    const currentStatus = hotel?.status === "JA_CADASTRADO"
+        ? "CADASTRADO_BENNER"
+        : hotel?.status;
+
+    activeHotelStatusId = String(id);
+
+    dialog.querySelectorAll("[data-dialog-hotel-status]").forEach(function (button) {
+        const isActive = button.dataset.dialogHotelStatus === currentStatus;
+        button.style.borderColor = isActive ? "#5eead4" : "#dbe4ea";
+        button.style.color = isActive ? "#0f766e" : "#172033";
+        button.style.background = isActive ? "#ecfdf8" : "#ffffff";
+        button.querySelector("[data-status-check]").textContent = isActive ? "✓" : "";
+    });
+
+    dialog.style.display = "grid";
 }
 
 function closeHotelStatusMenus() {
@@ -798,6 +865,10 @@ function closeHotelStatusMenus() {
     document.querySelectorAll(".hotel-status-trigger").forEach(function (button) {
         button.setAttribute("aria-expanded", "false");
     });
+
+    const dialog = document.getElementById("hotelStatusDialog");
+    if (dialog) dialog.style.display = "none";
+    activeHotelStatusId = null;
 }
 
 function getHotelPageSize() {
@@ -1842,13 +1913,16 @@ hotelTableBody.addEventListener("click", async function (event) {
     switch (button.dataset.action) {
 
         case "toggle-status-menu": {
-            const menu = document.querySelector(`[data-status-menu="${id}"]`);
-            const isOpen = menu && !menu.classList.contains("hidden");
+            const dialog = document.getElementById("hotelStatusDialog");
+            const isOpen =
+                dialog?.style.display === "grid" &&
+                String(activeHotelStatusId) === String(id);
 
             closeHotelStatusMenus();
 
-            if (menu && !isOpen) {
-                openHotelStatusMenu(button, menu);
+            if (!isOpen) {
+                openHotelStatusDialog(id);
+                button.setAttribute("aria-expanded", "true");
             }
 
             break;
