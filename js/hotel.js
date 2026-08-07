@@ -1428,7 +1428,7 @@ function renderHotels() {
 }
 
 function openHotelStatusMenu(button, menu) {
-    const viewportGap = 12;
+    const viewportGap = 8;
     const menuGap = 6;
 
     menu.style.visibility = "hidden";
@@ -1436,11 +1436,23 @@ function openHotelStatusMenu(button, menu) {
 
     const buttonRect = button.getBoundingClientRect();
     const menuRect = menu.getBoundingClientRect();
-    const availableLeft = window.innerWidth - menuRect.width - viewportGap;
-    const left = Math.max(
-        viewportGap,
-        Math.min(buttonRect.right - menuRect.width, availableLeft)
-    );
+    const spaceOnRight = window.innerWidth - buttonRect.right - viewportGap;
+    const spaceOnLeft = buttonRect.left - viewportGap;
+    let left;
+
+    if (spaceOnRight >= menuRect.width + menuGap) {
+        left = buttonRect.right + menuGap;
+    } else if (spaceOnLeft >= menuRect.width + menuGap) {
+        left = buttonRect.left - menuRect.width - menuGap;
+    } else {
+        left = Math.max(
+            viewportGap,
+            Math.min(
+                buttonRect.left + (buttonRect.width - menuRect.width) / 2,
+                window.innerWidth - menuRect.width - viewportGap
+            )
+        );
+    }
     const canOpenAbove =
         buttonRect.top - menuRect.height - menuGap >= viewportGap;
     const wouldOverflowBelow =
