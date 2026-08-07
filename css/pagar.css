@@ -143,6 +143,24 @@
     font-weight: 700;
 }
 
+.table-wrapper .finance-items-count {
+    min-width: 50px;
+    padding: 5px 8px;
+    font-size: 10px;
+}
+
+.table-wrapper .finance-service-summary {
+    gap: 2px;
+}
+
+.table-wrapper .finance-service-summary strong {
+    font-size: 11px;
+}
+
+.table-wrapper .finance-service-summary span {
+    font-size: 10px;
+}
+
 .danger-icon {
     color: #dc2626;
 }
