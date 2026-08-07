@@ -790,6 +790,9 @@ function renderHotelStatusMenu(hotel) {
 function closeHotelStatusMenus() {
     document.querySelectorAll(".hotel-status-dropdown").forEach(function (menu) {
         menu.classList.add("hidden");
+        menu.style.removeProperty("top");
+        menu.style.removeProperty("left");
+        menu.style.removeProperty("visibility");
     });
 
     document.querySelectorAll(".hotel-status-trigger").forEach(function (button) {
@@ -1424,6 +1427,35 @@ function renderHotels() {
 
 }
 
+function openHotelStatusMenu(button, menu) {
+    const viewportGap = 12;
+    const menuGap = 6;
+
+    menu.style.visibility = "hidden";
+    menu.classList.remove("hidden");
+
+    const buttonRect = button.getBoundingClientRect();
+    const menuRect = menu.getBoundingClientRect();
+    const availableLeft = window.innerWidth - menuRect.width - viewportGap;
+    const left = Math.max(
+        viewportGap,
+        Math.min(buttonRect.right - menuRect.width, availableLeft)
+    );
+    const canOpenAbove =
+        buttonRect.top - menuRect.height - menuGap >= viewportGap;
+    const wouldOverflowBelow =
+        buttonRect.bottom + menuGap + menuRect.height >
+        window.innerHeight - viewportGap;
+    const top = wouldOverflowBelow && canOpenAbove
+        ? buttonRect.top - menuRect.height - menuGap
+        : buttonRect.bottom + menuGap;
+
+    menu.style.left = `${left}px`;
+    menu.style.top = `${Math.max(viewportGap, top)}px`;
+    menu.style.visibility = "visible";
+    button.setAttribute("aria-expanded", "true");
+}
+
 function syncHotelSelectionControls(filteredHotels = getFilteredHotels()) {
     const selectableHotels = filteredHotels.filter(function (hotel) {
         return hotel.status !== "CONCLUIDO";
@@ -1804,8 +1836,7 @@ hotelTableBody.addEventListener("click", async function (event) {
             closeHotelStatusMenus();
 
             if (menu && !isOpen) {
-                menu.classList.remove("hidden");
-                button.setAttribute("aria-expanded", "true");
+                openHotelStatusMenu(button, menu);
             }
 
             break;
@@ -1931,6 +1962,9 @@ document.addEventListener("click", function (event) {
         closeHotelStatusMenus();
     }
 });
+
+window.addEventListener("resize", closeHotelStatusMenus);
+window.addEventListener("scroll", closeHotelStatusMenus, true);
 
 hotelDetailClose.addEventListener("click", closeHotelDetails);
 hotelDetailDone.addEventListener("click", closeHotelDetails);
