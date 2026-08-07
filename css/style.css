@@ -1736,56 +1736,90 @@ body.app-body .btn-danger {
 }
 
 .table-wrapper table {
-    font-size: 12px;
+    width: 100%;
+    table-layout: auto;
+    font-size: clamp(10px, 0.78vw, 12px);
 }
 
 .table-wrapper th {
-    padding: 9px 10px;
-    font-size: 9px;
+    padding: clamp(6px, 0.62vw, 9px) clamp(6px, 0.7vw, 10px);
+    font-size: clamp(8px, 0.62vw, 9px);
     letter-spacing: 0.06em;
 }
 
 .table-wrapper td {
-    padding: 8px 10px;
+    padding: clamp(6px, 0.58vw, 8px) clamp(6px, 0.7vw, 10px);
     line-height: 1.25;
+    white-space: normal;
 }
 
 .table-wrapper input[type="checkbox"] {
-    width: 14px;
-    height: 14px;
+    width: clamp(12px, 1vw, 14px);
+    height: clamp(12px, 1vw, 14px);
 }
 
 .table-wrapper .action-buttons {
-    gap: 5px;
+    gap: clamp(3px, 0.36vw, 5px);
 }
 
 .table-wrapper .icon-button {
-    width: 29px;
-    height: 29px;
-    border-radius: 9px;
+    width: clamp(25px, 2.15vw, 29px);
+    height: clamp(25px, 2.15vw, 29px);
+    border-radius: clamp(7px, 0.7vw, 9px);
+    flex: 0 0 auto;
 }
 
 .table-wrapper .icon-button svg {
-    width: 14px;
-    height: 14px;
+    width: clamp(12px, 1vw, 14px);
+    height: clamp(12px, 1vw, 14px);
 }
 
 .table-wrapper .badge {
-    min-width: 68px;
-    padding: 4px 7px;
-    font-size: 9px;
+    min-width: clamp(58px, 5vw, 68px);
+    padding: clamp(3px, 0.3vw, 4px) clamp(5px, 0.5vw, 7px);
+    font-size: clamp(8px, 0.62vw, 9px);
 }
 
 .table-wrapper .table-input {
-    width: 125px;
-    height: 30px;
-    border-radius: 9px;
-    padding: 0 8px;
-    font-size: 11px;
+    width: clamp(88px, 9vw, 125px);
+    height: clamp(27px, 2.3vw, 30px);
+    border-radius: clamp(7px, 0.7vw, 9px);
+    padding: 0 clamp(6px, 0.55vw, 8px);
+    font-size: clamp(9px, 0.76vw, 11px);
 }
 
 .refund-table .refund-rloc-input {
-    width: 96px;
+    width: clamp(72px, 7vw, 96px);
+}
+
+.table-wrapper .action-buttons,
+.table-wrapper .badge,
+.table-wrapper .table-input,
+.table-wrapper .finance-items-count,
+.table-wrapper .refund-gross-value,
+.table-wrapper td:first-child,
+.table-wrapper td:last-child {
+    white-space: nowrap;
+}
+
+@media (max-width: 1180px) and (min-width: 761px) {
+    .table-wrapper th {
+        letter-spacing: 0.035em;
+    }
+
+    .table-wrapper .icon-button {
+        border-radius: 7px;
+    }
+
+    .table-wrapper td {
+        line-height: 1.18;
+    }
+}
+
+@media (max-width: 760px) {
+    .table-wrapper table {
+        min-width: 860px;
+    }
 }
 
 .table-pagination {
@@ -1798,4 +1832,80 @@ body.app-body .btn-danger {
     min-height: 34px;
     padding: 0 12px;
     font-size: 11px;
+}
+
+/* Hotéis — ações e seletor de status */
+
+.module-hotel .table-wrapper .action-buttons {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: flex-start;
+}
+
+.module-hotel .hotel-status-menu {
+    position: relative;
+    display: inline-flex;
+    flex: 0 0 auto;
+}
+
+.module-hotel .hotel-status-dropdown {
+    position: fixed;
+    z-index: 320;
+    display: grid;
+    width: 210px;
+    gap: 3px;
+    padding: 6px;
+    overflow: hidden;
+    border: 1px solid #d7e3e8;
+    border-radius: 12px;
+    background: #ffffff;
+    box-shadow: 0 14px 34px rgba(15, 23, 42, 0.18);
+}
+
+.module-hotel .hotel-status-dropdown.hidden {
+    display: none;
+}
+
+.module-hotel .hotel-status-option {
+    display: flex;
+    width: 100%;
+    min-height: 34px;
+    align-items: center;
+    gap: 8px;
+    border: 0;
+    border-radius: 9px;
+    padding: 7px 10px;
+    color: var(--text);
+    background: transparent;
+    font: inherit;
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 1.2;
+    text-align: left;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.module-hotel .hotel-status-option:hover,
+.module-hotel .hotel-status-option.active {
+    color: var(--hotel-dark);
+    background: #ecfdf8;
+}
+
+.module-hotel .hotel-status-option svg {
+    width: 14px;
+    height: 14px;
+    flex: 0 0 auto;
+}
+
+.module-hotel .table-wrapper td:nth-last-child(2),
+.module-hotel .table-wrapper td:last-child {
+    white-space: nowrap;
+}
+
+@media (max-width: 1180px) {
+    .module-hotel .table-wrapper table {
+        min-width: 1080px;
+    }
 }
