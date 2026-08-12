@@ -8,7 +8,22 @@
     color: var(--refund);
 }
 
+.module-refund .app-main,
+.module-refund .tabs-card,
+.module-refund .refund-page,
+.module-refund .refund-layout,
+.module-refund .refund-form-card,
+.module-refund .refund-table-card {
+    min-width: 0;
+    max-width: 100%;
+}
+
+.module-refund .app-main {
+    overflow-x: hidden;
+}
+
 .refund-page {
+    width: 100%;
     padding: 26px;
 }
 
@@ -21,6 +36,7 @@
 
 .refund-summary-card {
     display: flex;
+    min-width: 0;
     min-height: 96px;
     flex-direction: column;
     justify-content: center;
@@ -39,13 +55,14 @@
 .refund-summary-card strong {
     display: block;
     margin-top: 8px;
+    overflow-wrap: anywhere;
     color: var(--refund-dark);
     font-size: 24px;
 }
 
 .refund-layout {
     display: grid;
-    grid-template-columns: minmax(340px, 0.85fr) minmax(0, 1.35fr);
+    grid-template-columns: minmax(300px, 0.72fr) minmax(0, 1.45fr);
     gap: 22px;
 }
 
@@ -63,7 +80,8 @@
 }
 
 .refund-table-card {
-    min-width: 0;
+    width: 100%;
+    overflow: hidden;
 }
 
 .refund-table-header {
@@ -73,8 +91,37 @@
     border-bottom: 1px solid var(--line);
 }
 
+.refund-table-header > div:first-child {
+    min-width: 0;
+}
+
+.refund-table-header h3 {
+    overflow-wrap: anywhere;
+}
+
 .refund-filters {
-    grid-template-columns: 160px 160px 190px minmax(200px, 1fr);
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)) !important;
+    width: 100%;
+    min-width: 0;
+}
+
+.refund-filters > * {
+    width: 100%;
+    min-width: 0;
+}
+
+.refund-table-wrapper {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-gutter: stable;
+}
+
+.refund-table {
+    width: 100%;
+    min-width: 980px;
 }
 
 .refund-table-footer {
@@ -201,25 +248,39 @@
     min-width: 104px;
 }
 
-@media (max-width: 1200px) {
+@media (max-width: 1450px) {
     .refund-layout {
         grid-template-columns: 1fr;
     }
-
-    .refund-filters {
-        grid-template-columns: 1fr 1fr;
-    }
 }
 
-@media (max-width: 760px) {
+@media (max-width: 900px) {
     .refund-page {
         padding: 18px;
     }
 
-    .refund-summary-grid,
+    .refund-summary-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .refund-table-header {
+        align-items: stretch;
+    }
+
+    .refund-table-header .table-header-actions {
+        justify-content: flex-start;
+    }
+}
+
+@media (max-width: 760px) {
     .refund-filters,
     .refund-form-card .form-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: 1fr !important;
+    }
+
+    .refund-form-card,
+    .refund-table-card {
+        padding: 18px;
     }
 
     .modal-actions {
