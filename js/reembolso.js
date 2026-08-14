@@ -1078,6 +1078,11 @@
             "hidden",
             selectedRefunds.size === 0 || !isAdminOrMaster()
         );
+
+        completeSelectedButton.innerHTML = `
+            <i data-lucide="list-checks"></i>
+            Alterar status (${selectedRefunds.size})
+        `;
     
         lucide.createIcons();
     }
@@ -1521,18 +1526,49 @@
         await loadRefunds();
     }
     
-    async function completeSelectedRefunds() {
-        if (!isAdminOrMaster() || selectedRefunds.size === 0) {
-            return;
-        }
-    
-        const confirmAction = await requestConfirmation({
-            title: "Concluir reembolsos",
-            message: `Deseja concluir ${selectedRefunds.size} reembolso(s) selecionado(s)?`,
-            confirmLabel: "Concluir"
+    function requestRefundStatusSelection(count) {
+        return new Promise(function (resolve) {
+            const backdrop = document.createElement("div");
+            backdrop.style.cssText = "position:fixed;inset:0;z-index:9999;display:grid;place-items:center;padding:20px;background:rgba(15,23,42,.48);backdrop-filter:blur(2px)";
+            backdrop.innerHTML = `
+                <div role="dialog" aria-modal="true" style="width:min(360px,100%);border:1px solid #fde68a;border-radius:18px;padding:18px;background:#fff;box-shadow:0 24px 70px rgba(15,23,42,.28)">
+                    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:14px">
+                        <div>
+                            <small style="color:#64748b;font-weight:700;text-transform:uppercase">Alterar status</small>
+                            <strong style="display:block;margin-top:4px;color:#172033;font-size:16px">${count} reembolso(s) selecionado(s)</strong>
+                        </div>
+                        <button type="button" data-close-status style="width:30px;height:30px;border:1px solid #dbe4ea;border-radius:9px;background:#fff;cursor:pointer">&times;</button>
+                    </div>
+                    <div style="display:grid;gap:7px">
+                        <button type="button" data-status-choice="PENDENTE" style="min-height:40px;border:1px solid #fde68a;border-radius:11px;color:#92400e;background:#fffbeb;font:inherit;font-weight:600;cursor:pointer">Pendente</button>
+                        <button type="button" data-status-choice="CONCLUIDO" style="min-height:40px;border:1px solid #bbf7d0;border-radius:11px;color:#166534;background:#f0fdf4;font:inherit;font-weight:600;cursor:pointer">Concluído</button>
+                    </div>
+                </div>
+            `;
+
+            function finish(value) {
+                document.removeEventListener("keydown", handleEscape);
+                backdrop.remove();
+                resolve(value);
+            }
+
+            function handleEscape(event) {
+                if (event.key === "Escape") finish(null);
+            }
+
+            backdrop.addEventListener("click", function (event) {
+                const option = event.target.closest("[data-status-choice]");
+                if (option) return finish(option.dataset.statusChoice);
+                if (event.target === backdrop || event.target.closest("[data-close-status]")) finish(null);
+            });
+
+            document.addEventListener("keydown", handleEscape);
+            document.body.appendChild(backdrop);
         });
-    
-        if (!confirmAction) {
+    }
+
+    async function updateSelectedRefundsStatus(status) {
+        if (!isAdminOrMaster() || selectedRefunds.size === 0) {
             return;
         }
     
@@ -1541,19 +1577,27 @@
             return ids.map(String).includes(String(item.id));
         });
     
+        const payload = {
+            status,
+            updated_by: currentUser.id
+        };
+
+        if (status === "CONCLUIDO") {
+            payload.concluido_por = currentUser.id;
+            payload.concluido_em = new Date().toISOString();
+        } else {
+            payload.concluido_por = null;
+            payload.concluido_em = null;
+        }
+
         const { error } = await supabaseClient
             .from("reembolsos")
-            .update({
-                status: "CONCLUIDO",
-                concluido_por: currentUser.id,
-                concluido_em: new Date().toISOString(),
-                updated_by: currentUser.id
-            })
+            .update(payload)
             .in("id", ids);
     
         if (error) {
             console.error(error);
-            showToast("Erro ao concluir selecionados.");
+            showToast("Erro ao alterar os status selecionados.");
             return;
         }
     
@@ -1561,21 +1605,16 @@
             await registerHistory(
                 "REEMBOLSOS",
                 before,
-                { ...before, status: "CONCLUIDO" },
+                { ...before, ...payload },
                 "STATUS"
             );
 
-            Object.assign(before, {
-                status: "CONCLUIDO",
-                concluido_por: currentUser.id,
-                concluido_em: new Date().toISOString(),
-                updated_by: currentUser.id
-            });
+            Object.assign(before, payload);
         }
     
         selectedRefunds.clear();
         selectAllRefunds.checked = false;
-        showToast("Reembolsos conclu\u00eddos.");
+        showToast("Status dos reembolsos atualizado.");
         renderRefundsQuietly();
     }
     
@@ -1918,7 +1957,10 @@
             }
         });
     
-        completeSelectedButton.addEventListener("click", completeSelectedRefunds);
+        completeSelectedButton.addEventListener("click", async function () {
+            const status = await requestRefundStatusSelection(selectedRefunds.size);
+            if (status) await updateSelectedRefundsStatus(status);
+        });
         exportRefundsButton.addEventListener("click", exportRefundsToExcel);
     
         logoutButton.addEventListener("click", async function () {
@@ -1971,3 +2013,4 @@
     }
     
     startRefundModule();
+s
