@@ -1309,6 +1309,18 @@ async function openHistory(moduleName, id, title, currentItem = null) {
     lucide.createIcons();
 }
 
+function renderHotelsQuietly() {
+    const wrapper = hotelTableBody.closest(".table-wrapper");
+    wrapper?.classList.add("table-update-silent");
+    renderHotels();
+
+    requestAnimationFrame(function () {
+        requestAnimationFrame(function () {
+            wrapper?.classList.remove("table-update-silent");
+        });
+    });
+}
+
 function renderHotels() {
 
     const filteredHotels = getFilteredHotels();
@@ -1618,7 +1630,11 @@ async function updateHotelStatus(id, status) {
 
     showToast("Status atualizado.");
 
-    await loadHotels();
+    if (before) {
+        Object.assign(before, payload);
+    }
+
+    renderHotelsQuietly();
 
 }
 
@@ -1679,6 +1695,7 @@ async function completeSelectedHotels() {
             "STATUS"
         );
         selectedHotels.delete(before.id);
+        Object.assign(before, payload);
     }
 
     selectAllHotels.checked = false;
@@ -1689,7 +1706,7 @@ async function completeSelectedHotels() {
             ? "Solicita\u00e7\u00e3o conclu\u00edda."
             : "Solicita\u00e7\u00f5es conclu\u00eddas."
     );
-    await loadHotels();
+    renderHotelsQuietly();
 }
 
 async function deleteHotel(id) {
