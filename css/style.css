@@ -1195,6 +1195,11 @@ body.app-body .main-content {
     animation-delay: 0.03s;
 }
 
+/* Atualizações locais de status não repetem a animação de carregamento. */
+.table-wrapper.table-update-silent tbody tr {
+    animation: none !important;
+}
+
 .modal-card,
 .hotel-detail-modal,
 .finance-detail-modal,
