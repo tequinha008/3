@@ -12,6 +12,7 @@ const hotelForm = document.getElementById("hotelForm");
 const dataSolicitacao = document.getElementById("dataSolicitacao");
 const emissorNome = document.getElementById("emissorNome");
 const nomeHotel = document.getElementById("nomeHotel");
+const nomeHotelMessage = document.getElementById("nomeHotelMessage");
 const ruaNumero = document.getElementById("ruaNumero");
 const bairro = document.getElementById("bairro");
 const cidadeEstado = document.getElementById("cidadeEstado");
@@ -70,6 +71,33 @@ function onlyNumbers(value) {
 
 function normalizeText(value) {
     return String(value || "").trim().toUpperCase();
+}
+
+function normalizeHotelName(value) {
+    return normalizeText(value).replace(/\s+/g, " ");
+}
+
+function validateHotelName(showBrowserMessage = false) {
+    const value = normalizeHotelName(nomeHotel.value);
+    const hasForbiddenCharacters = value !== "" && !/^[A-Z0-9Ç ]+$/.test(value);
+    const message = hasForbiddenCharacters
+        ? "Não use acentos, hífen, barra ou símbolos. São permitidos letras, números, espaços e Ç."
+        : "";
+
+    nomeHotel.value = value;
+    nomeHotel.setCustomValidity(message);
+    nomeHotel.classList.toggle("field-invalid", hasForbiddenCharacters);
+
+    if (nomeHotelMessage) {
+        nomeHotelMessage.textContent = message;
+    }
+
+    if (hasForbiddenCharacters && showBrowserMessage) {
+        nomeHotel.reportValidity();
+        showToast("Corrija o nome do hotel antes de salvar.");
+    }
+
+    return value !== "" && !hasForbiddenCharacters;
 }
 
 function normalizeSearchText(value) {
@@ -284,6 +312,10 @@ function handleTipoChange() {
 async function saveHotel(event) {
     event.preventDefault();
 
+    if (!validateHotelName(true)) {
+        return;
+    }
+
     saveHotelButton.disabled = true;
     saveHotelButton.textContent = "Salvando...";
 
@@ -302,7 +334,7 @@ async function saveHotel(event) {
         data_solicitacao: dataSolicitacao.value,
         emissor_id: currentUser.id,
         emissor_nome: currentProfile.nome,
-        nome_hotel: normalizeText(nomeHotel.value),
+        nome_hotel: normalizeHotelName(nomeHotel.value),
         rua_numero: normalizeText(ruaNumero.value),
         bairro: normalizeText(bairro.value),
         cidade_estado: normalizeText(cidadeEstado.value),
@@ -400,7 +432,7 @@ function buildHotelPayload() {
         data_solicitacao: dataSolicitacao.value,
         emissor_id: editingHotelId ? emitter.id : currentUser.id,
         emissor_nome: editingHotelId ? emitter.nome : currentProfile.nome,
-        nome_hotel: normalizeText(nomeHotel.value),
+        nome_hotel: normalizeHotelName(nomeHotel.value),
         rua_numero: normalizeText(ruaNumero.value),
         bairro: normalizeText(bairro.value),
         cidade_estado: normalizeText(cidadeEstado.value),
@@ -464,6 +496,10 @@ async function registerHistory(moduleName, before, after, action) {
 
 async function saveHotel(event) {
     event.preventDefault();
+
+    if (!validateHotelName(true)) {
+        return;
+    }
 
     saveHotelButton.disabled = true;
     saveHotelButton.textContent = "Salvando...";
@@ -768,6 +804,7 @@ function renderHotelStatusMenu(hotel) {
 }
 
 let activeHotelStatusId = null;
+let activeHotelStatusIds = [];
 
 function ensureHotelStatusDialog() {
     let dialog = document.getElementById("hotelStatusDialog");
@@ -820,12 +857,18 @@ function ensureHotelStatusDialog() {
         }
 
         const optionButton = event.target.closest("[data-dialog-hotel-status]");
-        if (!optionButton || !activeHotelStatusId) return;
+        if (!optionButton || (!activeHotelStatusId && activeHotelStatusIds.length === 0)) return;
 
         const hotelId = activeHotelStatusId;
+        const hotelIds = [...activeHotelStatusIds];
         const status = optionButton.dataset.dialogHotelStatus;
         closeHotelStatusMenus();
-        await updateHotelStatus(hotelId, status);
+
+        if (hotelIds.length > 0) {
+            await updateSelectedHotelsStatus(hotelIds, status);
+        } else {
+            await updateHotelStatus(hotelId, status);
+        }
     });
 
     document.body.appendChild(dialog);
@@ -842,9 +885,49 @@ function openHotelStatusDialog(id) {
         : hotel?.status;
 
     activeHotelStatusId = String(id);
+    activeHotelStatusIds = [];
+    dialog.querySelector("#hotelStatusDialogTitle").textContent = "Selecione o novo status";
 
     dialog.querySelectorAll("[data-dialog-hotel-status]").forEach(function (button) {
         const isActive = button.dataset.dialogHotelStatus === currentStatus;
+        button.style.borderColor = isActive ? "#5eead4" : "#dbe4ea";
+        button.style.color = isActive ? "#0f766e" : "#172033";
+        button.style.background = isActive ? "#ecfdf8" : "#ffffff";
+        button.querySelector("[data-status-check]").textContent = isActive ? "✓" : "";
+    });
+
+    dialog.style.display = "grid";
+}
+
+function openSelectedHotelStatusDialog() {
+    const selectedItems = hotels.filter(function (hotel) {
+        return selectedHotels.has(hotel.id);
+    });
+
+    if (!isAdminOrMaster() || selectedItems.length === 0) {
+        showToast("Selecione pelo menos uma solicitação.");
+        return;
+    }
+
+    const dialog = ensureHotelStatusDialog();
+    const normalizedStatuses = selectedItems.map(function (hotel) {
+        return hotel.status === "JA_CADASTRADO"
+            ? "CADASTRADO_BENNER"
+            : hotel.status;
+    });
+    const currentStatus = normalizedStatuses.every(function (status) {
+        return status === normalizedStatuses[0];
+    }) ? normalizedStatuses[0] : null;
+
+    activeHotelStatusId = null;
+    activeHotelStatusIds = selectedItems.map(function (hotel) {
+        return hotel.id;
+    });
+    dialog.querySelector("#hotelStatusDialogTitle").textContent =
+        `Escolha o status para ${selectedItems.length} solicitação(ões)`;
+
+    dialog.querySelectorAll("[data-dialog-hotel-status]").forEach(function (button) {
+        const isActive = Boolean(currentStatus) && button.dataset.dialogHotelStatus === currentStatus;
         button.style.borderColor = isActive ? "#5eead4" : "#dbe4ea";
         button.style.color = isActive ? "#0f766e" : "#172033";
         button.style.background = isActive ? "#ecfdf8" : "#ffffff";
@@ -869,6 +952,7 @@ function closeHotelStatusMenus() {
     const dialog = document.getElementById("hotelStatusDialog");
     if (dialog) dialog.style.display = "none";
     activeHotelStatusId = null;
+    activeHotelStatusIds = [];
 }
 
 function getHotelPageSize() {
@@ -1363,7 +1447,7 @@ function renderHotels() {
                     type="checkbox"
                     class="hotel-checkbox"
                     data-id="${hotel.id}"
-                    ${hotel.status === "CONCLUIDO" || !isAdminOrMaster() ? "disabled" : ""}
+                    ${!isAdminOrMaster() ? "disabled" : ""}
                     ${checked}>
 
             </td>
@@ -1552,16 +1636,14 @@ function openHotelStatusMenu(button, menu) {
 }
 
 function syncHotelSelectionControls(filteredHotels = getFilteredHotels()) {
-    const selectableHotels = filteredHotels.filter(function (hotel) {
-        return hotel.status !== "CONCLUIDO";
-    });
+    const selectableHotels = filteredHotels;
 
     const selectedInFilter = selectableHotels.filter(function (hotel) {
         return selectedHotels.has(hotel.id);
     });
 
     const selectedCount = hotels.filter(function (hotel) {
-        return hotel.status !== "CONCLUIDO" && selectedHotels.has(hotel.id);
+        return selectedHotels.has(hotel.id);
     }).length;
 
     selectAllHotels.disabled = !isAdminOrMaster() || selectableHotels.length === 0;
@@ -1578,8 +1660,8 @@ function syncHotelSelectionControls(filteredHotels = getFilteredHotels()) {
     );
 
     completeSelectedButton.innerHTML = `
-        <i data-lucide="check-check"></i>
-        Concluir selecionados (${selectedCount})
+        <i data-lucide="list-checks"></i>
+        Alterar status (${selectedCount})
     `;
 
     lucide.createIcons();
@@ -1638,40 +1720,35 @@ async function updateHotelStatus(id, status) {
 
 }
 
-async function completeSelectedHotels() {
+async function updateSelectedHotelsStatus(ids, status) {
     if (!isAdminOrMaster()) {
-        showToast("Voc\u00ea n\u00e3o tem permiss\u00e3o para concluir solicita\u00e7\u00f5es.");
+        showToast("Você não tem permissão para alterar solicitações.");
         return;
     }
 
     const selectedItems = hotels.filter(function (hotel) {
-        return selectedHotels.has(hotel.id) && hotel.status !== "CONCLUIDO";
+        return ids.map(String).includes(String(hotel.id));
     });
 
     if (selectedItems.length === 0) {
-        showToast("Selecione pelo menos uma solicita\u00e7\u00e3o pendente.");
+        showToast("Selecione pelo menos uma solicitação.");
         return;
     }
-
-    const confirmed = window.confirm(
-        `Deseja concluir ${selectedItems.length} solicita\u00e7\u00e3o(\u00f5es) de hotel selecionada(s)?`
-    );
-
-    if (!confirmed) {
-        return;
-    }
-
-    const ids = selectedItems.map(function (hotel) {
-        return hotel.id;
-    });
 
     const payload = {
-        status: "CONCLUIDO",
-        concluido_por: currentUser.id,
-        concluido_por_nome: currentProfile.nome,
-        concluido_em: new Date().toISOString(),
+        status,
         updated_by: currentUser.id
     };
+
+    if (status === "CONCLUIDO") {
+        payload.concluido_por = currentUser.id;
+        payload.concluido_por_nome = currentProfile.nome;
+        payload.concluido_em = new Date().toISOString();
+    } else {
+        payload.concluido_por = null;
+        payload.concluido_por_nome = null;
+        payload.concluido_em = null;
+    }
 
     completeSelectedButton.disabled = true;
 
@@ -1682,7 +1759,7 @@ async function completeSelectedHotels() {
 
     if (error) {
         console.error(error);
-        showToast("Erro ao concluir as solicita\u00e7\u00f5es selecionadas.");
+        showToast("Erro ao alterar as solicitações selecionadas.");
         completeSelectedButton.disabled = false;
         return;
     }
@@ -1701,11 +1778,7 @@ async function completeSelectedHotels() {
     selectAllHotels.checked = false;
     selectAllHotels.indeterminate = false;
     completeSelectedButton.disabled = false;
-    showToast(
-        selectedItems.length === 1
-            ? "Solicita\u00e7\u00e3o conclu\u00edda."
-            : "Solicita\u00e7\u00f5es conclu\u00eddas."
-    );
+    showToast("Status das solicitações atualizado.");
     renderHotelsQuietly();
 }
 
@@ -1839,12 +1912,19 @@ function resetHotelForm() {
     emissorNome.value = currentProfile.nome;
     pais.value = "Brasil";
     tipoHotel.value = "NACIONAL";
+    nomeHotel.setCustomValidity("");
+    nomeHotel.classList.remove("field-invalid");
+    if (nomeHotelMessage) nomeHotelMessage.textContent = "";
     saveHotelButton.textContent = "Salvar solicita\u00e7\u00e3o";
     fillHotelEmitterSelect(currentUser.id);
     handleTipoChange();
 }
 
 hotelForm.addEventListener("submit", saveHotel);
+
+nomeHotel.addEventListener("input", function () {
+    validateHotelName(false);
+});
 
 tipoHotel.addEventListener("change", handleTipoChange);
 
@@ -2017,7 +2097,7 @@ hotelTableBody.addEventListener("change", async function (event) {
             return String(item.id) === String(input.dataset.id);
         });
 
-        if (!hotel || hotel.status === "CONCLUIDO" || !isAdminOrMaster()) {
+        if (!hotel || !isAdminOrMaster()) {
             input.checked = false;
             return;
         }
@@ -2044,10 +2124,6 @@ selectAllHotels.addEventListener("change", function () {
     }
 
     getFilteredHotels().forEach(function (hotel) {
-        if (hotel.status === "CONCLUIDO") {
-            return;
-        }
-
         if (selectAllHotels.checked) {
             selectedHotels.add(hotel.id);
         } else {
@@ -2058,10 +2134,14 @@ selectAllHotels.addEventListener("change", function () {
     renderHotels();
 });
 
-completeSelectedButton.addEventListener("click", completeSelectedHotels);
+completeSelectedButton.addEventListener("click", openSelectedHotelStatusDialog);
 
 document.addEventListener("click", function (event) {
-    if (!event.target.closest(".hotel-status-menu")) {
+    if (
+        !event.target.closest(".hotel-status-menu") &&
+        !event.target.closest("#completeSelectedButton") &&
+        !event.target.closest("#hotelStatusDialog")
+    ) {
         closeHotelStatusMenus();
     }
 });
