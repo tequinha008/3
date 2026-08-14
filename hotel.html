@@ -139,7 +139,14 @@
 
                     <div class="form-field span-2">
                         <label>Nome do hotel</label>
-                        <input type="text" id="nomeHotel" required>
+                        <input
+                            type="text"
+                            id="nomeHotel"
+                            pattern="[A-Za-z0-9Çç ]+"
+                            title="Use apenas letras sem acento, números, espaços e Ç."
+                            aria-describedby="nomeHotelMessage"
+                            required>
+                        <small id="nomeHotelMessage" class="field-message"></small>
                     </div>
 
                     <div class="form-field span-2">
