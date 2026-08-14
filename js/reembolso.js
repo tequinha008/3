@@ -389,6 +389,7 @@
     }
     
     async function loadClientes() {
+        const selectedClientId = cliente.value;
         const { data, error } = await supabaseClient
             .from("clientes")
             .select("id, nome")
@@ -410,6 +411,63 @@
                 </option>
             `;
         });
+
+        if (selectedClientId && Array.from(cliente.options).some(function (option) {
+            return String(option.value) === String(selectedClientId);
+        })) {
+            cliente.value = selectedClientId;
+        }
+
+        rebuildRefundClientCustomSelect();
+    }
+
+    function rebuildRefundClientCustomSelect() {
+        const wrapper = cliente.closest(".tres-select") ||
+            (cliente.nextElementSibling?.classList.contains("tres-select") ? cliente.nextElementSibling : null) ||
+            cliente.parentElement?.querySelector(".tres-select");
+
+        if (!wrapper) return;
+
+        const menu = wrapper.querySelector(".tres-select-menu");
+        const label = wrapper.querySelector(".tres-select-label");
+
+        if (!menu) return;
+
+        menu.innerHTML = Array.from(cliente.options).map(function (option) {
+            const active = String(option.value) === String(cliente.value) ? "active" : "";
+
+            return `
+                <button type="button" class="tres-select-option ${active}" data-value="${escapeHtml(option.value)}">
+                    <i data-lucide="circle"></i>
+                    <span>${escapeHtml(option.textContent.trim())}</span>
+                </button>
+            `;
+        }).join("");
+
+        if (label) {
+            label.textContent = cliente.selectedOptions?.[0]?.textContent?.trim() || "Selecione";
+        }
+
+        menu.querySelectorAll(".tres-select-option").forEach(function (button) {
+            button.addEventListener("click", function (event) {
+                event.preventDefault();
+                event.stopPropagation();
+                cliente.value = button.dataset.value || "";
+
+                menu.querySelectorAll(".tres-select-option").forEach(function (item) {
+                    item.classList.toggle("active", item === button);
+                });
+
+                if (label) {
+                    label.textContent = cliente.selectedOptions?.[0]?.textContent?.trim() || "Selecione";
+                }
+
+                wrapper.classList.remove("open");
+                cliente.dispatchEvent(new Event("change", { bubbles: true }));
+            });
+        });
+
+        lucide.createIcons();
     }
     
     function calculateTax() {
@@ -885,6 +943,18 @@
         summaryFinal.textContent = money(finalTotal);
     }
     
+    function renderRefundsQuietly() {
+        const wrapper = refundTableBody.closest(".table-wrapper");
+        wrapper?.classList.add("table-update-silent");
+        renderRefunds();
+
+        requestAnimationFrame(function () {
+            requestAnimationFrame(function () {
+                wrapper?.classList.remove("table-update-silent");
+            });
+        });
+    }
+
     function renderRefunds() {
         const filtered = getFilteredRefunds();
         const pageSize = getRefundPageSize();
@@ -1395,9 +1465,16 @@
                 { ...before, status: "CONCLUIDO" },
                 "STATUS"
             );
+
+            Object.assign(before, {
+                status: "CONCLUIDO",
+                concluido_por: currentUser.id,
+                concluido_em: new Date().toISOString(),
+                updated_by: currentUser.id
+            });
         }
-    
-        await loadRefunds();
+
+        renderRefundsQuietly();
     }
     
     async function deleteRefund(id) {
@@ -1487,12 +1564,19 @@
                 { ...before, status: "CONCLUIDO" },
                 "STATUS"
             );
+
+            Object.assign(before, {
+                status: "CONCLUIDO",
+                concluido_por: currentUser.id,
+                concluido_em: new Date().toISOString(),
+                updated_by: currentUser.id
+            });
         }
     
         selectedRefunds.clear();
         selectAllRefunds.checked = false;
         showToast("Reembolsos conclu\u00eddos.");
-        await loadRefunds();
+        renderRefundsQuietly();
     }
     
     function exportRefundsToCSV() {
