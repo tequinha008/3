@@ -2492,6 +2492,18 @@ async function openHistory(moduleName, id, title, currentItem = null) {
     lucide.createIcons();
 }
 
+function renderLancamentosQuietly() {
+    const wrapper = financeTableBody.closest(".table-wrapper");
+    wrapper?.classList.add("table-update-silent");
+    renderLancamentos();
+
+    requestAnimationFrame(function () {
+        requestAnimationFrame(function () {
+            wrapper?.classList.remove("table-update-silent");
+        });
+    });
+}
+
 function renderLancamentos() {
     const filtered = getFilteredLancamentos();
     const pageSize = getFinancePageSize();
@@ -2652,7 +2664,11 @@ async function completeLancamento(id) {
         );
     }
 
-    await loadLancamentos();
+    const updatedGroup = findFinanceGroup(id);
+    updatedGroup?.itens.forEach(function (item) {
+        item.status = "CONCLUIDO";
+    });
+    renderLancamentosQuietly();
 }
 
 async function deleteFinanceGroup(id, skipConfirm = false) {
@@ -2809,12 +2825,16 @@ async function completeSelectedLancamentos() {
             { ...before, status: "CONCLUIDO" },
             "STATUS"
         );
+
+        before.itens.forEach(function (item) {
+            item.status = "CONCLUIDO";
+        });
     }
 
     selectedLancamentos.clear();
     selectAllFinance.checked = false;
     showToast("Lan\u00e7amentos conclu\u00eddos.");
-    await loadLancamentos();
+    renderLancamentosQuietly();
 }
 
 tabButtons.forEach(function (button) {
