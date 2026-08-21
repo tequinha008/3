@@ -31,6 +31,50 @@
     min-height: 18px;
 }
 
+.hotel-name-row {
+    display: grid;
+    grid-template-columns: minmax(0, 3fr) minmax(170px, 0.8fr);
+    gap: 18px;
+    align-items: start;
+}
+
+#hotelDiretoField {
+    justify-content: flex-start;
+    padding-top: 27px;
+}
+
+#hotelDiretoField .checkbox-field {
+    display: flex;
+    width: 100%;
+    min-height: 48px;
+    align-items: center;
+    gap: 10px;
+    margin: 0;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 0 14px;
+    color: var(--text);
+    background: #ffffff;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+#hotelDiretoField .checkbox-field input {
+    width: 16px;
+    height: 16px;
+    flex: 0 0 auto;
+    margin: 0;
+    border: 0;
+    padding: 0;
+    accent-color: var(--hotel);
+    box-shadow: none;
+}
+
+#hotelDiretoField .checkbox-field span {
+    line-height: 1.2;
+}
+
 .hotel-checkbox,
 #selectAllHotels {
     accent-color: var(--hotel);
@@ -275,6 +319,14 @@ body.hotel-detail-open {
 }
 
 @media (max-width: 700px) {
+    .hotel-name-row {
+        grid-template-columns: 1fr;
+    }
+
+    #hotelDiretoField {
+        padding-top: 0;
+    }
+
     .hotel-detail-summary,
     .hotel-info-grid {
         grid-template-columns: 1fr;
