@@ -15,6 +15,10 @@
     <link rel="icon" type="image/png" href="TRES_logo_transparente.png">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/hotel.css">
+    <link rel="icon" type="image/png" href="TRES_logo_transparente.png?v=20260821-2">
+    <link rel="shortcut icon" type="image/png" href="TRES_logo_transparente.png?v=20260821-2">
+    <link rel="stylesheet" href="css/style.css?v=20260821-2">
+    <link rel="stylesheet" href="css/hotel.css?v=20260821-2">
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -131,12 +135,10 @@
                                 required>
                             <small id="nomeHotelMessage" class="field-message"></small>
                         </div>
-                        <div class="form-field" id="hotelDiretoField">
-                            <label class="checkbox-field">
-                                <input type="checkbox" id="hotelDireto">
-                                <span>Hotel direto</span>
-                            </label>
-                        </div>
+                        <label class="hotel-direct-control" id="hotelDiretoField" for="hotelDireto">
+                            <input type="checkbox" id="hotelDireto">
+                            <span>Hotel direto</span>
+                        </label>
                     </div>
                     <div class="form-field span-2">
                         <label>Rua e n&uacute;mero</label>
@@ -299,5 +301,9 @@
     <script src="js/ui-selects.js"></script>
     <script src="js/ui-dates.js"></script>
     <script src="js/hotel.js?v=20260807-3"></script>
+    <script src="js/config.js?v=20260821-2"></script>
+    <script src="js/ui-selects.js?v=20260821-2"></script>
+    <script src="js/ui-dates.js?v=20260821-2"></script>
+    <script src="js/hotel.js?v=20260821-2"></script>
 </body>
 </html>
