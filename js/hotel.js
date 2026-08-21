@@ -19,6 +19,7 @@ const cidadeEstado = document.getElementById("cidadeEstado");
 const pais = document.getElementById("pais");
 const telefone = document.getElementById("telefone");
 const tipoHotel = document.getElementById("tipoHotel");
+const hotelDireto = document.getElementById("hotelDireto");
 const cnpj = document.getElementById("cnpj");
 const cnpjMessage = document.getElementById("cnpjMessage");
 const clearHotelForm = document.getElementById("clearHotelForm");
@@ -341,6 +342,7 @@ async function saveHotel(event) {
         pais: normalizeText(pais.value),
         telefone: onlyNumbers(telefone.value) || null,
         tipo: tipoHotel.value,
+        hotel_direto: Boolean(hotelDireto.checked),
         cnpj: tipoHotel.value === "NACIONAL" ? onlyNumbers(cnpj.value) : null,
         status: "PENDENTE",
         created_by: currentUser.id,
@@ -439,6 +441,7 @@ function buildHotelPayload() {
         pais: normalizeText(pais.value),
         telefone: onlyNumbers(telefone.value) || null,
         tipo: tipoHotel.value,
+        hotel_direto: Boolean(hotelDireto.checked),
         cnpj: tipoHotel.value === "NACIONAL" ? onlyNumbers(cnpj.value) : null,
         status: "PENDENTE",
         updated_by: currentUser.id
@@ -586,6 +589,7 @@ async function loadHotels() {
             pais,
             telefone,
             tipo,
+            hotel_direto,
             cnpj,
             codigo_integracao,
             status,
@@ -1090,6 +1094,7 @@ function openHotelDetails(id) {
         hotelInfoRow("Bairro", detailValue(hotel.bairro)),
         hotelInfoRow("Cidade / Estado", detailValue(hotel.cidade_estado)),
         hotelInfoRow("País", detailValue(hotel.pais)),
+        hotelInfoRow("Hotel direto", hotel.hotel_direto ? "Sim" : "Não"),
         hotelInfoRow(
             "Telefone",
             hotel.telefone ? escapeHtml(formatTelefone(hotel.telefone)) : "-"
@@ -1147,6 +1152,7 @@ function editHotel(id) {
     pais.value = hotel.pais || "";
     telefone.value = hotel.telefone ? formatTelefone(hotel.telefone) : "";
     tipoHotel.value = hotel.tipo || "NACIONAL";
+    hotelDireto.checked = Boolean(hotel.hotel_direto);
     cnpj.value = hotel.cnpj ? formatCNPJ(hotel.cnpj) : "";
     fillHotelEmitterSelect(hotel.emissor_id);
     handleTipoChange();
@@ -1208,6 +1214,7 @@ function friendlyHistoryField(field) {
         pais: "Pa\u00eds",
         telefone: "Telefone",
         tipo: "Tipo",
+        hotel_direto: "Hotel direto",
         cnpj: "CNPJ",
         codigo_integracao: "C\u00f3d. integra\u00e7\u00e3o",
         status: "Status"
@@ -1237,6 +1244,10 @@ function formatHistoryValue(field, value) {
 
     if (field === "status") {
         return hotelStatusLabel(value);
+    }
+
+    if (field === "hotel_direto") {
+        return value ? "Sim" : "Não";
     }
 
     return String(value);
@@ -1835,6 +1846,7 @@ async function duplicateHotel(id) {
     pais.value = hotel.pais;
     telefone.value = hotel.telefone ? formatTelefone(hotel.telefone) : "";
     tipoHotel.value = hotel.tipo;
+    hotelDireto.checked = Boolean(hotel.hotel_direto);
 
     cnpj.value = "";
 
@@ -1912,6 +1924,7 @@ function resetHotelForm() {
     emissorNome.value = currentProfile.nome;
     pais.value = "Brasil";
     tipoHotel.value = "NACIONAL";
+    hotelDireto.checked = false;
     nomeHotel.setCustomValidity("");
     nomeHotel.classList.remove("field-invalid");
     if (nomeHotelMessage) nomeHotelMessage.textContent = "";
