@@ -84,13 +84,9 @@ const taxasValorField = document.getElementById("taxasValorField");
 const taxasValor = document.getElementById("taxasValor");
 const comissaoField = document.getElementById("comissaoField");
 const comissaoPercent = document.getElementById("comissaoPercent");
-const comissaoField = document.getElementById("comissaoField");
-const comissaoPercent = document.getElementById("comissaoPercent");
 const tarifaNetField = document.getElementById("tarifaNetField");
 const tarifaNet = document.getElementById("tarifaNet");
 const comissaoOptionsRow = document.getElementById("comissaoOptionsRow");
-const tarifaNetField = document.getElementById("tarifaNetField");
-const tarifaNet = document.getElementById("tarifaNet");
 const checkinField = document.getElementById("checkinField");
 const checkin = document.getElementById("checkin");
 const checkoutField = document.getElementById("checkoutField");
@@ -316,54 +312,57 @@ function applyUserProfile(profile, user) {
 async function loadClientes() {
     const selectedClientId = cliente.value;
     const selectedFilterId = financeClientFilter?.value || "";
+
     const { data, error } = await supabaseClient
         .from("clientes")
         .select("id, nome")
-        .eq("ativo", true)
         .order("nome");
-    if (error) {
-        console.error(error);
-        return;
-        .select("id, nome")
-        .order("nome");
+
     if (error) {
         console.error("Erro ao carregar clientes:", error);
         showToast("Erro ao carregar os clientes.");
         return;
     }
+
     cliente.innerHTML = `<option value="">Selecione</option>`;
+
     if (financeClientFilter) {
         financeClientFilter.innerHTML = `<option value="">Todos os clientes</option>`;
     }
+
     const clientesDisponiveis = (data || []).filter(function (item) {
         return normalizeText(item.nome) !== "HAOC";
     });
+
     clientesDisponiveis.forEach(function (item) {
-        cliente.innerHTML += `
-            <option value="${item.id}">
-                ${item.nome}
-            </option>
-        `;
+        const formOption = document.createElement("option");
+        formOption.value = item.id;
+        formOption.textContent = item.nome;
+        cliente.appendChild(formOption);
+
         if (financeClientFilter) {
-            financeClientFilter.innerHTML += `
-                <option value="${item.id}">
-                    ${item.nome}
-                </option>
-            `;
+            const filterOption = document.createElement("option");
+            filterOption.value = item.id;
+            filterOption.textContent = item.nome;
+            financeClientFilter.appendChild(filterOption);
         }
     });
+
     if (selectedClientId && Array.from(cliente.options).some(function (option) {
         return String(option.value) === String(selectedClientId);
     })) {
         cliente.value = selectedClientId;
     }
+
     if (financeClientFilter && selectedFilterId && Array.from(financeClientFilter.options).some(function (option) {
         return String(option.value) === String(selectedFilterId);
     })) {
         financeClientFilter.value = selectedFilterId;
     }
+
     rebuildFinanceClientCustomSelect(cliente);
     rebuildFinanceClientCustomSelect(financeClientFilter);
+
     requestAnimationFrame(function () {
         rebuildFinanceClientCustomSelect(cliente);
         rebuildFinanceClientCustomSelect(financeClientFilter);
@@ -461,8 +460,6 @@ function hideAllDynamicFields() {
 function showField(field) {
     field.classList.remove("hidden");
 }
-function handleServiceChange() {
-    hideAllDynamicFields();
 function handleServiceChange() {
     hideAllDynamicFields();
     fornecedorField.classList.add("span-2");
