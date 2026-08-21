@@ -317,7 +317,6 @@ async function loadClientes() {
     const selectedClientId = cliente.value;
     const selectedFilterId = financeClientFilter?.value || "";
     const { data, error } = await supabaseClient
-    let { data, error } = await supabaseClient
         .from("clientes")
         .select("id, nome")
         .eq("ativo", true)
@@ -325,20 +324,12 @@ async function loadClientes() {
     if (error) {
         console.error(error);
         return;
-        .select("id, nome, ativo")
+        .select("id, nome")
         .order("nome");
     if (error) {
-        const fallback = await supabaseClient
-            .from("clientes")
-            .select("id, nome")
-            .order("nome");
-        data = fallback.data;
-        error = fallback.error;
-        if (error) {
-            console.error(error);
-            showToast("Erro ao carregar os clientes.");
-            return;
-        }
+        console.error("Erro ao carregar clientes:", error);
+        showToast("Erro ao carregar os clientes.");
+        return;
     }
     cliente.innerHTML = `<option value="">Selecione</option>`;
     if (financeClientFilter) {
@@ -346,7 +337,6 @@ async function loadClientes() {
     }
     const clientesDisponiveis = (data || []).filter(function (item) {
         return normalizeText(item.nome) !== "HAOC";
-        return item.ativo !== false && normalizeText(item.nome) !== "HAOC";
     });
     clientesDisponiveis.forEach(function (item) {
         cliente.innerHTML += `
@@ -374,7 +364,11 @@ async function loadClientes() {
     }
     rebuildFinanceClientCustomSelect(cliente);
     rebuildFinanceClientCustomSelect(financeClientFilter);
-    lucide.createIcons();
+    requestAnimationFrame(function () {
+        rebuildFinanceClientCustomSelect(cliente);
+        rebuildFinanceClientCustomSelect(financeClientFilter);
+        lucide.createIcons();
+    });
 }
 function rebuildFinanceClientCustomSelect(select) {
     if (!select) {
