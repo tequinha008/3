@@ -315,7 +315,8 @@ async function loadClientes() {
 
     const { data, error } = await supabaseClient
         .from("clientes")
-        .select("id, nome")
+        .select("id, nome, ativo")
+        .eq("ativo", true)
         .order("nome");
 
     if (error) {
@@ -330,8 +331,14 @@ async function loadClientes() {
         financeClientFilter.innerHTML = `<option value="">Todos os clientes</option>`;
     }
 
+    const nomesAntigos = new Set([
+        "HAOC",
+        "EINSTEIN",
+        "EINSTEIN - PROADI"
+    ]);
+
     const clientesDisponiveis = (data || []).filter(function (item) {
-        return normalizeText(item.nome) !== "HAOC";
+        return !nomesAntigos.has(normalizeText(item.nome));
     });
 
     clientesDisponiveis.forEach(function (item) {
