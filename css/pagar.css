@@ -118,12 +118,30 @@
 #hotelDiretoField .checkbox-field {
     width: 100%;
     margin-bottom: 0;
+    border: 0;
+    padding: 0;
+    background: transparent;
+    box-shadow: none;
 }
 
 #hotelDiretoField .checkbox-field input {
     flex: 0 0 auto;
     margin: 0;
     padding: 0;
+}
+
+/* HOTEL: fornecedor largo e flag compacto, sem aparência de campo. */
+@media (min-width: 901px) {
+    #fornecedorField:not(.span-2) {
+        width: 150%;
+        min-width: 0;
+    }
+
+    #hotelDiretoField:not(.hidden) {
+        width: 50%;
+        min-width: 150px;
+        justify-self: end;
+    }
 }
 
 .finance-inline-pair {
