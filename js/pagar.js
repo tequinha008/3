@@ -84,6 +84,9 @@ const bilhete = document.getElementById("bilhete");
 const fornecedorField = document.getElementById("fornecedorField");
 const fornecedor = document.getElementById("fornecedor");
 
+const hotelDiretoField = document.getElementById("hotelDiretoField");
+const hotelDireto = document.getElementById("hotelDireto");
+
 const tarifaField = document.getElementById("tarifaField");
 const tarifa = document.getElementById("tarifa");
 
@@ -529,6 +532,7 @@ function hideAllDynamicFields() {
         aereoSubtypeField,
         consolidadorField,
         fornecedorField,
+        hotelDiretoField,
         tarifaField,
         taxaEmbarqueField,
         rcField,
@@ -559,6 +563,10 @@ function handleServiceChange() {
     const selectedService = servico.value;
     const isAirService = selectedService === "AEREO";
 
+    if (selectedService !== "HOTEL") {
+        hotelDireto.checked = false;
+    }
+
     [diaria, checkin, checkout, valorPeriodo, outroServico].forEach(function (field) {
         field.required = false;
     });
@@ -587,6 +595,7 @@ function handleServiceChange() {
         checkin.required = true;
         checkout.required = true;
         showField(fornecedorField);
+        showField(hotelDiretoField);
         showField(diariaField);
         showField(taxasTipoField);
         showField(taxasValorField);
@@ -747,6 +756,7 @@ const payload = {
     consolidador: isAirService ? consolidador.value || null : null,
 
     fornecedor: normalizeText(fornecedor.value),
+    hotel_direto: isHotelService ? Boolean(hotelDireto.checked) : false,
 
     localizador: isAirService ? normalizeText(localizador.value) || null : null,
     bilhete: isAirService ? normalizeText(bilhete.value) || null : null,
@@ -874,6 +884,7 @@ function buildFinancePayload() {
         outro_servico: selectedService === "OUTROS" ? normalizeText(outroServico.value) : null,
         consolidador: isAirService ? consolidador.value || null : null,
         fornecedor: normalizeText(fornecedor.value),
+        hotel_direto: isHotelService ? Boolean(hotelDireto.checked) : false,
         localizador: isAirService ? normalizeText(localizador.value) || null : null,
         bilhete: isAirService ? normalizeText(bilhete.value) || null : null,
         moeda: isAirService ? moedaPreview.value : "BRL",
@@ -1128,6 +1139,7 @@ function resetFinanceForm() {
     dataLancamento.value = todayISO();
     emissorNome.value = currentProfile.nome;
     tipoLancamento.value = "NACIONAL";
+    hotelDireto.checked = false;
     selectedSubtype = "AEREO";
 
     [diaria, checkin, checkout, valorPeriodo, outroServico].forEach(function (field) {
@@ -1222,6 +1234,7 @@ async function loadLancamentos() {
             outro_servico,
             consolidador,
             fornecedor,
+            hotel_direto,
             localizador,
             bilhete,
             tarifa,
@@ -1528,6 +1541,7 @@ function openFinanceDetails(id) {
         );
     } else if (item.servico === "HOTEL") {
         details.push(
+            detailItem("Hotel direto", item.hotel_direto ? "Sim" : "Não"),
             detailItem("Di\u00e1ria", detailMoney(item.diaria, "BRL")),
             detailItem("Tipo da taxa", detailValue(item.taxas_tipo)),
             detailItem(
@@ -1598,6 +1612,7 @@ function renderFinanceItemDetails(item, index) {
         );
     } else if (item.servico === "HOTEL") {
         details.push(
+            detailItem("Hotel direto", item.hotel_direto ? "Sim" : "Não"),
             detailItem("Di\u00e1ria", detailMoney(item.diaria, "BRL")),
             detailItem("Tipo da taxa", detailValue(item.taxas_tipo)),
             detailItem(
@@ -1727,6 +1742,7 @@ function renderFinanceItemDetails(item, index) {
         );
     } else if (item.servico === "HOTEL") {
         details.push(
+            financeCompactDetail("Hotel direto", item.hotel_direto ? "Sim" : "Não"),
             financeCompactDetail("Di\u00e1ria", detailMoney(item.diaria, "BRL")),
             financeCompactDetail("Taxas / impostos", item.taxas_tipo === "%" ? `${Number(item.taxas_valor || 0).toLocaleString("pt-BR")} %` : detailMoney(item.taxas_valor, "BRL")),
             financeCompactDetail("Comiss\u00e3o", item.tarifa_net ? "Tarifa NET" : `${Number(item.comissao_percent || 0).toLocaleString("pt-BR")} %`),
@@ -1863,6 +1879,7 @@ function editFinance(id) {
     setMoneyField(taxasValor, item.taxas_valor);
     setMoneyField(comissaoPercent, item.comissao_percent);
     tarifaNet.checked = Boolean(item.tarifa_net);
+    hotelDireto.checked = Boolean(item.hotel_direto);
     checkin.value = item.checkin || "";
     checkout.value = item.checkout || "";
 
@@ -1931,6 +1948,7 @@ function duplicateFinance(id) {
     setMoneyField(taxasValor, item.taxas_valor);
     setMoneyField(comissaoPercent, item.comissao_percent);
     tarifaNet.checked = Boolean(item.tarifa_net);
+    hotelDireto.checked = Boolean(item.hotel_direto);
     checkin.value = item.checkin || "";
     checkout.value = item.checkout || "";
 
@@ -2089,6 +2107,7 @@ function buildDuplicatedFinanceItem(item, newOs, newClientId, itemOrder) {
         outro_servico: item.outro_servico,
         consolidador: item.consolidador,
         fornecedor: item.fornecedor,
+        hotel_direto: Boolean(item.hotel_direto),
         localizador: item.localizador,
         bilhete: item.bilhete,
         moeda: item.moeda,
@@ -2252,6 +2271,7 @@ function friendlyHistoryField(field) {
         servico: "Servi\u00e7o",
         subtipo: "Classifica\u00e7\u00e3o",
         fornecedor: "Fornecedor",
+        hotel_direto: "Hotel direto",
         localizador: "Localizador",
         bilhete: "Bilhete",
         tarifa: "Tarifa",
@@ -2320,7 +2340,7 @@ function formatHistoryValue(field, value) {
         return `${Number(value || 0).toLocaleString("pt-BR", { maximumFractionDigits: 2 })}%`;
     }
 
-    if (field === "tarifa_net") {
+    if (field === "tarifa_net" || field === "hotel_direto") {
         return value ? "Sim" : "N\u00e3o";
     }
 
