@@ -465,6 +465,7 @@ function handleServiceChange() {
     fornecedorField.classList.add("span-2");
     const selectedService = servico.value;
     const isAirService = selectedService === "AEREO";
+    financeForm.classList.toggle("hotel-values-compact", selectedService === "HOTEL");
     if (selectedService !== "HOTEL") {
         hotelDireto.checked = false;
     }
