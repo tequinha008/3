@@ -161,12 +161,50 @@
 .finance-inline-pair #tarifaNetField .checkbox-field {
     width: 100%;
     margin-bottom: 0;
+    border: 0;
+    padding: 0;
+    background: transparent;
+    box-shadow: none;
 }
 
 .finance-inline-pair #tarifaNetField .checkbox-field input {
     flex: 0 0 auto;
     margin: 0;
     padding: 0;
+}
+
+/* HOTEL: valores em uma única linha no desktop. */
+@media (min-width: 1201px) {
+    #financeForm.hotel-values-compact {
+        grid-template-columns: repeat(10, minmax(0, 1fr));
+    }
+
+    #financeForm.hotel-values-compact > .form-field {
+        grid-column: span 5;
+    }
+
+    #financeForm.hotel-values-compact > .span-2 {
+        grid-column: span 10;
+    }
+
+    #financeForm.hotel-values-compact > #diariaField,
+    #financeForm.hotel-values-compact > #taxasTipoField,
+    #financeForm.hotel-values-compact > #taxasValorField {
+        grid-column: span 2;
+    }
+
+    #financeForm.hotel-values-compact > #comissaoOptionsRow {
+        display: contents;
+    }
+
+    #financeForm.hotel-values-compact > #comissaoOptionsRow.hidden {
+        display: none;
+    }
+
+    #financeForm.hotel-values-compact > #comissaoOptionsRow > .form-field {
+        grid-column: span 2;
+        min-width: 0;
+    }
 }
 
 .finance-items-count {
