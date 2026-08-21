@@ -111,6 +111,46 @@
     accent-color: var(--finance);
 }
 
+#hotelDiretoField {
+    justify-content: flex-end;
+}
+
+#hotelDiretoField .checkbox-field {
+    width: 100%;
+    margin-bottom: 0;
+}
+
+#hotelDiretoField .checkbox-field input {
+    flex: 0 0 auto;
+    margin: 0;
+    padding: 0;
+}
+
+.finance-inline-pair {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+}
+
+.finance-inline-pair.hidden {
+    display: none;
+}
+
+.finance-inline-pair #tarifaNetField {
+    justify-content: flex-end;
+}
+
+.finance-inline-pair #tarifaNetField .checkbox-field {
+    width: 100%;
+    margin-bottom: 0;
+}
+
+.finance-inline-pair #tarifaNetField .checkbox-field input {
+    flex: 0 0 auto;
+    margin: 0;
+    padding: 0;
+}
+
 .finance-items-count {
     display: inline-flex;
     align-items: center;
@@ -144,9 +184,9 @@
 }
 
 .table-wrapper .finance-items-count {
-    min-width: 50px;
-    padding: 5px 8px;
-    font-size: 10px;
+    min-width: clamp(44px, 4vw, 50px);
+    padding: clamp(4px, 0.36vw, 5px) clamp(6px, 0.55vw, 8px);
+    font-size: clamp(9px, 0.7vw, 10px);
 }
 
 .table-wrapper .finance-service-summary {
@@ -154,11 +194,11 @@
 }
 
 .table-wrapper .finance-service-summary strong {
-    font-size: 11px;
+    font-size: clamp(10px, 0.76vw, 11px);
 }
 
 .table-wrapper .finance-service-summary span {
-    font-size: 10px;
+    font-size: clamp(9px, 0.7vw, 10px);
 }
 
 .danger-icon {
@@ -639,6 +679,10 @@ body.finance-detail-open {
 }
 
 @media (max-width: 580px) {
+    .finance-inline-pair {
+        grid-template-columns: 1fr;
+    }
+
     .finance-duplicate-grid {
         grid-template-columns: 1fr;
     }
