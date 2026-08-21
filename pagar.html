@@ -232,7 +232,7 @@
                         <input type="text" id="fornecedor">
                     </div>
 
-                    <div class="form-field span-2 hidden" id="hotelDiretoField">
+                    <div class="form-field hidden" id="hotelDiretoField">
                         <label class="checkbox-field">
                             <input type="checkbox" id="hotelDireto">
                             <span>Hotel direto</span>
@@ -290,16 +290,18 @@
                         <input type="text" inputmode="decimal" id="taxasValor" placeholder="0,00">
                     </div>
 
-                    <div class="form-field hidden" id="comissaoField">
-                        <label>Comiss&atilde;o (%)</label>
-                        <input type="text" inputmode="decimal" id="comissaoPercent" placeholder="0,00">
-                    </div>
+                    <div class="finance-inline-pair span-2 hidden" id="comissaoOptionsRow">
+                        <div class="form-field" id="comissaoField">
+                            <label>Comiss&atilde;o (%)</label>
+                            <input type="text" inputmode="decimal" id="comissaoPercent" placeholder="0,00">
+                        </div>
 
-                    <div class="form-field hidden" id="tarifaNetField">
-                        <label class="checkbox-field">
-                            <input type="checkbox" id="tarifaNet">
-                            <span>Tarifa NET</span>
-                        </label>
+                        <div class="form-field" id="tarifaNetField">
+                            <label class="checkbox-field">
+                                <input type="checkbox" id="tarifaNet">
+                                <span>Tarifa NET</span>
+                            </label>
+                        </div>
                     </div>
 
                     <div class="form-field hidden" id="checkinField">
