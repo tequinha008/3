@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -13,94 +12,75 @@
             } catch (error) {}
         })();
     </script><title>TRES | Hot&eacute;is</title>
-
     <link rel="icon" type="image/png" href="TRES_logo_transparente.png">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/hotel.css">
-
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
-
 <body class="app-body module-hotel">
-
     <aside class="sidebar">
         <button class="sidebar-toggle" id="sidebarToggle" title="Recolher menu">
                 <i data-lucide="panel-left-close"></i>
         </button>
-
         <div class="sidebar-logo">
             <div class="mini-mark">
                 <span></span>
                 <span></span>
                 <span></span>
             </div>
-
             <div>
                 <strong>TRES</strong>
                 <small>Sistema interno</small>
             </div>
         </div>
-
         <nav class="sidebar-nav">
             <a href="dashboard.html" class="nav-link">
                 <i data-lucide="layout-dashboard"></i>
                 <span>In&iacute;cio</span>
             </a>
-
             <a href="hotel.html" class="nav-link active">
                 <i data-lucide="building-2"></i>
                 <span>Hot&eacute;is</span>
             </a>
-
             <a href="pagar.html" class="nav-link">
                 <i data-lucide="wallet-cards"></i>
                 <span>Valores a pagar</span>
             </a>
-
             <a href="reembolso.html" class="nav-link">
                 <i data-lucide="receipt-text"></i>
                 <span>Reembolsos</span>
             </a>
-
             <a href="usuarios.html" class="nav-link admin-link hidden">
                 <i data-lucide="users-round"></i>
                 <span>Usu&aacute;rios</span>
             </a>
         </nav>
-
         <div class="sidebar-footer">
             <a href="conta.html" class="nav-link">
                 <i data-lucide="circle-user-round"></i>
                 <span>Minha conta</span>
             </a>
-
             <button id="logoutButton" class="nav-link">
                 <i data-lucide="log-out"></i>
                 <span>Sair</span>
             </button>
         </div>
-
     </aside>
-
     <main class="app-main">
-
         <header class="topbar">
             <div>
                 <p class="eyebrow">M&oacute;dulo cadastral</p>
                 <h1>Cadastro de Hot&eacute;is</h1>
             </div>
-
             <div class="user-pill">
                 <div class="avatar" id="avatar">T</div>
-
                 <div>
                     <strong id="userName">Usu&aacute;rio</strong>
                     <small id="userRole">perfil</small>
                 </div>
             </div>
         </header>
-
         <section class="module-header hotel-module">
             <div>
                 <p class="eyebrow">Hot&eacute;is</p>
@@ -110,33 +90,26 @@
                 </p>
             </div>
         </section>
-
         <section class="tabs-card">
-
             <div class="tabs-header">
                 <button class="tab-button active" data-tab="newHotel">
                     Nova solicita&ccedil;&atilde;o
                 </button>
-
                 <button class="tab-button" data-tab="allHotels">
                     Todas as solicita&ccedil;&otilde;es
                 </button>
             </div>
-
             <div class="tab-content active" id="newHotel">
-
                 <form id="hotelForm" class="form-grid">
-
                     <div class="form-field">
                         <label>Data de hoje</label>
                         <input type="date" id="dataSolicitacao" disabled>
                     </div>
-
                     <div class="form-field">
                         <label>Emissor</label>
                         <input type="text" id="emissorNome" disabled>
                     </div>
-
+                    <div class="hotel-name-row span-2">
                     <div class="form-field span-2">
                         <label>Nome do hotel</label>
                         <input
@@ -147,28 +120,40 @@
                             aria-describedby="nomeHotelMessage"
                             required>
                         <small id="nomeHotelMessage" class="field-message"></small>
+                        <div class="form-field">
+                            <label>Nome do hotel</label>
+                            <input
+                                type="text"
+                                id="nomeHotel"
+                                pattern="[A-Za-z0-9Çç ]+"
+                                title="Use apenas letras sem acento, números, espaços e Ç."
+                                aria-describedby="nomeHotelMessage"
+                                required>
+                            <small id="nomeHotelMessage" class="field-message"></small>
+                        </div>
+                        <div class="form-field" id="hotelDiretoField">
+                            <label class="checkbox-field">
+                                <input type="checkbox" id="hotelDireto">
+                                <span>Hotel direto</span>
+                            </label>
+                        </div>
                     </div>
-
                     <div class="form-field span-2">
                         <label>Rua e n&uacute;mero</label>
                         <input type="text" id="ruaNumero" required>
                     </div>
-
                     <div class="form-field">
                         <label>Bairro</label>
                         <input type="text" id="bairro" required>
                     </div>
-
                     <div class="form-field">
                         <label>Cidade / Estado</label>
                         <input type="text" id="cidadeEstado" required>
                     </div>
-
                     <div class="form-field">
                         <label>Pa&iacute;s</label>
                         <input type="text" id="pais" value="Brasil">
                     </div>
-
                     <div class="form-field">
                         <label>Tipo</label>
                         <select id="tipoHotel" required>
@@ -176,14 +161,12 @@
                             <option value="INTERNACIONAL">INTERNACIONAL</option>
                         </select>
                     </div>
-
                     <div class="form-field">
                         <label class="checkbox-field">
                             <input type="checkbox" id="hotelDireto">
                             <span>Hotel direto</span>
                         </label>
                     </div>
-
                     <div class="form-field">
                         <label for="telefone">Telefone</label>
                         <input
@@ -193,53 +176,41 @@
                             placeholder="(00) 00000-0000"
                             autocomplete="tel">
                     </div>
-
                     <div class="form-field">
                         <label>CNPJ</label>
                         <input type="text" id="cnpj" placeholder="00.000.000/0000-00">
                         <small id="cnpjMessage" class="field-message"></small>
                     </div>
-
                     <div class="form-actions span-2">
                         <button type="button" class="btn btn-soft" id="clearHotelForm">
                             Limpar dados
                         </button>
-
                         <button type="submit" class="btn btn-hotel" id="saveHotelButton">
                             Salvar solicita&ccedil;&atilde;o
                         </button>
                     </div>
-
                 </form>
-
             </div>
-
             <div class="tab-content" id="allHotels">
-
                 <div class="panel-header table-header">
                     <div>
                         <p class="eyebrow">Consulta</p>
                         <h3>Solicita&ccedil;&otilde;es de hot&eacute;is</h3>
                     </div>
-
                     <div class="table-header-actions">
                         <button type="button" class="btn btn-soft" id="refreshHotelsButton">
                             <i data-lucide="refresh-cw"></i> Atualizar
                         </button>
-
                         <button type="button" class="btn btn-hotel hidden" id="completeSelectedButton">
                             <i data-lucide="check-check"></i>
                             Concluir selecionados
                         </button>
                     </div>
                 </div>
-
                 <div class="filters-grid hotel-filters">
                     <input type="search" id="hotelSearch" placeholder="Pesquisar hotel, cidade, CNPJ ou emissor">
-
                     <input type="date" id="hotelStartDate">
                     <input type="date" id="hotelEndDate">
-
                     <select id="statusFilter">
                         <option value="">Todos os status</option>
                         <option value="PENDENTE">Pendente</option>
@@ -247,13 +218,11 @@
                         <option value="CADASTRADO_BENNER">Cadastrado Benner</option>
                         <option value="CONCLUIDO">Conclu&iacute;do</option>
                     </select>
-
                     <select id="tipoFilter">
                         <option value="">Todos os tipos</option>
                         <option value="NACIONAL">Nacional</option>
                         <option value="INTERNACIONAL">Internacional</option>
                     </select>
-
                     <select id="hotelSort">
                         <option value="DATE_DESC">Data: mais recente</option>
                         <option value="DATE_ASC">Data: mais antiga</option>
@@ -261,7 +230,6 @@
                         <option value="STATUS_DESC">Status: conclu&iacute;dos primeiro</option>
                     </select>
                 </div>
-
                 <div class="table-wrapper">
                     <table>
                         <thead>
@@ -281,11 +249,9 @@
                                 <th>A&ccedil;&otilde;es</th>
                             </tr>
                         </thead>
-
                         <tbody id="hotelTableBody"></tbody>
                     </table>
                 </div>
-
                 <div class="table-pagination" id="hotelPagination">
                     <span id="hotelPaginationInfo">Mostrando 0 de 0</span>
                     <div class="table-pagination-actions">
@@ -302,13 +268,9 @@
                         <button type="button" class="btn btn-soft" id="hotelNextPage">Pr&oacute;xima</button>
                     </div>
                 </div>
-
             </div>
-
         </section>
-
     </main>
-
     <div
         class="hotel-detail-backdrop hidden"
         id="hotelDetailModal"
@@ -326,22 +288,16 @@
                     <i data-lucide="x"></i>
                 </button>
             </header>
-
             <div class="hotel-detail-grid" id="hotelDetailContent"></div>
-
             <footer class="hotel-detail-footer">
                 <button type="button" class="btn btn-soft" id="hotelDetailDone">Fechar</button>
             </footer>
         </div>
     </div>
-
     <div id="toast" class="toast hidden"></div>
-
     <script src="js/config.js"></script>
     <script src="js/ui-selects.js"></script>
     <script src="js/ui-dates.js"></script>
     <script src="js/hotel.js?v=20260807-3"></script>
-
 </body>
-
 </html>
