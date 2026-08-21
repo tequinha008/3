@@ -404,7 +404,15 @@
     
         cliente.innerHTML = `<option value="">Selecione</option>`;
     
-        data.forEach(function (item) {
+        const nomesAntigos = new Set([
+            "HAOC",
+            "EINSTEIN",
+            "EINSTEIN - PROADI"
+        ]);
+
+        data.filter(function (item) {
+            return !nomesAntigos.has(normalizeText(item.nome));
+        }).forEach(function (item) {
             cliente.innerHTML += `
                 <option value="${item.id}">
                     ${item.nome}
@@ -2013,4 +2021,3 @@
     }
     
     startRefundModule();
-s
