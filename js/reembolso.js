@@ -777,9 +777,9 @@
         }
     
         const { data, error } = await supabaseClient
-            .from("usuarios")
-            .select("id, nome")
-            .in("id", emitterIds);
+            .rpc("buscar_nomes_usuarios", {
+                p_ids: emitterIds
+            });
     
         if (error) {
             console.error(error);
@@ -802,10 +802,7 @@
     
     async function loadUsersList() {
         const { data, error } = await supabaseClient
-            .from("usuarios")
-            .select("id, nome, email")
-            .eq("ativo", true)
-            .order("nome");
+            .rpc("listar_usuarios_ativos");
     
         if (error) {
             console.error(error);
