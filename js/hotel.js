@@ -376,10 +376,7 @@ async function saveHotel(event) {
 
 async function loadUsersList() {
     const { data, error } = await supabaseClient
-        .from("usuarios")
-        .select("id, nome, email")
-        .eq("ativo", true)
-        .order("nome");
+        .rpc("listar_usuarios_ativos");
 
     if (error) {
         console.error(error);
@@ -632,9 +629,9 @@ async function attachHotelEmitterNames(items) {
     }
 
     const { data, error } = await supabaseClient
-        .from("usuarios")
-        .select("id, nome")
-        .in("id", missingEmitterIds);
+        .rpc("buscar_nomes_usuarios", {
+            p_ids: missingEmitterIds
+        });
 
     if (error) {
         console.error(error);
